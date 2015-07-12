@@ -6,53 +6,142 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>239</width>
-    <height>394</height>
+    <width>569</width>
+    <height>524</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QLineEdit" name="lineEdit_port">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>40</y>
-      <width>101</width>
-      <height>20</height>
-     </rect>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>4</number>
     </property>
-    <property name="text">
-     <string>51015</string>
+    <property name="leftMargin">
+     <number>4</number>
     </property>
-   </widget>
-   <widget class="QLabel" name="label_2">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>20</y>
-      <width>47</width>
-      <height>13</height>
-     </rect>
+    <property name="topMargin">
+     <number>4</number>
     </property>
-    <property name="text">
-     <string>Port</string>
+    <property name="rightMargin">
+     <number>4</number>
     </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton_listen">
-    <property name="geometry">
-     <rect>
-      <x>120</x>
-      <y>40</y>
-      <width>111</width>
-      <height>23</height>
-     </rect>
+    <property name="bottomMargin">
+     <number>4</number>
     </property>
-    <property name="text">
-     <string>Listen</string>
-    </property>
-   </widget>
+    <item>
+     <widget class="QWidget" name="widget" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>90</height>
+       </size>
+      </property>
+      <widget class="QPushButton" name="pushButton_listen">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>101</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Listen</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>47</width>
+         <height>13</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Port</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_port">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>101</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>51015</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_ip">
+       <property name="geometry">
+        <rect>
+         <x>140</x>
+         <y>30</y>
+         <width>113</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_3">
+       <property name="geometry">
+        <rect>
+         <x>140</x>
+         <y>10</y>
+         <width>47</width>
+         <height>13</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>IP</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_send">
+       <property name="geometry">
+        <rect>
+         <x>260</x>
+         <y>60</y>
+         <width>75</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Send</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_message">
+       <property name="geometry">
+        <rect>
+         <x>260</x>
+         <y>30</y>
+         <width>171</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_4">
+       <property name="geometry">
+        <rect>
+         <x>260</x>
+         <y>10</y>
+         <width>47</width>
+         <height>13</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Message</string>
+       </property>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTextEdit" name="textEdit_log"/>
+    </item>
+   </layout>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
  </widget>

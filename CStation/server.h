@@ -14,7 +14,9 @@ class Server : public QObject
 public:
     Server();
     ~Server();
+    void Reset(int server_port);
     void StartServer(int server_port);
+    void SendData(QString ip_to, QString message);
 
 signals:
     void error(QString message);
@@ -22,12 +24,13 @@ signals:
 
 private slots:
     void sessionOpened();
-    void sendData();
+    void recieveConnection();
     void recieveData();
+    void socketStateChanged(QAbstractSocket::SocketState state);
     void displayError(QAbstractSocket::SocketError socketError);
 private:
     int port = 0;
-    QMap<QString, QTcpSocket *> *sockets;
+    QMap<quint32, QTcpSocket *> *sockets;
     QString ipAddress;
     QTcpServer *tcpServer;
     QNetworkSession *networkSession;

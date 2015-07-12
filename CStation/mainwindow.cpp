@@ -15,24 +15,35 @@ MainWindow::~MainWindow()
     if (server) delete server;
 }
 
-void MainWindow::on_pushButton_listen_clicked(bool checked)
-{
-    if (server) {
-        delete server;
-    }
-    ui->statusBar->showMessage(tr("Starting server..."), 10000);
-    server = new Server();
-    QObject::connect(server, SIGNAL(error(QString)), this, SLOT(get_error(QString)));
-    QObject::connect(server, SIGNAL(write_message(QString)), this, SLOT(get_message(QString)));
-    server->StartServer(ui->lineEdit_port->text().toInt());
-}
-
 void MainWindow::get_message(QString message)
 {
     ui->statusBar->showMessage(message, 10000);
+    ui->textEdit_log->append(message);
 }
 
 void MainWindow::get_error(QString message)
 {
     QMessageBox::information(this, tr("CStation"), message);
+    ui->textEdit_log->append(message);
+}
+
+void MainWindow::on_pushButton_send_clicked()
+{
+    if (!server) {
+        get_error(tr("Server is not running"));
+        return;
+    }
+    server->SendData(ui->lineEdit_ip->text(), ui->lineEdit_message->text());
+}
+
+void MainWindow::on_pushButton_listen_clicked()
+{
+    if (!server) {
+        server = new Server();
+        QObject::connect(server, SIGNAL(error(QString)), this, SLOT(get_error(QString)));
+        QObject::connect(server, SIGNAL(write_message(QString)), this, SLOT(get_message(QString)));
+        server->StartServer(ui->lineEdit_port->text().toInt());
+    } else {
+        server->Reset(ui->lineEdit_port->text().toInt());
+    }
 }

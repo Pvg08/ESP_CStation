@@ -18,9 +18,11 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_pushButton_listen_clicked(bool checked);
     void get_message(QString message);
     void get_error(QString message);
+    void on_pushButton_send_clicked();
+    void on_pushButton_listen_clicked();
+
 private:
     Ui::MainWindow *ui;
     Server* server;

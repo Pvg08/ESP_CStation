@@ -7,14 +7,38 @@ Server::Server()
     ipAddress = "";
     tcpServer = 0;
     networkSession = 0;
-    sockets = new QMap<QString, QTcpSocket *>();
+    sockets = new QMap<quint32, QTcpSocket *>();
 }
 
 Server::~Server()
 {
-    if (networkSession) delete networkSession;
     if (tcpServer) delete tcpServer;
+    if (networkSession) delete networkSession;
     delete sockets;
+}
+
+void Server::Reset(int server_port)
+{
+    emit write_message(tr("Reseting server."));
+    if (!sockets->isEmpty()) {
+        QMap<quint32, QTcpSocket *>::const_iterator i = sockets->constBegin();
+        while (i != sockets->constEnd()) {
+            QTcpSocket* tcpSocket = i.value();
+            if (tcpSocket) {
+                emit write_message(tr("Sending reset signal to %1.").arg(tcpSocket->peerAddress().toString()));
+                tcpSocket->write("RST\r\n\r\n");
+                tcpSocket->flush();
+                tcpSocket->disconnectFromHost();
+            }
+            ++i;
+        }
+        sockets->clear();
+    }
+    if (tcpServer) {
+        tcpServer->close();
+    }
+    if (server_port) port = server_port;
+    sessionOpened();
 }
 
 void Server::StartServer(int server_port)
@@ -46,7 +70,18 @@ void Server::StartServer(int server_port)
         sessionOpened();
     }
 
-    connect(tcpServer, SIGNAL(newConnection()), this, SLOT(sendData()));
+    connect(tcpServer, SIGNAL(newConnection()), this, SLOT(recieveConnection()));
+}
+
+void Server::SendData(QString ip_to, QString message)
+{
+    QTcpSocket* tcpSocket = sockets->value(QHostAddress(ip_to).toIPv4Address(), 0);
+    if (tcpSocket) {
+        emit write_message(tr("Sending data (size=%1) to %2. Content: \"%3\"").arg(message.length()).arg(ip_to).arg(message));
+        tcpSocket->write(message.toLocal8Bit());
+    } else {
+        emit write_message(tr("Client \"%1\" not found").arg(ip_to));
+    }
 }
 
 void Server::sessionOpened()
@@ -68,7 +103,7 @@ void Server::sessionOpened()
         settings.endGroup();
     }
 
-    tcpServer = new QTcpServer(this);
+    if (!tcpServer) tcpServer = new QTcpServer(this);
     if (!tcpServer->listen(QHostAddress::Any, port)) {
         emit error(tr("Unable to start the server: %1.").arg(tcpServer->errorString()));
         return;
@@ -87,10 +122,10 @@ void Server::sessionOpened()
     if (ipAddress.isEmpty())
         ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
 
-    emit write_message(tr("The server is running on\n\nIP: %1\nport: %2\n").arg(ipAddress).arg(tcpServer->serverPort()));
+    emit write_message(tr("The server is running on IP: %1 port: %2\n").arg(ipAddress).arg(tcpServer->serverPort()));
 }
 
-void Server::sendData()
+void Server::recieveConnection()
 {
     QByteArray block;
 
@@ -98,41 +133,46 @@ void Server::sendData()
     connect(clientConnection, SIGNAL(disconnected()), clientConnection, SLOT(deleteLater()));
 
     QString client_ip = clientConnection->peerAddress().toString();
+    quint32 client_ip_int = clientConnection->peerAddress().toIPv4Address();
 
     emit write_message(tr("New connection from IP: %1").arg(client_ip));
 
-    if (sockets->contains(client_ip)) {
-        ((QTcpSocket*) sockets->value(client_ip))->disconnectFromHost();
-        sockets->remove(client_ip);
+    if (sockets->contains(client_ip_int)) {
+        ((QTcpSocket*) sockets->value(client_ip_int))->disconnectFromHost();
+        sockets->remove(client_ip_int);
     }
 
-    sockets->insert(client_ip, clientConnection);
+    sockets->insert(client_ip_int, clientConnection);
 
     clientConnection->write(block);
 
+    connect(clientConnection, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(socketStateChanged(QAbstractSocket::SocketState)));
     connect(clientConnection, SIGNAL(readyRead()), this, SLOT(recieveData()));
     connect(clientConnection, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(displayError(QAbstractSocket::SocketError)));
 }
 
 void Server::displayError(QAbstractSocket::SocketError socketError)
 {
-    switch (socketError) {
-        case QAbstractSocket::RemoteHostClosedError:
-            break;
-        case QAbstractSocket::HostNotFoundError:
-            emit write_message(tr("The host was not found. Please check the host name and port settings."));
-            break;
-        case QAbstractSocket::ConnectionRefusedError:
-            emit write_message(tr("The connection was refused by the peer. Make sure the fortune server is running, and check that the host name and port settings are correct."));
-            break;
-        default:
-            emit write_message(tr("Error"));
+    QTcpSocket *clientConnection = dynamic_cast<QTcpSocket*>(this->sender());
+    if (clientConnection != NULL) {
+        switch (socketError) {
+            case QAbstractSocket::RemoteHostClosedError:
+                break;
+            case QAbstractSocket::HostNotFoundError:
+                emit write_message(tr("The host was not found. Please check the host name settings."));
+                break;
+            case QAbstractSocket::ConnectionRefusedError:
+                emit write_message(tr("The connection was refused by the peer %1. Make sure the client is running, and check that the host name is correct.").arg(clientConnection->peerAddress().toString()));
+                break;
+            default:
+                emit write_message(tr("Error"));
+        }
     }
 }
 
 void Server::recieveData()
 {
-    QMap<QString, QTcpSocket *>::const_iterator i = sockets->constBegin();
+    QMap<quint32, QTcpSocket *>::const_iterator i = sockets->constBegin();
 
     while (i != sockets->constEnd()) {
         QTcpSocket* tcpSocket = i.value();
@@ -144,10 +184,33 @@ void Server::recieveData()
             in.readRawData(mem, size);
             QString message = QString::fromLatin1(mem, size);
             delete mem;
-
-            qDebug() << tcpSocket->peerAddress().toString() << " " << size << " " << message << endl;
+            emit write_message(tr("Recieved data (size=%1) from %2. Content: \"%3\"").arg(size).arg(tcpSocket->peerAddress().toString()).arg(message));
         }
         ++i;
     }
 }
 
+void Server::socketStateChanged(QAbstractSocket::SocketState state)
+{
+    QTcpSocket *clientConnection = dynamic_cast<QTcpSocket*>(this->sender());
+    if (clientConnection) {
+        QString host_ip = clientConnection->peerAddress().toString();
+        switch(state) {
+            case QAbstractSocket::HostLookupState:
+            emit write_message(tr("%1 is performing a host name lookup.").arg(host_ip));
+            break;
+            case QAbstractSocket::ConnectingState:
+            emit write_message(tr("%1 has started establishing a connection.").arg(host_ip));
+            break;
+            case QAbstractSocket::ConnectedState:
+            emit write_message(tr("%1 established a connection.").arg(host_ip));
+            break;
+            case QAbstractSocket::BoundState:
+            emit write_message(tr("%1 is bound to an address and port.").arg(host_ip));
+            break;
+            case QAbstractSocket::ClosingState:
+            emit write_message(tr("%1 is closing.").arg(host_ip));
+            break;
+        }
+    }
+}

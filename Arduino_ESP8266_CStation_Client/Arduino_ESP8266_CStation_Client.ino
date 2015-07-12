@@ -2,114 +2,136 @@
 
 // Arduino pin 2 for RX
 // Arduino Pin 3 for TX
-SoftwareSerial espSerial(2,3);
-  
-const bool printReply = true;
+SoftwareSerial espSerial(2, 3);
+
+#define WIFI_SSID "network"
+#define WIFI_PASSWORD "123456"
+#define SERVER_ADDR "192.168.1.2"
+#define SERVER_PORT 51015
+#define MAX_CONNECTIONS 4
+
+// 3 chars station code
+#define IDENTIFICATION_CODE "DS0"
+
+#define REPLY_BUFFER 500
+
+#define PRINT_REPLY true
+//define DEBUG_PRINT(msg)
+#define DEBUG_PRINT(msg) Serial.println(msg)
+
 const char line[] = "-----\n\r";
-int loopCount=0;
- 
+
 char html[50];
-char command[20];
-char reply[500];
+char reply[REPLY_BUFFER];
  
-char ipAddress [20];
-char name[30];
 unsigned int rlength = 0;
+bool connected_to_wifi = false;
+bool connected_to_server = false;
+byte connection_id = 0;
+
 char temp[5];
+
+void StartConnection(bool reconnect) 
+{
+  if (reconnect || !connected_to_wifi) {
+    DEBUG_PRINT("Reset the module");
+    espSerial.print("AT+RST\r\n");
+    getReply( 2000 );
+    DEBUG_PRINT("Change to station mode");
+    espSerial.print("AT+CWMODE=1\r\n");
+    getReply( 1500 );
+    DEBUG_PRINT("Connect to a network");
+    espSerial.print("AT+CWJAP=\"");
+    espSerial.print(WIFI_SSID);
+    espSerial.print("\",\"");
+    espSerial.print(WIFI_PASSWORD);
+    espSerial.print("\"\r\n");
+    getReply( 6000 );
+    DEBUG_PRINT("Get the ip address assigned by the router");
+    espSerial.print("AT+CIFSR\r\n");
+    getReply( 1000 );
+    DEBUG_PRINT("Set for multiple connections");
+    espSerial.print("AT+CIPMUX=1\r\n");
+    getReply( 1500 );
+    connected_to_wifi = true;
+    connected_to_server = false;
+  }
+  if (reconnect && connected_to_wifi && !connected_to_server) {
+
+    DEBUG_PRINT("Connect to the server");
+    connection_id++;
+    if (connection_id > MAX_CONNECTIONS) connection_id = 1;
+    espSerial.print("AT+CIPSTART=");
+    espSerial.print(connection_id);
+    espSerial.print(",\"TCP\",\"");
+    espSerial.print(SERVER_ADDR);
+    espSerial.print("\",");
+    espSerial.print(SERVER_PORT);
+    espSerial.print("\r\n");
+    getReply( 2000 );
+
+    DEBUG_PRINT("Start the server");
+    espSerial.print("AT+CIPSERVER=1,51015\r\n");
+    getReply( 1500 );
+    connected_to_server = true;
+
+    DEBUG_PRINT("Send identification Number");
+    espSerial.print("AT+CIPSEND=");
+    espSerial.print(connection_id);
+    espSerial.print(",3");
+    espSerial.print("\r\n");
+    getReply( 2000 );
+    
+    espSerial.print(IDENTIFICATION_CODE);
+    espSerial.print("\r\n");
+    getReply( 2000 );
+  }
+}
 
 void setup()
 {
     Serial.begin(9600);
-    Serial.println("Start\r\n\r\n");
+    DEBUG_PRINT("Start\r\n\r\n");
     espSerial.begin(9600);
-    Serial.println("reset the module");
-    espSerial.print("AT+RST\r\n");
-    getReply( 2000 );
-    Serial.println("Change to station mode");
-    espSerial.print("AT+CWMODE=1\r\n");
-    getReply( 1500 );
-    Serial.println("Connect to a network ");
-    espSerial.print("AT+CWJAP=\"PWRT_SDP__m11\",\"tUqq0Oo_OMRT102qD_b1\"\r\n");
-    getReply( 6000 );
-    Serial.println("Get the ip address assigned ny the router");
-    espSerial.print("AT+CIFSR\r\n");
-    getReply( 1000 );
 
-    int len = strlen( reply );
-    bool done=false;
-    bool error = false;
-    int pos = 0;
-    while (!done)
-    {
-        if ( reply[pos] == 10) { done = true;}
-        pos++;
-        if (pos > len) { done = true;  error = true;}
-    }
- 
-    if (!error)
-    {
-        int buffpos = 0;
-        done = false;
-        while (!done)
-        {
-           if ( reply[pos] == 13 ) { done = true; }
-           else { ipAddress[buffpos] = reply[pos];    buffpos++; pos++;   }
-        }
-        ipAddress[buffpos] = 0;
-    }
-    else { strcpy(ipAddress,"ERROR"); }
- 
-    Serial.println("Set for multiple connections");
-    espSerial.print("AT+CIPMUX=1\r\n");
-    getReply( 1500 );
- 
-    Serial.println("Start the server");
-    espSerial.print("AT+CIPSERVER=1,51015\r\n");
-    getReply( 1500 );
- 
-    Serial.println("");
-  
-    Serial.println("Waiting for requests");
-    Serial.print("Connect to "); Serial.println(ipAddress);
-    Serial.println("");
+    StartConnection(true);
 }
-
 
 void loop()
 {
     if(espSerial.available())
     {
-        getReply( 2000 );
+        getReply( 1000 );
 
         bool foundConnect = false;
-        for (int i=0; i<strlen(reply)-6; i++)
+        int i;
+        int reply_len = strlen(reply);
+        char* message = reply;
+        
+        for (i=0; i<reply_len-5; i++)
         {
-             if (  (reply[i]=='C') && (reply[i+1]=='O') && (reply[i+2]=='N') && (reply[i+3]=='N') && (reply[i+4]=='E') && (reply[i+5]=='C') && (reply[i+6]=='T') ) { foundConnect = true;    }
+             if ( (reply[i]=='+') && (reply[i+1]=='I') && (reply[i+2]=='P') && (reply[i+3]=='D') && (reply[i+4]==',') ) { 
+               foundConnect = true;
+               break;
+             }
         }
-  
+
         if (foundConnect)
         {
+          for (; i<reply_len && reply[i]!=':'; i++);
+          i++;
 
-            loopCount++;
-            Serial.print( "Have a connection.  Loop = ");  
-            Serial.println(loopCount); 
-            Serial.println("");
+          if (i<reply_len) {
+            message = reply+i;
+            DEBUG_PRINT(message);
 
-            strncpy(html, "RESULT", sizeof(html));
-            rlength = strlen(html);
+            if (strncmp(message, "RST\r\n\r\n", 7)==0) {
+              StartConnection(true);
+              delay (1000);
+              return;
+            }
             
-            espSerial.print("AT+CIPSEND=0,");
-            espSerial.print(rlength);
-            espSerial.print("\r\n");
-            getReply( 1000 );
-            espSerial.print(html);
-            getReply( 1000 );
-
-            espSerial.print( "AT+CIPCLOSE=0\r\n" );
-            getReply( 500 );
-
-            Serial.println("last getReply 1 ");
-            getReply( 500 );
+          }
         }
     }
 
@@ -125,10 +147,12 @@ void getReply(int wait)
         while(espSerial.available())
         {
             char c = espSerial.read(); 
-            if (tempPos < 500) { reply[tempPos] = c; tempPos++;   }
+            if (tempPos < REPLY_BUFFER) { reply[tempPos] = c; tempPos++;   }
         }
         reply[tempPos] = 0;
     } 
  
-    if (printReply) { Serial.println( reply );  Serial.println(line);     }
+    if (PRINT_REPLY) { DEBUG_PRINT( reply );  DEBUG_PRINT(line);     }
 }
+
+
