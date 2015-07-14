@@ -14,9 +14,13 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    server.cpp
+    server.cpp \
+    clientblock.cpp \
+    sensor.cpp
 
 HEADERS  += mainwindow.h \
-    server.h
+    server.h \
+    clientblock.h \
+    sensor.h
 
 FORMS    += mainwindow.ui

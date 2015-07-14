@@ -8,12 +8,21 @@ Server::Server()
     tcpServer = 0;
     networkSession = 0;
     sockets = new QMap<quint32, QTcpSocket *>();
+    clientblocks = new QMap<quint16, ClientBlock *>();
 }
 
 Server::~Server()
 {
+    QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
+    while (i != clientblocks->constEnd()) {
+        delete i.value();
+        ++i;
+    }
+    clientblocks->clear();
+
     if (tcpServer) delete tcpServer;
     if (networkSession) delete networkSession;
+    delete clientblocks;
     delete sockets;
 }
 
@@ -170,6 +179,18 @@ void Server::displayError(QAbstractSocket::SocketError socketError)
     }
 }
 
+ClientBlock *Server::getClientBlock(quint32 ip_addr)
+{
+    QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
+    while (i != clientblocks->constEnd()) {
+        if (i.value()->getIpAddr()==ip_addr) {
+            return i.value();
+        }
+        ++i;
+    }
+    return NULL;
+}
+
 void Server::recieveData()
 {
     QMap<quint32, QTcpSocket *>::const_iterator i = sockets->constBegin();
@@ -185,6 +206,26 @@ void Server::recieveData()
             QString message = QString::fromLatin1(mem, size);
             delete mem;
             emit write_message(tr("Recieved data (size=%1) from %2. Content: \"%3\"").arg(size).arg(tcpSocket->peerAddress().toString()).arg(message));
+
+            if (message.length()>=3 && message.length()<=4 && message.startsWith("DS")) {
+                int dst_id = message.remove(0,2).toInt();
+                if (dst_id) {
+                    if (clientblocks->contains(dst_id)) {
+                        clientblocks->value(dst_id)->setIpAddr(i.key());
+                        emit write_message(tr("Block with ID=%1 connected.").arg(dst_id));
+                    } else {
+                        ClientBlock *nblock = new ClientBlock(this, dst_id);
+                        nblock->setIpAddr(i.key());
+                        emit write_message(tr("Registered new block. ID=%1").arg(dst_id));
+                    }
+                }
+            } else {
+                ClientBlock *rblock = getClientBlock(i.key());
+                if (rblock) {
+                    rblock->BlockMessage(message);
+                }
+            }
+
         }
         ++i;
     }

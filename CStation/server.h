@@ -6,6 +6,7 @@
 #include <QNetworkSession>
 #include <QtNetwork>
 #include <stdlib.h>
+#include "clientblock.h"
 
 class Server : public QObject
 {
@@ -31,9 +32,12 @@ private slots:
 private:
     int port = 0;
     QMap<quint32, QTcpSocket *> *sockets;
+    QMap<quint16, ClientBlock *> *clientblocks;
     QString ipAddress;
     QTcpServer *tcpServer;
     QNetworkSession *networkSession;
+
+    ClientBlock *getClientBlock(quint32 ip_addr);
 };
 
 #endif
