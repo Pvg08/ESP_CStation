@@ -1,7 +1,4 @@
 
-// 3 chars station code
-#define IDENTIFICATION_CODE "DS1"
-
 #define BAUD_RATE 38400
 
 #define CSTATION_DEBUG
@@ -44,37 +41,14 @@ void loop()
 
 void executeCommands() 
 {
-  char *message = readReply( 1000 );
+  char *message = readTCPMessage( 1000 );
   if (message) {
-    bool foundConnect = false;
-    int i;
-    int reply_len = strlen(message);
-    
-    for (i=0; i<reply_len-5; i++)
+    char* param;
+    if ((param = getMessageParam(message, "SERV_RST=1"))) 
     {
-      if ( (message[i]=='+') && (message[i+1]=='I') && (message[i+2]=='P') && (message[i+3]=='D') && (message[i+4]==',') ) { 
-        foundConnect = true;
-        break;
-      }
-    }
-
-    if (foundConnect)
-    {
-      for (; i<reply_len && message[i]!=':'; i++);
-      i++;
-
-      if (i<reply_len) 
-      {
-        message = message+i;
-        DEBUG_WRITE(message);
-
-        if (strncmp(message, "RST\r\n\r\n", 7)==0) 
-        {
-          StartConnection(true);
-          delay(1000);
-          return;
-        }
-      }
+      StartConnection(true);
+      delay(1000);
+      return;
     }
   }
 }
