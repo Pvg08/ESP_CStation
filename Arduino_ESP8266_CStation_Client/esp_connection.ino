@@ -61,6 +61,7 @@ void StartConfiguringMode()
 {
   bool rok = true;
   byte attempts = 0;
+  char* reply = NULL;
 
   DEBUG_WRITE("Starting configuration mode");
   do {
@@ -69,8 +70,8 @@ void StartConfiguringMode()
       attempts = 0;
       do {
         espSerial.print("AT+RST\r\n");
-        getReply( 4000, false );
-        rok = replyIsOK();
+        reply = getReply( 4000, false );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
@@ -80,8 +81,8 @@ void StartConfiguringMode()
       attempts = 0;
       do {
         espSerial.print("AT+CWMODE=3\r\n");
-        getReply( 1500, true );
-        rok = replyIsOK();
+        reply = getReply( 1500, true );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
@@ -99,37 +100,30 @@ void StartConfiguringMode()
         espSerial.print(",");
         espSerial.print(HOST_WIFI_ECN);
         espSerial.print("\r\n");
-        getReply( 2000, true );
-        rok = replyIsOK();
+        reply = getReply( 2000, true );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
       
-      DEBUG_WRITE("Connect to a network");
-      setLCDText("WIFI Network ->");
-      attempts = 0;
-      do {
+      if (strlen(wifi_ssid)>0 || strlen(wifi_passw)>0) {
+        DEBUG_WRITE("Connect to a network");
+        setLCDText("WIFI Network ->");
         espSerial.print("AT+CWJAP=\"");
         espSerial.print(wifi_ssid);
         espSerial.print("\",\"");
         espSerial.print(wifi_passw);
         espSerial.print("\"\r\n");
         getReply( 6000, true );
-        rok = replyIsOK();
-        attempts++;
-      } while (!rok && attempts<MAX_ATTEMPTS);
-      if (!rok) continue;
-      
-      
+      }
 
-      char* reply = NULL;
       DEBUG_WRITE("Get ip address of the esp");
       setLCDLines("Getting IP","address");
       attempts = 0;
       do {
         espSerial.print("AT+CIFSR\r\n");
         reply = getReply( 1000, true );
-        rok = replyIsOK();
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok || !reply) continue;
@@ -157,13 +151,13 @@ void StartConfiguringMode()
       attempts = 0;
       do {
         espSerial.print("AT+CIPMUX=1\r\n");
-        getReply( 1500, true );
-        rok = replyIsOK();
+        reply = getReply( 1500, true );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
 
-      rok = startServer(1, 80);
+      rok = startServer(1, SERVER_PORT);
       if (!rok) {
         DEBUG_WRITE("Can't start the server. Let's try again");
         setLCDLines("Error: Can't", "start server");
@@ -189,51 +183,45 @@ void StartConfiguringMode()
       char* param;
       if (message) {
        
-        if ((param = getMessageParam(message, "SET_SSID="))) {
-          strncpy(wifi_ssid, param, WIFI_SSID_MAXLEN);
+        if ((param = getMessageParam(message, "DS_SETUP:\r\n", false))) {
+          unsigned line_pos = 0;
+          
+          rok = readLineToStr(param, wifi_ssid, WIFI_SSID_MAXLEN, line_pos, &line_pos);
           writeStringToEEPROM(EEPROM_START_ADDR+1, wifi_ssid, WIFI_SSID_MAXLEN);
           DEBUG_WRITE("SSID written to EEPROM:");
           DEBUG_WRITE(wifi_ssid);
-        } else if ((param = getMessageParam(message, "SET_PSWD="))) {
-          strncpy(wifi_passw, param, WIFI_PASSWORD_MAXLEN);
+          
+          rok = readLineToStr(param, wifi_passw, WIFI_PASSWORD_MAXLEN, line_pos, &line_pos);
           writeStringToEEPROM(EEPROM_START_ADDR+WIFI_SSID_MAXLEN+2, wifi_passw, WIFI_PASSWORD_MAXLEN);
           DEBUG_WRITE("PASSW written to EEPROM:");
           DEBUG_WRITE(wifi_passw);
-        } else if ((param = getMessageParam(message, "SET_SERV="))) {
-          strncpy(server_ip_addr, param, WIFI_SERVER_ADDRESS_MAXLEN);
+          
+          rok = readLineToStr(param, server_ip_addr, WIFI_SERVER_ADDRESS_MAXLEN, line_pos, &line_pos);
           writeStringToEEPROM(EEPROM_START_ADDR+WIFI_SSID_MAXLEN+WIFI_PASSWORD_MAXLEN+3, server_ip_addr, WIFI_SERVER_ADDRESS_MAXLEN);
           DEBUG_WRITE("Server address written to EEPROM:");
           DEBUG_WRITE(server_ip_addr);
-        } else if ((param = getMessageParam(message, "SET_STID="))) {
-          station_id = String(param).toInt();
+          
+          station_id = readIntFromString(param, line_pos);
           EEPROM.write(EEPROM_START_ADDR, station_id);
           DEBUG_WRITE("Station ID written to EEPROM:");
           DEBUG_WRITE(station_id);
-        } else if ((param = getMessageParam(message, "SERV_RST=1"))) {
+          return;
+          
+        } else if ((param = getMessageParam(message, "SERV_RST=1", true))) {
           return;
         }
+        
+        closeConnection(5);
+        startServer(1, SERVER_PORT);
       }
     }
-}
-
-char* getMessageParam(char* message, char const * param_name)
-{
-  int param_len = strlen(param_name);
-  if (strncmp(message, param_name, param_len)==0) {
-      message += param_len;
-      int message_len = strlen(message);
-      int i;
-      for(i = 0; i<message_len && message[i]!='\r'; i++);
-      message[i]=0;
-      return message;
-  }
-  return NULL;
 }
 
 void StartConnection(bool reconnect) 
 {
   bool rok = true;
   byte attempts = 0;
+  char* reply;
 
   if (reconnect || !connected_to_wifi) 
   {
@@ -250,8 +238,8 @@ void StartConnection(bool reconnect)
       attempts = 0;
       do {
         espSerial.print("AT+RST\r\n");
-        getReply( 4000, false );
-        rok = replyIsOK();
+        reply = getReply( 4000, false );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
@@ -261,8 +249,8 @@ void StartConnection(bool reconnect)
       attempts = 0;
       do {
         espSerial.print("AT+CWMODE=1\r\n");
-        getReply( 1500, true );
-        rok = replyIsOK();
+        reply = getReply( 1500, true );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
@@ -276,8 +264,8 @@ void StartConnection(bool reconnect)
         espSerial.print("\",\"");
         espSerial.print(wifi_passw);
         espSerial.print("\"\r\n");
-        getReply( 6000, true );
-        rok = replyIsOK();
+        reply = getReply( 6000, true );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
@@ -287,8 +275,8 @@ void StartConnection(bool reconnect)
       attempts = 0;
       do {
         espSerial.print("AT+CIFSR\r\n");
-        getReply( 1000, true );
-        rok = replyIsOK();
+        reply = getReply( 1000, true );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
@@ -298,8 +286,8 @@ void StartConnection(bool reconnect)
       attempts = 0;
       do {
         espSerial.print("AT+CIPMUX=1\r\n");
-        getReply( 750, true );
-        rok = replyIsOK();
+        reply = getReply( 750, true );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
 
@@ -324,8 +312,8 @@ void StartConnection(bool reconnect)
         espSerial.print("\",");
         espSerial.print(SERVER_PORT);
         espSerial.print("\r\n");
-        getReply( 2000, true );
-        rok = replyIsOK();
+        reply = getReply( 2000, true );
+        rok = replyIsOK(reply);
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) {
@@ -346,8 +334,8 @@ void StartConnection(bool reconnect)
       DEBUG_WRITE("Send identification Number");
       setLCDText("Identification");
       
-      sendMessage(connection_id, "DS"+String(station_id), MAX_ATTEMPTS);
-      rok = replyIsOK();
+      reply = sendMessage(connection_id, "DS"+String(station_id), MAX_ATTEMPTS);
+      rok = replyIsOK(reply);
     } while (!rok);
     
     connected_to_server = true;
@@ -363,14 +351,15 @@ bool startServer(unsigned connection, unsigned port)
   setLCDLines("Start local", "server");
   unsigned attempts = 0;
   bool rok = false;
+  char* reply;
   do {
     espSerial.print("AT+CIPSERVER=");
     espSerial.print(connection);
     espSerial.print(",");
     espSerial.print(port);
     espSerial.print("\r\n");
-    getReply( 750, true );
-    rok = replyIsOK();
+    reply = getReply( 750, true );
+    rok = replyIsOK(reply);
     attempts++;
   } while (!rok && attempts<MAX_ATTEMPTS);
   return rok;
@@ -381,18 +370,19 @@ bool closeConnection(unsigned connection) {
   setLCDLines("Close local", "server");
   unsigned attempts = 0;
   bool rok = false;
+  char* reply;
   do {
     espSerial.print("AT+CIPCLOSE=");
     espSerial.print(connection);
     espSerial.print("\r\n");
-    getReply( 800, true );
-    rok = replyIsOK();
+    reply = getReply( 800, true );
+    rok = replyIsOK(reply);
     attempts++;
   } while (!rok && attempts<MAX_ATTEMPTS);
   return rok;
 }
 
-void sendMessage(unsigned connection_id, String message, unsigned max_attempts)
+char* sendMessage(unsigned connection_id, String message, unsigned max_attempts)
 {
   DEBUG_WRITE("Sending to ");
   DEBUG_WRITE(connection_id);
@@ -405,6 +395,7 @@ void sendMessage(unsigned connection_id, String message, unsigned max_attempts)
   unsigned str_length = message.length();
   unsigned buffer_len = SERIAL_TX_BUFFER_SIZE;
   String spart;
+  char* reply = NULL;
   
   while (written<str_length) {
     spart = message.substring(written, written+buffer_len);
@@ -414,8 +405,8 @@ void sendMessage(unsigned connection_id, String message, unsigned max_attempts)
     espSerial.print(",");
     espSerial.print(spart.length(), DEC);
     espSerial.print("\r\n");
-    getReply( 5000, true );
-    if (!replyIsOK() && max_attempts && attempts<max_attempts) {
+    reply = getReply( 5000, true );
+    if (!replyIsOK(reply) && max_attempts && attempts<max_attempts) {
       errors_count++;
       attempts++;
       DEBUG_WRITE("error: Retry");
@@ -424,8 +415,8 @@ void sendMessage(unsigned connection_id, String message, unsigned max_attempts)
     
     espSerial.print(spart.c_str());
     espSerial.print("\r\n");
-    getReply( 5000, true );
-    if (!replyIsOK() && max_attempts && attempts<max_attempts) {
+    reply = getReply( 5000, true );
+    if (!replyIsOK(reply) && max_attempts && attempts<max_attempts) {
       errors_count++;
       attempts++;
       DEBUG_WRITE("error: Retry");
@@ -435,6 +426,8 @@ void sendMessage(unsigned connection_id, String message, unsigned max_attempts)
     written += buffer_len;
     attempts = 0;
   }
+  
+  return reply;
 }
 
 char* readReply(unsigned int wait, bool skip_on_ok)
@@ -442,8 +435,9 @@ char* readReply(unsigned int wait, bool skip_on_ok)
   char* result = NULL;
   if(espSerial.available())
   {
+    DEBUG_WRITE("Reading reply:");
     result = getReply( wait, skip_on_ok );
-    if (!replyIsOK()) errors_count++;
+    if (!replyIsOK(result)) errors_count++;
     millis_sum_delay += wait;
   }
   return result;
@@ -458,6 +452,9 @@ char* readTCPMessage(unsigned int wait, unsigned* tcp_connection_id)
     int i;
     int reply_len = strlen(message);
     
+    DEBUG_WRITE("TCP message length:");
+    DEBUG_WRITE(reply_len);
+    
     for (i=0; i<reply_len-5; i++)
     {
       if ( (message[i]=='+') && (message[i+1]=='I') && (message[i+2]=='P') && (message[i+3]=='D') && (message[i+4]==',') ) { 
@@ -466,25 +463,35 @@ char* readTCPMessage(unsigned int wait, unsigned* tcp_connection_id)
       }
     }
 
+    DEBUG_WRITE("TCP message offset:");
+    DEBUG_WRITE(i);
+
     if (foundConnect)
     {
       bool start = false;
       bool done = false;
       if (tcp_connection_id) *tcp_connection_id = 0;
       for (; i<reply_len && message[i]!=':'; i++) {
-        if (tcp_connection_id) {
-          if (message[i] == ',') {
-            done = start;
+        DEBUG_WRITE(i);
+        if (tcp_connection_id && !done) {
+          if (!start && message[i] == ',') {
             start = true;
           } else if (start && message[i]>='0' && message[i]<='9') {
-            *tcp_connection_id = (*tcp_connection_id) * 10 + message[i] - '0';
+            *tcp_connection_id = readIntFromString(message, i);
+            DEBUG_WRITE(*tcp_connection_id);
+            done = true;
           }
         }
       };
       i++;
+      
+      DEBUG_WRITE("TCP message index:");
+      DEBUG_WRITE(i);
+      
       if (i<reply_len) 
       {
         message = message+i;
+        DEBUG_WRITE("TCP message:");
         DEBUG_WRITE(message);
         return message;
       }
@@ -525,23 +532,7 @@ char* getReply(unsigned int wait, bool skip_on_ok)
       }
     }
   }
-  DEBUG_WRITE(reply); DEBUG_WRITE(line);
+  DEBUG_WRITE(line); DEBUG_WRITE(reply); DEBUG_WRITE(line);
   return reply;
 }
 
-bool replyIsOK()
-{
-  int i;
-  int reply_len = strlen(reply);
-  bool foundOK = false;
-
-  for (i=0; i<reply_len-1; i++)
-  {
-    if ( (reply[i]=='O') && (reply[i+1]=='K') ) { 
-      foundOK = true;
-      break;
-    }
-  }
-
-  return foundOK;
-}

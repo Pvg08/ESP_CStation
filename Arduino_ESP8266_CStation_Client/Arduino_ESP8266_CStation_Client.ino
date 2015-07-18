@@ -44,14 +44,16 @@ void executeCommands()
   char *message = readTCPMessage( 1000, NULL );
   if (message) {
     char* param;
-    if ((param = getMessageParam(message, "SERV_RST=1"))) 
+    if ((param = getMessageParam(message, "SERV_RST=1", true))) 
     {
+      closeConnection(5);
       StartConnection(true);
       delay(1000);
-    } else if ((param = getMessageParam(message, "SERV_CONF=1"))) {
+    } else if ((param = getMessageParam(message, "SERV_CONF=1", true))) {
+      closeConnection(5);
       StartConfiguringMode();
       delay(1000);
-    } else if ((param = getMessageParam(message, "TONE="))) {
+    } else if ((param = getMessageParam(message, "TONE=", true))) {
       DEBUG_WRITE(param);
       if (param[0]=='0') {
         DEBUG_WRITE("Stopping tone");

@@ -18,6 +18,9 @@ public:
     void Reset(int server_port);
     void StartServer(int server_port);
     bool SendData(QString ip_to, QString message);
+    bool SendReboot(QString ip_to);
+    bool SendRunSetup(QString ip_to);
+    bool SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid);
 
     const QStringList getIPsList();
 

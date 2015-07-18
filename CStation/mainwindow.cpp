@@ -65,32 +65,18 @@ void MainWindow::on_pushButton_clearlog_clicked()
 
 void MainWindow::on_pushButton_write_clicked()
 {
-    if (!server) {
-        get_error(tr("Server is not running"));
-        return;
-    }
-
-    server->SendData(ui->comboBox_ip->currentText(), "SET_SSID="+ui->lineEdit_ssid->text()+"\r\n") &&
-    server->SendData(ui->comboBox_ip->currentText(), "SET_PSWD="+ui->lineEdit_passw->text()+"\r\n") &&
-    server->SendData(ui->comboBox_ip->currentText(), "SET_SERV="+ui->lineEdit_serv->text()+"\r\n") &&
-    server->SendData(ui->comboBox_ip->currentText(), "SET_STID="+ui->lineEdit_cid->text()+"\r\n") &&
-    server->SendData(ui->comboBox_ip->currentText(), "SERV_RST=1\r\n");
+    if (!server) ui->pushButton_listen->click();
+    server->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->lineEdit_cid->text().toInt());
 }
 
 void MainWindow::on_pushButton_reboot_clicked()
 {
-    if (!server) {
-        get_error(tr("Server is not running"));
-        return;
-    }
-    server->SendData(ui->comboBox_ip->currentText(), "SERV_RST=1\r\n");
+    if (!server) ui->pushButton_listen->click();
+    server->SendReboot(ui->comboBox_ip->currentText());
 }
 
 void MainWindow::on_pushButton_setup_clicked()
 {
-    if (!server) {
-        get_error(tr("Server is not running"));
-        return;
-    }
-    server->SendData(ui->comboBox_ip->currentText(), "SERV_CONF=1\r\n");
+    if (!server) ui->pushButton_listen->click();
+    server->SendRunSetup(ui->comboBox_ip->currentText());
 }

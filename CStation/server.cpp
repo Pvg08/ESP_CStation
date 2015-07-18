@@ -87,17 +87,17 @@ bool Server::SendData(QString ip_to, QString message)
     bool result = false;
     ip_to = ip_to.replace(QRegExp("(\\s){0,}\\(.*\\)(\\s){0,}"), "");
     QTcpSocket* tcpSocket = sockets->value(QHostAddress(ip_to).toIPv4Address(), 0);
-    if (tcpSocket) {
+    if (tcpSocket && tcpSocket->state()==QAbstractSocket::ConnectedState && tcpSocket->isWritable()) {
         emit write_message(tr("Sending data (size=%1) to %2. Content: \"%3\"").arg(message.length()).arg(ip_to).arg(message));
         tcpSocket->write(message.toLocal8Bit());
         result = tcpSocket->waitForBytesWritten();
     } else {
         tcpSocket = new QTcpSocket();
-        tcpSocket->connectToHost(ip_to, port);
+        tcpSocket->connectToHost(QHostAddress(ip_to), port, QIODevice::ReadWrite);
         tcpSocket->waitForConnected(5000);
 
         if (tcpSocket->state()==QAbstractSocket::ConnectedState) {
-            emit write_message(tr("Sending data (size=%1) to %2. Content: \"%3\"").arg(message.length()).arg(ip_to).arg(message));
+            emit write_message(tr("Sending data (size=%1) from new socket to %2. Content: \"%3\"").arg(message.length()).arg(ip_to).arg(message));
             tcpSocket->write(message.toLocal8Bit());
             result = tcpSocket->waitForBytesWritten(5000);
         } else {
@@ -108,6 +108,22 @@ bool Server::SendData(QString ip_to, QString message)
         delete tcpSocket;
     }
     return result;
+}
+
+bool Server::SendReboot(QString ip_to)
+{
+    return SendData(ip_to, "SERV_RST=1\r\n");
+}
+
+bool Server::SendRunSetup(QString ip_to)
+{
+    return SendData(ip_to, "SERV_CONF=1\r\n");
+}
+
+bool Server::SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid)
+{
+    QString command = "DS_SETUP:\r\n"+ssid+"\r\n"+pssw+"\r\n"+servip+"\r\n"+QString::number(stid)+"\r\n";
+    return SendData(ip_to, command);
 }
 
 const QStringList Server::getIPsList()
