@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>569</width>
-    <height>524</height>
+    <width>820</width>
+    <height>668</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,115 +31,476 @@
      <number>4</number>
     </property>
     <item>
-     <widget class="QWidget" name="widget" native="true">
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>90</height>
-       </size>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>1</number>
       </property>
-      <widget class="QPushButton" name="pushButton_listen">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>60</y>
-         <width>101</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Listen</string>
-       </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Main</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QWidget" name="widget" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>90</height>
+           </size>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QWidget" name="widget_8" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>100</height>
+              </size>
+             </property>
+             <widget class="QLabel" name="label_2">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>10</y>
+                <width>20</width>
+                <height>16</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Port</string>
+              </property>
+             </widget>
+             <widget class="QLineEdit" name="lineEdit_port">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>30</y>
+                <width>133</width>
+                <height>20</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>51015</string>
+              </property>
+             </widget>
+             <widget class="QCheckBox" name="checkBox">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>70</y>
+                <width>197</width>
+                <height>17</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Automatic listening on program start</string>
+              </property>
+             </widget>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="widget_9" native="true"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="widget_6" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>35</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>35</height>
+           </size>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>5</number>
+           </property>
+           <item>
+            <widget class="QWidget" name="widget_7" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_listen">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>100</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string> Listen</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
       </widget>
-      <widget class="QLabel" name="label_2">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>47</width>
-         <height>13</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Port</string>
-       </property>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Remote control</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QWidget" name="widget_2" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>90</height>
+           </size>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QWidget" name="widget_10" native="true">
+             <layout class="QVBoxLayout" name="verticalLayout_7">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>IP</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_ip">
+                <property name="editable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QTabWidget" name="tabWidget_2">
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <widget class="QWidget" name="tab_5">
+              <attribute name="title">
+               <string>Main</string>
+              </attribute>
+              <widget class="QLabel" name="label_4">
+               <property name="geometry">
+                <rect>
+                 <x>10</x>
+                 <y>20</y>
+                 <width>47</width>
+                 <height>13</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Message</string>
+               </property>
+              </widget>
+              <widget class="QPushButton" name="pushButton_send">
+               <property name="geometry">
+                <rect>
+                 <x>190</x>
+                 <y>40</y>
+                 <width>81</width>
+                 <height>21</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Send</string>
+               </property>
+              </widget>
+              <widget class="QLineEdit" name="lineEdit_message">
+               <property name="geometry">
+                <rect>
+                 <x>10</x>
+                 <y>40</y>
+                 <width>171</width>
+                 <height>20</height>
+                </rect>
+               </property>
+              </widget>
+              <widget class="QPushButton" name="pushButton_reboot">
+               <property name="geometry">
+                <rect>
+                 <x>10</x>
+                 <y>90</y>
+                 <width>81</width>
+                 <height>31</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Reboot</string>
+               </property>
+              </widget>
+              <widget class="QPushButton" name="pushButton_setup">
+               <property name="geometry">
+                <rect>
+                 <x>100</x>
+                 <y>90</y>
+                 <width>81</width>
+                 <height>31</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Setup</string>
+               </property>
+              </widget>
+             </widget>
+             <widget class="QWidget" name="tab_6">
+              <attribute name="title">
+               <string>First configuration</string>
+              </attribute>
+              <widget class="QLabel" name="label">
+               <property name="geometry">
+                <rect>
+                 <x>20</x>
+                 <y>20</y>
+                 <width>47</width>
+                 <height>13</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>SSID</string>
+               </property>
+              </widget>
+              <widget class="QLineEdit" name="lineEdit_passw">
+               <property name="geometry">
+                <rect>
+                 <x>20</x>
+                 <y>100</y>
+                 <width>171</width>
+                 <height>20</height>
+                </rect>
+               </property>
+               <property name="maxLength">
+                <number>30</number>
+               </property>
+              </widget>
+              <widget class="QLabel" name="label_5">
+               <property name="geometry">
+                <rect>
+                 <x>20</x>
+                 <y>80</y>
+                 <width>47</width>
+                 <height>13</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Password</string>
+               </property>
+              </widget>
+              <widget class="QLineEdit" name="lineEdit_cid">
+               <property name="geometry">
+                <rect>
+                 <x>20</x>
+                 <y>220</y>
+                 <width>171</width>
+                 <height>20</height>
+                </rect>
+               </property>
+               <property name="maxLength">
+                <number>3</number>
+               </property>
+              </widget>
+              <widget class="QLabel" name="label_7">
+               <property name="geometry">
+                <rect>
+                 <x>20</x>
+                 <y>200</y>
+                 <width>47</width>
+                 <height>13</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Client ID</string>
+               </property>
+              </widget>
+              <widget class="QLineEdit" name="lineEdit_ssid">
+               <property name="geometry">
+                <rect>
+                 <x>20</x>
+                 <y>40</y>
+                 <width>171</width>
+                 <height>20</height>
+                </rect>
+               </property>
+               <property name="maxLength">
+                <number>30</number>
+               </property>
+              </widget>
+              <widget class="QLabel" name="label_6">
+               <property name="geometry">
+                <rect>
+                 <x>20</x>
+                 <y>140</y>
+                 <width>101</width>
+                 <height>16</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Server IP address</string>
+               </property>
+              </widget>
+              <widget class="QPushButton" name="pushButton_write">
+               <property name="geometry">
+                <rect>
+                 <x>60</x>
+                 <y>260</y>
+                 <width>131</width>
+                 <height>31</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Write and reset</string>
+               </property>
+              </widget>
+              <widget class="QLineEdit" name="lineEdit_serv">
+               <property name="geometry">
+                <rect>
+                 <x>20</x>
+                 <y>160</y>
+                 <width>171</width>
+                 <height>20</height>
+                </rect>
+               </property>
+               <property name="maxLength">
+                <number>16</number>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
       </widget>
-      <widget class="QLineEdit" name="lineEdit_port">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>101</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>51015</string>
-       </property>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Devices and Sensors</string>
+       </attribute>
       </widget>
-      <widget class="QLineEdit" name="lineEdit_ip">
-       <property name="geometry">
-        <rect>
-         <x>140</x>
-         <y>30</y>
-         <width>113</width>
-         <height>20</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_3">
-       <property name="geometry">
-        <rect>
-         <x>140</x>
-         <y>10</y>
-         <width>47</width>
-         <height>13</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>IP</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_send">
-       <property name="geometry">
-        <rect>
-         <x>260</x>
-         <y>60</y>
-         <width>75</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Send</string>
-       </property>
-      </widget>
-      <widget class="QLineEdit" name="lineEdit_message">
-       <property name="geometry">
-        <rect>
-         <x>260</x>
-         <y>30</y>
-         <width>171</width>
-         <height>20</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_4">
-       <property name="geometry">
-        <rect>
-         <x>260</x>
-         <y>10</y>
-         <width>47</width>
-         <height>13</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Message</string>
-       </property>
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>Log</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QWidget" name="widget_3" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTextEdit" name="textEdit_log"/>
+           </item>
+           <item>
+            <widget class="QWidget" name="widget_4" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
+              <item>
+               <widget class="QWidget" name="widget_5" native="true"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_clearlog">
+                <property name="minimumSize">
+                 <size>
+                  <width>100</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>100</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
-    </item>
-    <item>
-     <widget class="QTextEdit" name="textEdit_log"/>
     </item>
    </layout>
   </widget>

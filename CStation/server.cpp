@@ -82,15 +82,43 @@ void Server::StartServer(int server_port)
     connect(tcpServer, SIGNAL(newConnection()), this, SLOT(recieveConnection()));
 }
 
-void Server::SendData(QString ip_to, QString message)
+bool Server::SendData(QString ip_to, QString message)
 {
+    bool result = false;
+    ip_to = ip_to.replace(QRegExp("(\\s){0,}\\(.*\\)(\\s){0,}"), "");
     QTcpSocket* tcpSocket = sockets->value(QHostAddress(ip_to).toIPv4Address(), 0);
     if (tcpSocket) {
         emit write_message(tr("Sending data (size=%1) to %2. Content: \"%3\"").arg(message.length()).arg(ip_to).arg(message));
         tcpSocket->write(message.toLocal8Bit());
+        result = tcpSocket->waitForBytesWritten();
     } else {
-        emit write_message(tr("Client \"%1\" not found").arg(ip_to));
+        tcpSocket = new QTcpSocket();
+        tcpSocket->connectToHost(ip_to, port);
+        tcpSocket->waitForConnected(5000);
+
+        if (tcpSocket->state()==QAbstractSocket::ConnectedState) {
+            emit write_message(tr("Sending data (size=%1) to %2. Content: \"%3\"").arg(message.length()).arg(ip_to).arg(message));
+            tcpSocket->write(message.toLocal8Bit());
+            result = tcpSocket->waitForBytesWritten(5000);
+        } else {
+            emit error(tr("Client \"%1\" not found").arg(ip_to));
+        }
+
+        tcpSocket->abort();
+        delete tcpSocket;
     }
+    return result;
+}
+
+const QStringList Server::getIPsList()
+{
+    QStringList result;
+    QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
+    while (i != clientblocks->constEnd()) {
+        result.append(QHostAddress(i.value()->getIpAddr()).toString()+" (DS"+QString(i.value()->getblockId())+")");
+        ++i;
+    }
+    return result;
 }
 
 void Server::sessionOpened()
@@ -216,8 +244,10 @@ void Server::recieveData()
                     } else {
                         ClientBlock *nblock = new ClientBlock(this, dst_id);
                         nblock->setIpAddr(i.key());
+                        clientblocks->insert(dst_id, nblock);
                         emit write_message(tr("Registered new block. ID=%1").arg(dst_id));
                     }
+                    emit blocks_change();
                 }
             } else {
                 ClientBlock *rblock = getClientBlock(i.key());

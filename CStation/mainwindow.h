@@ -20,8 +20,18 @@ public:
 private slots:
     void get_message(QString message);
     void get_error(QString message);
+    void update_blocks_list();
+
     void on_pushButton_send_clicked();
     void on_pushButton_listen_clicked();
+
+    void on_pushButton_clearlog_clicked();
+
+    void on_pushButton_write_clicked();
+
+    void on_pushButton_reboot_clicked();
+
+    void on_pushButton_setup_clicked();
 
 private:
     Ui::MainWindow *ui;

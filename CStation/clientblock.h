@@ -17,6 +17,8 @@ public:
     void setIpAddr(const quint32 &value);
     QString getSensorValue(Sensor::SensorTypes sensor_type);
     void BlockMessage(QString message);
+    quint16 getblockId() const;
+
 private:
     quint32 ip_addr;
     quint16 block_id;

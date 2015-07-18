@@ -76,7 +76,7 @@ void sensorsSending()
     
     if (send_str.length()>0) {
       send_str = "{" + send_str + "}";
-      sendMessage(send_str);
+      sendMessage(connection_id, send_str, 0);
     }
     
     millis_sum_delay = millis_sum_delay % 20000;

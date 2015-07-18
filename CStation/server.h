@@ -17,11 +17,14 @@ public:
     ~Server();
     void Reset(int server_port);
     void StartServer(int server_port);
-    void SendData(QString ip_to, QString message);
+    bool SendData(QString ip_to, QString message);
+
+    const QStringList getIPsList();
 
 signals:
     void error(QString message);
     void write_message(QString message);
+    void blocks_change();
 
 private slots:
     void sessionOpened();

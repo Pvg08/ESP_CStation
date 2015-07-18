@@ -41,14 +41,25 @@ void loop()
 
 void executeCommands() 
 {
-  char *message = readTCPMessage( 1000 );
+  char *message = readTCPMessage( 1000, NULL );
   if (message) {
     char* param;
     if ((param = getMessageParam(message, "SERV_RST=1"))) 
     {
       StartConnection(true);
       delay(1000);
-      return;
+    } else if ((param = getMessageParam(message, "SERV_CONF=1"))) {
+      StartConfiguringMode();
+      delay(1000);
+    } else if ((param = getMessageParam(message, "TONE="))) {
+      DEBUG_WRITE(param);
+      if (param[0]=='0') {
+        DEBUG_WRITE("Stopping tone");
+        noTone(7);
+      } else {
+        DEBUG_WRITE("Starting tone");
+        tone(7, 500);
+      }
     }
   }
 }

@@ -51,4 +51,9 @@ void ClientBlock::BlockMessage(QString message)
 {
 
 }
+quint16 ClientBlock::getblockId() const
+{
+    return block_id;
+}
+
 
