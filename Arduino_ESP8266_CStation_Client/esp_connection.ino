@@ -29,7 +29,7 @@
 // Baud rate can be up to 38400
 #define espSerial Serial2
 
-const char line[] = "-----\n\r";
+const char line[] = "-----\r\n";
 
 char reply[REPLY_BUFFER];
 
@@ -63,9 +63,9 @@ void StartConfiguringMode()
   byte attempts = 0;
   char* reply = NULL;
 
-  DEBUG_WRITE("Starting configuration mode");
+  DEBUG_WRITELN("Starting configuration mode");
   do {
-      DEBUG_WRITE("Reset the module");
+      DEBUG_WRITELN("Reset the module");
       setLCDText("Reset");
       attempts = 0;
       do {
@@ -76,7 +76,7 @@ void StartConfiguringMode()
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
       
-      DEBUG_WRITE("Change to host mode");
+      DEBUG_WRITELN("Change to host mode");
       setLCDText("Host mode ->");
       attempts = 0;
       do {
@@ -87,7 +87,7 @@ void StartConfiguringMode()
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
       
-      DEBUG_WRITE("Configuring a network");
+      DEBUG_WRITELN("Configuring a network");
       setLCDLines("Set Network","Parameters");
       attempts = 0;
       do {
@@ -107,7 +107,7 @@ void StartConfiguringMode()
       if (!rok) continue;
       
       if (strlen(wifi_ssid)>0 || strlen(wifi_passw)>0) {
-        DEBUG_WRITE("Connect to a network");
+        DEBUG_WRITELN("Connect to a network");
         setLCDText("WIFI Network ->");
         espSerial.print("AT+CWJAP=\"");
         espSerial.print(wifi_ssid);
@@ -117,7 +117,7 @@ void StartConfiguringMode()
         getReply( 6000, true );
       }
 
-      DEBUG_WRITE("Get ip address of the esp");
+      DEBUG_WRITELN("Get ip address of the esp");
       setLCDLines("Getting IP","address");
       attempts = 0;
       do {
@@ -146,7 +146,7 @@ void StartConfiguringMode()
       }
       ipAddress[buffpos] = 0;
 
-      DEBUG_WRITE("Set for multiple connections");
+      DEBUG_WRITELN("Set for multiple connections");
       setLCDLines("Configuring","the connection");
       attempts = 0;
       do {
@@ -159,17 +159,15 @@ void StartConfiguringMode()
 
       rok = startServer(1, SERVER_PORT);
       if (!rok) {
-        DEBUG_WRITE("Can't start the server. Let's try again");
+        DEBUG_WRITELN("Can't start the server. Let's try again");
         setLCDLines("Error: Can't", "start server");
         delay(5000);
         continue;
       }
 
-      DEBUG_WRITE("You need to connect to wifi-host");
-      DEBUG_WRITE(HOST_WIFI_SSID);
-      DEBUG_WRITE("Then use configuration programm to connect to");
-      DEBUG_WRITE(ipAddress);
-      DEBUG_WRITE("and perform setup operations...");
+      DEBUG_WRITE("You need to connect to wifi-host"); DEBUG_WRITELN(HOST_WIFI_SSID);
+      DEBUG_WRITE("Then use configuration programm to connect to"); DEBUG_WRITELN(ipAddress);
+      DEBUG_WRITELN("and perform setup operations...");
       
       setLCDLines("Waiting at host:", HOST_WIFI_SSID);
       delay(4000);
@@ -179,7 +177,7 @@ void StartConfiguringMode()
 
     while (1) {
       unsigned tcp_connection_id = 0;
-      char* message = readTCPMessage( 1000, &tcp_connection_id );
+      char* message = readTCPMessage( 1000, &tcp_connection_id, false );
       char* param;
       if (message) {
        
@@ -188,23 +186,19 @@ void StartConfiguringMode()
           
           rok = readLineToStr(param, wifi_ssid, WIFI_SSID_MAXLEN, line_pos, &line_pos);
           writeStringToEEPROM(EEPROM_START_ADDR+1, wifi_ssid, WIFI_SSID_MAXLEN);
-          DEBUG_WRITE("SSID written to EEPROM:");
-          DEBUG_WRITE(wifi_ssid);
+          DEBUG_WRITE("SSID written to EEPROM:"); DEBUG_WRITELN(wifi_ssid);
           
           rok = readLineToStr(param, wifi_passw, WIFI_PASSWORD_MAXLEN, line_pos, &line_pos);
           writeStringToEEPROM(EEPROM_START_ADDR+WIFI_SSID_MAXLEN+2, wifi_passw, WIFI_PASSWORD_MAXLEN);
-          DEBUG_WRITE("PASSW written to EEPROM:");
-          DEBUG_WRITE(wifi_passw);
+          DEBUG_WRITE("PASSW written to EEPROM:"); DEBUG_WRITELN(wifi_passw);
           
           rok = readLineToStr(param, server_ip_addr, WIFI_SERVER_ADDRESS_MAXLEN, line_pos, &line_pos);
           writeStringToEEPROM(EEPROM_START_ADDR+WIFI_SSID_MAXLEN+WIFI_PASSWORD_MAXLEN+3, server_ip_addr, WIFI_SERVER_ADDRESS_MAXLEN);
-          DEBUG_WRITE("Server address written to EEPROM:");
-          DEBUG_WRITE(server_ip_addr);
+          DEBUG_WRITE("Server address written to EEPROM:"); DEBUG_WRITELN(server_ip_addr);
           
           station_id = readIntFromString(param, line_pos);
           EEPROM.write(EEPROM_START_ADDR, station_id);
-          DEBUG_WRITE("Station ID written to EEPROM:");
-          DEBUG_WRITE(station_id);
+          DEBUG_WRITE("Station ID written to EEPROM:"); DEBUG_WRITELN(station_id);
           return;
           
         } else if ((param = getMessageParam(message, "SERV_RST=1", true))) {
@@ -227,13 +221,13 @@ void StartConnection(bool reconnect)
   {
     do {
       if (strlen(wifi_ssid)==0 || strlen(wifi_passw)==0 || strlen(server_ip_addr)==0 || !station_id) {
-        DEBUG_WRITE("Need to set SSID, password and server ip");
+        DEBUG_WRITELN("Need to set SSID, password and server ip");
         setLCDLines("Need ", "SSID, PWD, SRVIP");
         delay(5000);
         StartConfiguringMode();
       }
 
-      DEBUG_WRITE("Reset the module");
+      DEBUG_WRITELN("Reset the module");
       setLCDText("Reset");
       attempts = 0;
       do {
@@ -244,7 +238,7 @@ void StartConnection(bool reconnect)
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
       
-      DEBUG_WRITE("Change to client mode");
+      DEBUG_WRITELN("Change to client mode");
       setLCDText("Client mode ->");
       attempts = 0;
       do {
@@ -255,7 +249,7 @@ void StartConnection(bool reconnect)
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
   
-      DEBUG_WRITE("Connect to a network");
+      DEBUG_WRITELN("Connect to a network");
       setLCDText("WIFI Network ->");
       attempts = 0;
       do {
@@ -270,7 +264,7 @@ void StartConnection(bool reconnect)
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
   
-      DEBUG_WRITE("Get ip address assigned by the router");
+      DEBUG_WRITELN("Get ip address assigned by the router");
       setLCDLines("Getting IP","address");
       attempts = 0;
       do {
@@ -281,7 +275,7 @@ void StartConnection(bool reconnect)
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) continue;
   
-      DEBUG_WRITE("Set for multiple connections");
+      DEBUG_WRITELN("Set for multiple connections");
       setLCDLines("Configuring","the connection");
       attempts = 0;
       do {
@@ -299,7 +293,7 @@ void StartConnection(bool reconnect)
   if (reconnect && connected_to_wifi && !connected_to_server) 
   {
     do {
-      DEBUG_WRITE("Connect to the server");
+      DEBUG_WRITELN("Connect to the server");
       setLCDLines("Connect to", "server");
       connection_id++;
       if (connection_id > MAX_CONNECTIONS) connection_id = 1;
@@ -317,7 +311,7 @@ void StartConnection(bool reconnect)
         attempts++;
       } while (!rok && attempts<MAX_ATTEMPTS);
       if (!rok) {
-        DEBUG_WRITE("Can't connect to server. Let's try again");
+        DEBUG_WRITELN("Can't connect to server. Let's try again");
         setLCDText("Error: No server");
         delay(10000);
         continue;
@@ -325,29 +319,33 @@ void StartConnection(bool reconnect)
 
       rok = startServer(1, SERVER_PORT);
       if (!rok) {
-        DEBUG_WRITE("Can't start the server. Let's try again");
+        DEBUG_WRITELN("Can't start the server. Let's try again");
         setLCDLines("Error: Can't", "start server");
         delay(5000);
         continue;
       }
 
-      DEBUG_WRITE("Send identification Number");
+      DEBUG_WRITELN("Send identification Number");
       setLCDText("Identification");
       
-      reply = sendMessage(connection_id, "DS"+String(station_id), MAX_ATTEMPTS);
+      reply = sendMessage(connection_id, "DS="+String(station_id), MAX_ATTEMPTS);
       rok = replyIsOK(reply);
+      
+      DEBUG_WRITELN("Send sensors info");
+      setLCDLines("Send semnsors", "info");
+      rok = sendSensorsInfo(connection_id);
     } while (!rok);
     
     connected_to_server = true;
   }
   
-  DEBUG_WRITE("Connected successfully!");
+  DEBUG_WRITELN("Connected successfully!");
   setLCDText("Connected!");
 }
 
 bool startServer(unsigned connection, unsigned port)
 {
-  DEBUG_WRITE("Start the server");
+  DEBUG_WRITELN("Start the server");
   setLCDLines("Start local", "server");
   unsigned attempts = 0;
   bool rok = false;
@@ -366,7 +364,7 @@ bool startServer(unsigned connection, unsigned port)
 }
 
 bool closeConnection(unsigned connection) {
-  DEBUG_WRITE("Closing the server");
+  DEBUG_WRITELN("Closing the server");
   setLCDLines("Close local", "server");
   unsigned attempts = 0;
   bool rok = false;
@@ -384,16 +382,14 @@ bool closeConnection(unsigned connection) {
 
 char* sendMessage(unsigned connection_id, String message, unsigned max_attempts)
 {
-  DEBUG_WRITE("Sending to ");
-  DEBUG_WRITE(connection_id);
-  DEBUG_WRITE("message");
-  DEBUG_WRITE(message.c_str());
-  DEBUG_WRITE(line);
+  DEBUG_WRITE("Sending to "); DEBUG_WRITE(connection_id);  DEBUG_WRITELN(" message:");
+  DEBUG_WRITELN(message.c_str());
+  DEBUG_WRITELN(line);
   
   unsigned attempts = 0;
   unsigned written = 0;
   unsigned str_length = message.length();
-  unsigned buffer_len = SERIAL_TX_BUFFER_SIZE;
+  unsigned buffer_len = SERIAL_RX_BUFFER_SIZE;
   String spart;
   char* reply = NULL;
   
@@ -409,7 +405,7 @@ char* sendMessage(unsigned connection_id, String message, unsigned max_attempts)
     if (!replyIsOK(reply) && max_attempts && attempts<max_attempts) {
       errors_count++;
       attempts++;
-      DEBUG_WRITE("error: Retry");
+      DEBUG_WRITELN("Sending Error: Retry");
       continue;
     }
     
@@ -419,7 +415,7 @@ char* sendMessage(unsigned connection_id, String message, unsigned max_attempts)
     if (!replyIsOK(reply) && max_attempts && attempts<max_attempts) {
       errors_count++;
       attempts++;
-      DEBUG_WRITE("error: Retry");
+      DEBUG_WRITELN("Sending Error: Retry");
       continue;
     }
 
@@ -435,7 +431,6 @@ char* readReply(unsigned int wait, bool skip_on_ok)
   char* result = NULL;
   if(espSerial.available())
   {
-    DEBUG_WRITE("Reading reply:");
     result = getReply( wait, skip_on_ok );
     if (!replyIsOK(result)) errors_count++;
     millis_sum_delay += wait;
@@ -443,28 +438,39 @@ char* readReply(unsigned int wait, bool skip_on_ok)
   return result;
 }
 
-char* readTCPMessage(unsigned int wait, unsigned* tcp_connection_id)
+bool checkReplyQuery(char* message, unsigned* connect_start)
+{
+  bool foundConnect = false;
+  int i;
+  int reply_len = strlen(message);
+  
+  for (i=0; i<reply_len-5; i++)
+  {
+    if ( (message[i]=='+') && (message[i+1]=='I') && (message[i+2]=='P') && (message[i+3]=='D') && (message[i+4]==',') ) { 
+      foundConnect = true;
+      break;
+    }
+  }
+
+  if (foundConnect) {
+    *connect_start = i;
+  }
+
+  return foundConnect;
+}
+
+char* readTCPMessage(unsigned int wait, unsigned* tcp_connection_id, bool from_reply_buffer)
 {
   char *message = readReply( wait, false );
 
-  if (message) {
-    bool foundConnect = false;
-    int i;
-    int reply_len = strlen(message);
-    
-    DEBUG_WRITE("TCP message length:");
-    DEBUG_WRITE(reply_len);
-    
-    for (i=0; i<reply_len-5; i++)
-    {
-      if ( (message[i]=='+') && (message[i+1]=='I') && (message[i+2]=='P') && (message[i+3]=='D') && (message[i+4]==',') ) { 
-        foundConnect = true;
-        break;
-      }
-    }
+  if (!message && from_reply_buffer) {
+    message = reply;
+  }
 
-    DEBUG_WRITE("TCP message offset:");
-    DEBUG_WRITE(i);
+  if (message) {
+    unsigned i;
+    int reply_len = strlen(message);
+    bool foundConnect = checkReplyQuery(message, &i);
 
     if (foundConnect)
     {
@@ -472,27 +478,24 @@ char* readTCPMessage(unsigned int wait, unsigned* tcp_connection_id)
       bool done = false;
       if (tcp_connection_id) *tcp_connection_id = 0;
       for (; i<reply_len && message[i]!=':'; i++) {
-        DEBUG_WRITE(i);
         if (tcp_connection_id && !done) {
           if (!start && message[i] == ',') {
             start = true;
           } else if (start && message[i]>='0' && message[i]<='9') {
             *tcp_connection_id = readIntFromString(message, i);
-            DEBUG_WRITE(*tcp_connection_id);
             done = true;
           }
         }
       };
       i++;
       
-      DEBUG_WRITE("TCP message index:");
-      DEBUG_WRITE(i);
-      
       if (i<reply_len) 
       {
         message = message+i;
-        DEBUG_WRITE("TCP message:");
-        DEBUG_WRITE(message);
+        DEBUG_WRITE("TCP message:"); DEBUG_WRITELN(message);
+        if (from_reply_buffer) {
+          reply[0] = 0;
+        }
         return message;
       }
     }
@@ -525,14 +528,13 @@ char* getReply(unsigned int wait, bool skip_on_ok)
           foundOK = true;
           delay(100);
           while(espSerial.available()) { espSerial.read(); }
-          DEBUG_WRITE("Found OK");
-          DEBUG_WRITE("");
+          DEBUG_WRITELN("Found OK");
           break;
         }
       }
     }
   }
-  DEBUG_WRITE(line); DEBUG_WRITE(reply); DEBUG_WRITE(line);
+  DEBUG_WRITELN(line); DEBUG_WRITELN(reply); DEBUG_WRITELN(line);
   return reply;
 }
 

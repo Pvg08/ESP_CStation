@@ -30,8 +30,14 @@ void MainWindow::get_error(QString message)
 void MainWindow::update_blocks_list()
 {
     if (server) {
+        QStringList devices = server->getIPsList();
         ui->comboBox_ip->clear();
-        ui->comboBox_ip->insertItems(0, server->getIPsList());
+        ui->comboBox_ip->addItems(devices);
+        ui->listWidget_devices->clear();
+        ui->listWidget_devices->addItems(devices);
+
+        //ui->tableWidget_sensors->clear();
+        //ui->tableWidget_sensors->insertRow(ui->tableWidget_sensors->rowCount());
     }
 }
 
@@ -66,7 +72,7 @@ void MainWindow::on_pushButton_clearlog_clicked()
 void MainWindow::on_pushButton_write_clicked()
 {
     if (!server) ui->pushButton_listen->click();
-    server->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->lineEdit_cid->text().toInt());
+    server->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->spinBox_cid->value());
 }
 
 void MainWindow::on_pushButton_reboot_clicked()
@@ -79,4 +85,16 @@ void MainWindow::on_pushButton_setup_clicked()
 {
     if (!server) ui->pushButton_listen->click();
     server->SendRunSetup(ui->comboBox_ip->currentText());
+}
+
+void MainWindow::on_pushButton_start_tone_clicked()
+{
+    if (!server) ui->pushButton_listen->click();
+    server->SendTone(ui->comboBox_ip->currentText(), ui->spinBox_frequency->value());
+}
+
+void MainWindow::on_pushButton_stop_tone_clicked()
+{
+    if (!server) ui->pushButton_listen->click();
+    server->SendTone(ui->comboBox_ip->currentText(), 0);
 }

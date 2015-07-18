@@ -21,6 +21,7 @@ public:
     bool SendReboot(QString ip_to);
     bool SendRunSetup(QString ip_to);
     bool SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid);
+    bool SendTone(QString ip_to, unsigned frequency);
 
     const QStringList getIPsList();
 

@@ -126,12 +126,17 @@ bool Server::SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, Q
     return SendData(ip_to, command);
 }
 
+bool Server::SendTone(QString ip_to, unsigned frequency)
+{
+    return SendData(ip_to, "TONE="+QString::number(frequency)+"\r\n");
+}
+
 const QStringList Server::getIPsList()
 {
     QStringList result;
     QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
     while (i != clientblocks->constEnd()) {
-        result.append(QHostAddress(i.value()->getIpAddr()).toString()+" (DS"+QString(i.value()->getblockId())+")");
+        result.append(QHostAddress(i.value()->getIpAddr()).toString()+" (DS"+QString::number(i.value()->getblockId())+")");
         ++i;
     }
     return result;
@@ -251,8 +256,8 @@ void Server::recieveData()
             delete mem;
             emit write_message(tr("Recieved data (size=%1) from %2. Content: \"%3\"").arg(size).arg(tcpSocket->peerAddress().toString()).arg(message));
 
-            if (message.length()>=3 && message.length()<=4 && message.startsWith("DS")) {
-                int dst_id = message.remove(0,2).toInt();
+            if (message.length()>3 && message.length()<=5 && message.startsWith("DS=")) {
+                int dst_id = message.remove(0,3).toInt();
                 if (dst_id) {
                     if (clientblocks->contains(dst_id)) {
                         clientblocks->value(dst_id)->setIpAddr(i.key());

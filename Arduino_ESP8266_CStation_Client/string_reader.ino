@@ -43,9 +43,6 @@ bool readLineToStr(const char* message, char* buff, unsigned buff_maxlen, unsign
     }
     buff[i] = 0;
     
-    DEBUG_WRITE("LAST_I:");
-    DEBUG_WRITE(i);
-    
     if (next_line_pos) {
       if (message[i]=='\r' || message[i]=='\n') i++;
       if (message[i]=='\r' || message[i]=='\n') i++;

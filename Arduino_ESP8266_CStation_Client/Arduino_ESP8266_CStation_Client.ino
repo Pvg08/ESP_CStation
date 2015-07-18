@@ -4,9 +4,11 @@
 #define CSTATION_DEBUG
 
 #ifdef CSTATION_DEBUG
-  #define DEBUG_WRITE(x) { Serial.println(x); }
+  #define DEBUG_WRITE(...) { Serial.print(__VA_ARGS__); }
+  #define DEBUG_WRITELN(...) { Serial.println(__VA_ARGS__); }
 #else
-  #define DEBUG_WRITE(x) {}
+  #define DEBUG_WRITE(...) {}
+  #define DEBUG_WRITELN(...) {}
 #endif
 
 enum lcdmode {
@@ -26,7 +28,7 @@ void setup()
   delay(100);
   initSensors();
   delay(100);
-  DEBUG_WRITE("Start\r\n\r\n");
+  DEBUG_WRITELN("Start\r\n");
   delay(100);
   StartConnection(true);
 }
@@ -41,7 +43,9 @@ void loop()
 
 void executeCommands() 
 {
-  char *message = readTCPMessage( 1000, NULL );
+  char *message;
+  message = readTCPMessage( 1000, NULL, true );
+  
   if (message) {
     char* param;
     if ((param = getMessageParam(message, "SERV_RST=1", true))) 
@@ -54,13 +58,13 @@ void executeCommands()
       StartConfiguringMode();
       delay(1000);
     } else if ((param = getMessageParam(message, "TONE=", true))) {
-      DEBUG_WRITE(param);
-      if (param[0]=='0') {
-        DEBUG_WRITE("Stopping tone");
-        noTone(7);
+      unsigned frequency = readIntFromString(param, 0);
+      if (frequency) {
+        DEBUG_WRITE("Starting tone. F="); DEBUG_WRITELN(frequency);
+        tone(7, frequency);
       } else {
-        DEBUG_WRITE("Starting tone");
-        tone(7, 500);
+        DEBUG_WRITELN("Stopping tone");
+        noTone(7);
       }
     }
   }

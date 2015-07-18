@@ -33,6 +33,10 @@ private slots:
 
     void on_pushButton_setup_clicked();
 
+    void on_pushButton_start_tone_clicked();
+
+    void on_pushButton_stop_tone_clicked();
+
 private:
     Ui::MainWindow *ui;
     Server* server;
