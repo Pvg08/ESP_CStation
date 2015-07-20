@@ -24,6 +24,7 @@ public:
     bool SendTone(QString ip_to, unsigned frequency);
 
     const QStringList getIPsList();
+    ClientBlock *getClientBlock(quint32 ip_addr);
 
 signals:
     void error(QString message);
@@ -34,6 +35,7 @@ private slots:
     void sessionOpened();
     void recieveConnection();
     void recieveData();
+    void clientDisconnected();
     void socketStateChanged(QAbstractSocket::SocketState state);
     void displayError(QAbstractSocket::SocketError socketError);
 private:
@@ -43,8 +45,6 @@ private:
     QString ipAddress;
     QTcpServer *tcpServer;
     QNetworkSession *networkSession;
-
-    ClientBlock *getClientBlock(quint32 ip_addr);
 };
 
 #endif

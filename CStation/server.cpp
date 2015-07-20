@@ -185,8 +185,6 @@ void Server::sessionOpened()
 
 void Server::recieveConnection()
 {
-    QByteArray block;
-
     QTcpSocket *clientConnection = tcpServer->nextPendingConnection();
     connect(clientConnection, SIGNAL(disconnected()), clientConnection, SLOT(deleteLater()));
 
@@ -196,15 +194,17 @@ void Server::recieveConnection()
     emit write_message(tr("New connection from IP: %1").arg(client_ip));
 
     if (sockets->contains(client_ip_int)) {
-        ((QTcpSocket*) sockets->value(client_ip_int))->disconnectFromHost();
+        QTcpSocket *oldClientConnection = (QTcpSocket*) sockets->value(client_ip_int);
+        if (oldClientConnection && oldClientConnection->state() != QAbstractSocket::UnconnectedState) {
+            oldClientConnection->disconnectFromHost();
+        }
         sockets->remove(client_ip_int);
     }
 
     sockets->insert(client_ip_int, clientConnection);
 
-    clientConnection->write(block);
-
     connect(clientConnection, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(socketStateChanged(QAbstractSocket::SocketState)));
+    connect(clientConnection, SIGNAL(disconnected()), this, SLOT(clientDisconnected()));
     connect(clientConnection, SIGNAL(readyRead()), this, SLOT(recieveData()));
     connect(clientConnection, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(displayError(QAbstractSocket::SocketError)));
 }
@@ -279,6 +279,22 @@ void Server::recieveData()
 
         }
         ++i;
+    }
+}
+
+void Server::clientDisconnected()
+{
+    QTcpSocket *clientConnection = dynamic_cast<QTcpSocket*>(this->sender());
+    if (clientConnection) {
+        QMap<quint32, QTcpSocket *>::const_iterator i = sockets->constBegin();
+        while (i != sockets->constEnd()) {
+            if (clientConnection == i.value()) {
+                sockets->remove(i.key());
+                emit write_message(tr("Socket removed."));
+                break;
+            }
+            ++i;
+        }
     }
 }
 

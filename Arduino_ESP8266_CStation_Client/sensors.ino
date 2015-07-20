@@ -75,30 +75,30 @@ bool sendSensorsInfo(unsigned connection_id)
   char* reply;
   bool rok;
   
-  reply = sendMessage(connection_id, "DS_INFO=A:enum(on,off)[off-60]|Activity", MAX_ATTEMPTS);
+  reply = sendMessage(connection_id, "DS_INFO=A:enum(off,on)[60]|Activity", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
   if (!rok) return rok;
   
-  reply = sendMessage(connection_id, "DS_INFO=T:float(-100..100)C|Temperature", MAX_ATTEMPTS);
+  reply = sendMessage(connection_id, "DS_INFO=T:float(-100..100)[]C|Temperature", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
   if (!rok) return rok;
   
-  reply = sendMessage(connection_id, "DS_INFO=P:float(500..1000)mm|Pressure", MAX_ATTEMPTS);
+  reply = sendMessage(connection_id, "DS_INFO=P:float(500..1000)[]mm|Pressure", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
   if (!rok) return rok;
   
-  reply = sendMessage(connection_id, "DS_INFO=H:int(0..100)%|Humidity", MAX_ATTEMPTS);
+  reply = sendMessage(connection_id, "DS_INFO=H:int(0..100)[]%|Humidity", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
   if (!rok) return rok;
   
-  reply = sendMessage(connection_id, "DS_INFO=L:float(0..200000)lux|Illuminance", MAX_ATTEMPTS);
+  reply = sendMessage(connection_id, "DS_INFO=L:float(0..200000)[]lux|Illuminance", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
   if (!rok) return rok;
   
-  reply = sendMessage(connection_id, "DS_INFO=R:enum(no,yes)[no-10]|Presence", MAX_ATTEMPTS);
+  reply = sendMessage(connection_id, "DS_INFO=R:enum(no,yes)[10]|Presence", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
 
-  reply = sendMessage(connection_id, "DS_INFO=N:enum(no,yes)[no-5]|Noise", MAX_ATTEMPTS);
+  reply = sendMessage(connection_id, "DS_INFO=N:enum(no,yes)[5]|Noise", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
 
   return rok;
