@@ -78,7 +78,11 @@ bool sendSensorsInfo(unsigned connection_id)
   reply = sendMessage(connection_id, "DS_INFO=A:enum(off,on)[60]|Activity", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
   if (!rok) return rok;
-  
+
+  reply = sendMessage(connection_id, "DS_INFO=E:int(0..100000)[]|Errors", MAX_ATTEMPTS);
+  rok = replyIsOK(reply);
+  if (!rok) return rok;
+
   reply = sendMessage(connection_id, "DS_INFO=T:float(-100..100)[]C|Temperature", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
   if (!rok) return rok;
@@ -97,6 +101,7 @@ bool sendSensorsInfo(unsigned connection_id)
   
   reply = sendMessage(connection_id, "DS_INFO=R:enum(no,yes)[10]|Presence", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
+  if (!rok) return rok;
 
   reply = sendMessage(connection_id, "DS_INFO=N:enum(no,yes)[5]|Noise", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
@@ -145,6 +150,9 @@ bool sensorsSending()
     String send_str = "A(on)";
     String lcd1 = "";
     String lcd2 = "";
+    
+    if (send_str.length()>0) send_str = send_str + ";";
+    send_str = send_str + "E(" + String(errors_count) + ")";
     
     status = pressure.startTemperature();
     if (status != 0)
@@ -214,15 +222,15 @@ bool sensorsSending()
     last_sending_millis = millis();
 
   } else if ((hc_state && !hc_info_sended) || (ns_state && !ns_info_sended)) {
-    String send_str = "";
+    String send_str = "A(on)";
     
     if (hc_state && !hc_info_sended) {
       if (send_str.length()>0) send_str = send_str + ";";
-      send_str = "R(yes)";
+      send_str = send_str + "R(yes)";
     }
     if (ns_state && !ns_info_sended) {
       if (send_str.length()>0) send_str = send_str + ";";
-      send_str = "N(yes)";
+      send_str = send_str + "N(yes)";
     }
     
     char* reply = sendMessage(connection_id, "DS_V={"+send_str+"}", MAX_ATTEMPTS);
@@ -230,7 +238,7 @@ bool sensorsSending()
 
     if (hc_state && !hc_info_sended) hc_info_sended = info_sended;
     if (ns_state && !ns_info_sended) ns_info_sended = info_sended;
-    delay(1000);
+    delay(500);
     digitalWrite(ACTION_SIGNAL_PIN, LOW);
   }
 

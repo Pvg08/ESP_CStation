@@ -131,6 +131,16 @@ bool Server::SendTone(QString ip_to, unsigned frequency)
     return SendData(ip_to, "TONE="+QString::number(frequency)+"\r\n");
 }
 
+bool Server::SendLCDText(QString ip_to, QString text)
+{
+    return SendData(ip_to, "SERV_LT="+text+"\r\n");
+}
+
+bool Server::SendLCDReturn(QString ip_to)
+{
+    return SendData(ip_to, "SERV_LR=1\r\n");
+}
+
 const QStringList Server::getIPsList()
 {
     QStringList result;
@@ -228,6 +238,14 @@ void Server::displayError(QAbstractSocket::SocketError socketError)
     }
 }
 
+void Server::clientBlockSensorsChange()
+{
+    ClientBlock *cblock = dynamic_cast<ClientBlock*>(this->sender());
+    if (cblock) {
+        emit sensors_change(cblock->getblockId());
+    }
+}
+
 ClientBlock *Server::getClientBlock(quint32 ip_addr)
 {
     QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
@@ -236,6 +254,14 @@ ClientBlock *Server::getClientBlock(quint32 ip_addr)
             return i.value();
         }
         ++i;
+    }
+    return NULL;
+}
+
+ClientBlock *Server::getClientBlockByID(quint16 block_id)
+{
+    if (clientblocks->contains(block_id)) {
+        return clientblocks->value(block_id);
     }
     return NULL;
 }
@@ -266,6 +292,7 @@ void Server::recieveData()
                         ClientBlock *nblock = new ClientBlock(this, dst_id);
                         nblock->setIpAddr(i.key());
                         clientblocks->insert(dst_id, nblock);
+                        connect(nblock, SIGNAL(sensors_values_changed()), this, SLOT(clientBlockSensorsChange()));
                         emit write_message(tr("Registered new block. ID=%1").arg(dst_id));
                     }
                     emit blocks_change();

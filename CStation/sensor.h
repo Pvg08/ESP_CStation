@@ -56,6 +56,7 @@ private:
     bool isValid;
 
     void parseDescription();
+private slots:
     void reset_value();
 signals:
     void local_change();

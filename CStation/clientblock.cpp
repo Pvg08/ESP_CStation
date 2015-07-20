@@ -18,11 +18,6 @@ ClientBlock::~ClientBlock()
     delete sensors;
 }
 
-void ClientBlock::WriteToLCD(QString string)
-{
-
-}
-
 quint32 ClientBlock::getIpAddr() const
 {
     return ip_addr;
@@ -31,6 +26,15 @@ quint32 ClientBlock::getIpAddr() const
 void ClientBlock::setIpAddr(const quint32 &value)
 {
     ip_addr = value;
+}
+
+Sensor *ClientBlock::getSensor(char sensorLetter)
+{
+    if (sensors->contains(sensorLetter)) {
+        return sensors->value(sensorLetter);
+    } else {
+        return NULL;
+    }
 }
 
 QString ClientBlock::getSensorValue(char sensorLetter)
@@ -76,6 +80,7 @@ void ClientBlock::addSensor(QString message)
     if (n_sensor->getIsValid() && !sensors->contains(n_sensor->getSensorLetter())) {
         connect(n_sensor, SIGNAL(local_change()), this, SLOT(sensor_local_change()));
         sensors->insert(n_sensor->getSensorLetter(), n_sensor);
+        emit sensors_values_changed();
     } else {
         delete n_sensor;
     }
@@ -84,6 +89,11 @@ void ClientBlock::addSensor(QString message)
 quint16 ClientBlock::getblockId() const
 {
     return block_id;
+}
+
+QMap<char, Sensor *> *ClientBlock::getSensors() const
+{
+    return sensors;
 }
 
 void ClientBlock::sensor_local_change()

@@ -12,13 +12,13 @@ class ClientBlock : public QObject
 public:
     explicit ClientBlock(QObject *parent, quint16 id);
     ~ClientBlock();
-    void WriteToLCD(QString string);
     quint32 getIpAddr() const;
     void setIpAddr(const quint32 &value);
+    QMap<char, Sensor *> *getSensors() const;
+    Sensor* getSensor(char sensorLetter);
     QString getSensorValue(char sensorLetter);
     void BlockMessage(QString message);
     quint16 getblockId() const;
-
 private:
     quint32 ip_addr;
     quint16 block_id;

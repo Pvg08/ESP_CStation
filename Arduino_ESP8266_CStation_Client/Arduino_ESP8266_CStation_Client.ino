@@ -19,13 +19,7 @@
 #define CONFIG_BTN_INTERRUPT 1
 #define CONFIG_BTN_INTERRUPT_MODE RISING
 
-enum lcdmode {
-  lm_info,
-  lm_message
-};
-
 byte errors_count = 0;
-lcdmode lmode = lm_info;
 
 volatile bool reset_btn_pressed = false;
 volatile bool config_btn_pressed = false;
@@ -53,6 +47,7 @@ void loop()
     DEBUG_WRITELN("Config BTN pressed. Entering configuration mode\r\n");
     StartConfiguringMode();
     config_btn_pressed = false;
+    reset_btn_pressed = true;
     return;
   }
   if (reset_btn_pressed) {
@@ -82,7 +77,7 @@ void executeCommands()
   char *message;
   message = readTCPMessage( 1000, NULL, true );
   
-  if (message) {
+  if (message && !config_btn_pressed && !reset_btn_pressed) {
     char* param;
     if ((param = getMessageParam(message, "SERV_RST=1", true))) 
     {

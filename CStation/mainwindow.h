@@ -21,6 +21,7 @@ private slots:
     void get_message(QString message);
     void get_error(QString message);
     void update_blocks_list();
+    void update_sensors_values(quint16 block_id);
 
     void on_pushButton_send_clicked();
     void on_pushButton_listen_clicked();
@@ -36,6 +37,8 @@ private slots:
     void on_pushButton_start_tone_clicked();
 
     void on_pushButton_stop_tone_clicked();
+
+    void on_listWidget_devices_currentTextChanged(const QString &currentText);
 
 private:
     Ui::MainWindow *ui;

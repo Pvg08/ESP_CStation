@@ -22,14 +22,18 @@ public:
     bool SendRunSetup(QString ip_to);
     bool SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid);
     bool SendTone(QString ip_to, unsigned frequency);
+    bool SendLCDText(QString ip_to, QString text);
+    bool SendLCDReturn(QString ip_to);
 
     const QStringList getIPsList();
     ClientBlock *getClientBlock(quint32 ip_addr);
+    ClientBlock *getClientBlockByID(quint16 block_id);
 
 signals:
     void error(QString message);
     void write_message(QString message);
     void blocks_change();
+    void sensors_change(quint16 block_id);
 
 private slots:
     void sessionOpened();
@@ -38,6 +42,7 @@ private slots:
     void clientDisconnected();
     void socketStateChanged(QAbstractSocket::SocketState state);
     void displayError(QAbstractSocket::SocketError socketError);
+    void clientBlockSensorsChange();
 private:
     int port = 0;
     QMap<quint32, QTcpSocket *> *sockets;

@@ -7,7 +7,7 @@ Sensor::Sensor(QObject *parent, QString sensor_description) : QObject(parent)
     upd_time = QDateTime::currentDateTime();
     shotTimer = new QTimer(this);
     shotTimer->setSingleShot(true);
-    connect(shotTimer, SIGNAL(timeout()), SLOT(reset_value()));
+    connect(shotTimer, SIGNAL(timeout()), this, SLOT(reset_value()));
     parseDescription();
 }
 
@@ -153,6 +153,7 @@ void Sensor::parseDescription()
         if (enums.length()==2) {
             enumFalse = enums.at(0);
             enumTrue = enums.at(1);
+            sensorValue = enumFalse;
         } else {
             return;
         }
