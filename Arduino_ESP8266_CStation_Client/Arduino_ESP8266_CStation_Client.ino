@@ -11,14 +11,24 @@
   #define DEBUG_WRITELN(...) {}
 #endif
 
+#define TONE_PIN 7
+#define RESET_BTN_PIN 2
+#define RESET_BTN_INTERRUPT 0
+#define RESET_BTN_INTERRUPT_MODE RISING
+#define CONFIG_BTN_PIN 3
+#define CONFIG_BTN_INTERRUPT 1
+#define CONFIG_BTN_INTERRUPT_MODE RISING
+
 enum lcdmode {
   lm_info,
   lm_message
 };
 
-unsigned long int millis_sum_delay = 0;
 byte errors_count = 0;
 lcdmode lmode = lm_info;
+
+volatile bool reset_btn_pressed = false;
+volatile bool config_btn_pressed = false;
 
 void setup()
 {
@@ -31,14 +41,40 @@ void setup()
   DEBUG_WRITELN("Start\r\n");
   delay(100);
   StartConnection(true);
+  attachInterrupt(RESET_BTN_INTERRUPT, ResetBTN_Pressed, RESET_BTN_INTERRUPT_MODE);
+  attachInterrupt(CONFIG_BTN_INTERRUPT, ConfigurationBTN_Pressed, CONFIG_BTN_INTERRUPT_MODE);
+  reset_btn_pressed = false;
+  config_btn_pressed = false;
 }
 
 void loop()
 {
+  if (config_btn_pressed) {
+    DEBUG_WRITELN("Config BTN pressed. Entering configuration mode\r\n");
+    StartConfiguringMode();
+    config_btn_pressed = false;
+    return;
+  }
+  if (reset_btn_pressed) {
+    DEBUG_WRITELN("Reset BTN pressed. Resetting\r\n");
+    StartConnection(true);
+    reset_btn_pressed = false;
+    config_btn_pressed = false;
+    return;
+  }
+  
   executeCommands();
-  millis_sum_delay += 100;
-  delay (100);
   sensorsSending();
+}
+
+void ResetBTN_Pressed() 
+{
+  reset_btn_pressed = true;
+}
+
+void ConfigurationBTN_Pressed() 
+{
+  config_btn_pressed = true;
 }
 
 void executeCommands() 
@@ -50,23 +86,27 @@ void executeCommands()
     char* param;
     if ((param = getMessageParam(message, "SERV_RST=1", true))) 
     {
-      closeConnection(5);
       StartConnection(true);
+      reset_btn_pressed = false;
+      config_btn_pressed = false;
       delay(1000);
     } else if ((param = getMessageParam(message, "SERV_CONF=1", true))) {
-      closeConnection(5);
       StartConfiguringMode();
+      reset_btn_pressed = false;
+      config_btn_pressed = false;
       delay(1000);
     } else if ((param = getMessageParam(message, "TONE=", true))) {
       unsigned frequency = readIntFromString(param, 0);
       if (frequency) {
         DEBUG_WRITE("Starting tone. F="); DEBUG_WRITELN(frequency);
-        tone(7, frequency);
+        tone(TONE_PIN, frequency);
       } else {
         DEBUG_WRITELN("Stopping tone");
-        noTone(7);
+        noTone(TONE_PIN);
       }
     }
+
+    delay (100);
   }
 }
 

@@ -17,6 +17,10 @@
 #define WIFI_PASSWORD_MAXLEN 40
 #define WIFI_SERVER_ADDRESS_MAXLEN 16
 
+#define CONNECTIONS_ALL 5
+
+#define CONNECTION_ESP_PIN 48
+
 // FOR ARDUINO UNO
 // Arduino Pin 2 to RX
 // Arduino Pin 3 to TX
@@ -40,11 +44,14 @@ byte station_id = 0;
 
 bool connected_to_wifi = false;
 bool connected_to_server = false;
+bool in_configuration_mode = false;
+bool transmittion_mode = false;
 byte connection_id = 0;
 char temp[5];
 
 void initESP() {
   espSerial.begin(BAUD_RATE);
+  pinMode(CONNECTION_ESP_PIN, OUTPUT);
 
   wifi_ssid[0] = 0;
   wifi_passw[0] = 0;
@@ -63,7 +70,16 @@ void StartConfiguringMode()
   byte attempts = 0;
   char* reply = NULL;
 
+  digitalWrite(CONNECTION_ESP_PIN, HIGH);
+
+  if (connected_to_wifi && connected_to_server) closeConnection(CONNECTIONS_ALL);
+  connected_to_wifi = false;
+  connected_to_server = false;
+  in_configuration_mode = false;
+
   DEBUG_WRITELN("Starting configuration mode");
+  setLCDLines("Configuration", "      MODE");
+  delay(1000);
   do {
       DEBUG_WRITELN("Reset the module");
       setLCDText("Reset");
@@ -175,7 +191,8 @@ void StartConfiguringMode()
 
     } while (!rok);
 
-    while (1) {
+    in_configuration_mode = true;
+    while (!reset_btn_pressed) {
       unsigned tcp_connection_id = 0;
       char* message = readTCPMessage( 1000, &tcp_connection_id, false );
       char* param;
@@ -199,16 +216,18 @@ void StartConfiguringMode()
           station_id = readIntFromString(param, line_pos);
           EEPROM.write(EEPROM_START_ADDR, station_id);
           DEBUG_WRITE("Station ID written to EEPROM:"); DEBUG_WRITELN(station_id);
-          return;
+          break;
           
         } else if ((param = getMessageParam(message, "SERV_RST=1", true))) {
-          return;
+          break;
         }
         
         closeConnection(5);
         startServer(1, SERVER_PORT);
       }
     }
+    
+    digitalWrite(CONNECTION_ESP_PIN, LOW);
 }
 
 void StartConnection(bool reconnect) 
@@ -216,15 +235,24 @@ void StartConnection(bool reconnect)
   bool rok = true;
   byte attempts = 0;
   char* reply;
+  
+  digitalWrite(CONNECTION_ESP_PIN, HIGH);
+  
+  if (connected_to_wifi && connected_to_server) closeConnection(CONNECTIONS_ALL);
+  in_configuration_mode = false;
 
   if (reconnect || !connected_to_wifi) 
   {
+    connected_to_wifi = false;
+    connected_to_server = false;
     do {
       if (strlen(wifi_ssid)==0 || strlen(wifi_passw)==0 || strlen(server_ip_addr)==0 || !station_id) {
         DEBUG_WRITELN("Need to set SSID, password and server ip");
         setLCDLines("Need ", "SSID, PWD, SRVIP");
         delay(5000);
         StartConfiguringMode();
+        delay(1000);
+        digitalWrite(CONNECTION_ESP_PIN, HIGH);
       }
 
       DEBUG_WRITELN("Reset the module");
@@ -341,6 +369,7 @@ void StartConnection(bool reconnect)
   
   DEBUG_WRITELN("Connected successfully!");
   setLCDText("Connected!");
+  digitalWrite(CONNECTION_ESP_PIN, LOW);
 }
 
 bool startServer(unsigned connection, unsigned port)
@@ -393,6 +422,8 @@ char* sendMessage(unsigned connection_id, String message, unsigned max_attempts)
   String spart;
   char* reply = NULL;
   
+  transmittion_mode = true;
+  
   while (written<str_length) {
     spart = message.substring(written, written+buffer_len);
     
@@ -423,6 +454,8 @@ char* sendMessage(unsigned connection_id, String message, unsigned max_attempts)
     attempts = 0;
   }
   
+  transmittion_mode = false;
+  
   return reply;
 }
 
@@ -433,7 +466,6 @@ char* readReply(unsigned int wait, bool skip_on_ok)
   {
     result = getReply( wait, skip_on_ok );
     if (!replyIsOK(result)) errors_count++;
-    millis_sum_delay += wait;
   }
   return result;
 }
