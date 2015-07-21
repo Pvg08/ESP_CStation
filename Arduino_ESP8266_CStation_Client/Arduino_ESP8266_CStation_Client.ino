@@ -1,4 +1,6 @@
 
+#include <TimerOne.h>
+
 #define BAUD_RATE 38400
 
 #define CSTATION_DEBUG
@@ -21,6 +23,8 @@
 
 byte errors_count = 0;
 
+volatile unsigned tone_frequency;
+volatile bool tone_state;
 volatile bool reset_btn_pressed = false;
 volatile bool config_btn_pressed = false;
 
@@ -72,6 +76,16 @@ void ConfigurationBTN_Pressed()
   config_btn_pressed = true;
 }
 
+void tone_period() 
+{
+  if (tone_state) {
+    tone(TONE_PIN, tone_frequency);
+  } else {
+    noTone(TONE_PIN);
+  }
+  tone_state = !tone_state;
+}
+
 void executeCommands() 
 {
   char *message;
@@ -91,14 +105,28 @@ void executeCommands()
       config_btn_pressed = false;
       delay(1000);
     } else if ((param = getMessageParam(message, "TONE=", true))) {
-      unsigned frequency = readIntFromString(param, 0);
-      if (frequency) {
-        DEBUG_WRITE("Starting tone. F="); DEBUG_WRITELN(frequency);
-        tone(TONE_PIN, frequency);
+      tone_frequency = readIntFromString(param, 0);
+      Timer1.detachInterrupt();
+      Timer1.stop();
+      if (tone_frequency) {
+        unsigned long int period = readIntFromString(param, String(tone_frequency).length()+1);
+        if (period>0) {
+          DEBUG_WRITE("Starting tone. F="); DEBUG_WRITE(tone_frequency); DEBUG_WRITE(" P="); DEBUG_WRITELN(period);
+          tone_state = false;
+          Timer1.initialize(period*1000);
+          Timer1.attachInterrupt(tone_period);
+        } else {
+          DEBUG_WRITE("Starting tone. F="); DEBUG_WRITELN(tone_frequency);
+          tone(TONE_PIN, tone_frequency);
+        }
       } else {
         DEBUG_WRITELN("Stopping tone");
         noTone(TONE_PIN);
       }
+    } else if ((param = getMessageParam(message, "SERV_LT=", true))) {
+      setLCDFixed(param);
+    } else if ((param = getMessageParam(message, "SERV_LR=1", true))) {
+      resetLCDFixed();
     }
 
     delay (100);

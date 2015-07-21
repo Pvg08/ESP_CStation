@@ -15,6 +15,12 @@ MainWindow::~MainWindow()
     if (server) delete server;
 }
 
+Server *MainWindow::getServer()
+{
+    if (!server) ui->pushButton_listen->click();
+    return server;
+}
+
 void MainWindow::get_message(QString message)
 {
     ui->statusBar->showMessage(message, 10000);
@@ -117,6 +123,8 @@ void MainWindow::update_sensors_values(quint16 block_id)
             ui->tableWidget_sensors->removeRow(i);
         }
     }
+
+    ui->tableWidget_sensors->resizeColumnsToContents();
 }
 
 void MainWindow::on_pushButton_send_clicked()
@@ -125,7 +133,7 @@ void MainWindow::on_pushButton_send_clicked()
         get_error(tr("Server is not running"));
         return;
     }
-    server->SendData(ui->comboBox_ip->currentText(), ui->lineEdit_message->text());
+    getServer()->SendData(ui->comboBox_ip->currentText(), ui->lineEdit_message->text());
 }
 
 void MainWindow::on_pushButton_listen_clicked()
@@ -150,32 +158,27 @@ void MainWindow::on_pushButton_clearlog_clicked()
 
 void MainWindow::on_pushButton_write_clicked()
 {
-    if (!server) ui->pushButton_listen->click();
-    server->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->spinBox_cid->value());
+    getServer()->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->spinBox_cid->value());
 }
 
 void MainWindow::on_pushButton_reboot_clicked()
 {
-    if (!server) ui->pushButton_listen->click();
-    server->SendReboot(ui->comboBox_ip->currentText());
+    getServer()->SendReboot(ui->comboBox_ip->currentText());
 }
 
 void MainWindow::on_pushButton_setup_clicked()
 {
-    if (!server) ui->pushButton_listen->click();
-    server->SendRunSetup(ui->comboBox_ip->currentText());
+    getServer()->SendRunSetup(ui->comboBox_ip->currentText());
 }
 
 void MainWindow::on_pushButton_start_tone_clicked()
 {
-    if (!server) ui->pushButton_listen->click();
-    server->SendTone(ui->comboBox_ip->currentText(), ui->spinBox_frequency->value());
+    getServer()->SendTone(ui->comboBox_ip->currentText(), ui->spinBox_frequency->value(), ui->spinBox_period->value());
 }
 
 void MainWindow::on_pushButton_stop_tone_clicked()
 {
-    if (!server) ui->pushButton_listen->click();
-    server->SendTone(ui->comboBox_ip->currentText(), 0);
+    getServer()->SendTone(ui->comboBox_ip->currentText(), 0, 0);
 }
 
 void MainWindow::on_listWidget_devices_currentTextChanged(const QString &currentText)
@@ -184,4 +187,14 @@ void MainWindow::on_listWidget_devices_currentTextChanged(const QString &current
     sitem.replace(QRegExp("^([^\\(\\)]*)\\(DS([0-9]*)\\).*$"), "\\2");
     int block_code = sitem.toInt();
     update_sensors_values(block_code);
+}
+
+void MainWindow::on_pushButton_set_lcd_text_clicked()
+{
+    getServer()->SendLCDText(ui->comboBox_ip->currentText(), ui->lineEdit_lcdtext->text());
+}
+
+void MainWindow::on_pushButton_reset_lcd_text_clicked()
+{
+    getServer()->SendLCDReturn(ui->comboBox_ip->currentText());
 }

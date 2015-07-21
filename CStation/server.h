@@ -21,7 +21,7 @@ public:
     bool SendReboot(QString ip_to);
     bool SendRunSetup(QString ip_to);
     bool SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid);
-    bool SendTone(QString ip_to, unsigned frequency);
+    bool SendTone(QString ip_to, quint16 frequency, quint32 period);
     bool SendLCDText(QString ip_to, QString text);
     bool SendLCDReturn(QString ip_to);
 

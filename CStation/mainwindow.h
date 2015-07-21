@@ -40,9 +40,15 @@ private slots:
 
     void on_listWidget_devices_currentTextChanged(const QString &currentText);
 
+    void on_pushButton_set_lcd_text_clicked();
+
+    void on_pushButton_reset_lcd_text_clicked();
+
 private:
     Ui::MainWindow *ui;
     Server* server;
+
+    Server *getServer();
 };
 
 #endif // MAINWINDOW_H

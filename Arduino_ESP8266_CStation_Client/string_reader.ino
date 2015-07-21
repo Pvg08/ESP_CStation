@@ -19,9 +19,9 @@ char* getMessageParam(char* message, char const * param_name, bool break_line)
   return NULL;
 }
 
-unsigned readIntFromString(const char* message, unsigned from_pos)
+unsigned long int readIntFromString(const char* message, unsigned from_pos)
 {
-  unsigned result = 0;
+  unsigned long int result = 0;
 
   while (message && message[from_pos]>='0' && message[from_pos]<='9') {
     result = 10*result + message[from_pos] - '0';

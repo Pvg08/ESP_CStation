@@ -126,9 +126,9 @@ bool Server::SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, Q
     return SendData(ip_to, command);
 }
 
-bool Server::SendTone(QString ip_to, unsigned frequency)
+bool Server::SendTone(QString ip_to, quint16 frequency, quint32 period)
 {
-    return SendData(ip_to, "TONE="+QString::number(frequency)+"\r\n");
+    return SendData(ip_to, "TONE="+QString::number(frequency)+","+QString::number(period)+"\r\n");
 }
 
 bool Server::SendLCDText(QString ip_to, QString text)

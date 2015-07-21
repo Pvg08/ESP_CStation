@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>869</width>
-    <height>637</height>
+    <width>1053</width>
+    <height>726</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,175 +35,6 @@
       <property name="currentIndex">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string>Main</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_5">
-        <item>
-         <widget class="QWidget" name="widget" native="true">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>90</height>
-           </size>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_6">
-           <item>
-            <widget class="QWidget" name="widget_8" native="true">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>100</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>100</height>
-              </size>
-             </property>
-             <widget class="QLabel" name="label_2">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>0</y>
-                <width>20</width>
-                <height>16</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>Port</string>
-              </property>
-             </widget>
-             <widget class="QLineEdit" name="lineEdit_port">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>20</y>
-                <width>133</width>
-                <height>25</height>
-               </rect>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>51015</string>
-              </property>
-             </widget>
-             <widget class="QCheckBox" name="checkBox">
-              <property name="geometry">
-               <rect>
-                <x>160</x>
-                <y>20</y>
-                <width>197</width>
-                <height>25</height>
-               </rect>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Automatic listening on program start</string>
-              </property>
-             </widget>
-            </widget>
-           </item>
-           <item>
-            <widget class="QWidget" name="widget_9" native="true"/>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QWidget" name="widget_6" native="true">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>35</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>35</height>
-           </size>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <property name="spacing">
-            <number>0</number>
-           </property>
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>5</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>5</number>
-           </property>
-           <item>
-            <widget class="QWidget" name="widget_7" native="true">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>25</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_listen">
-             <property name="minimumSize">
-              <size>
-               <width>100</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>100</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string> Listen</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-       </layout>
-      </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
         <string>Remote control</string>
@@ -471,16 +302,72 @@
                       </widget>
                      </item>
                      <item>
+                      <widget class="QWidget" name="widget_30" native="true">
+                       <layout class="QVBoxLayout" name="verticalLayout_18">
+                        <property name="spacing">
+                         <number>0</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>9</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QLabel" name="label_12">
+                          <property name="text">
+                           <string>Period</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QSpinBox" name="spinBox_period">
+                          <property name="minimumSize">
+                           <size>
+                            <width>0</width>
+                            <height>25</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>16777215</width>
+                            <height>25</height>
+                           </size>
+                          </property>
+                          <property name="minimum">
+                           <number>0</number>
+                          </property>
+                          <property name="maximum">
+                           <number>100000</number>
+                          </property>
+                          <property name="singleStep">
+                           <number>50</number>
+                          </property>
+                          <property name="value">
+                           <number>0</number>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                     <item>
                       <widget class="QWidget" name="widget_21" native="true">
                        <property name="minimumSize">
                         <size>
-                         <width>190</width>
+                         <width>220</width>
                          <height>0</height>
                         </size>
                        </property>
                        <property name="maximumSize">
                         <size>
-                         <width>200</width>
+                         <width>220</width>
                          <height>16777215</height>
                         </size>
                        </property>
@@ -507,13 +394,13 @@
                          <widget class="QWidget" name="widget_23" native="true">
                           <property name="minimumSize">
                            <size>
-                            <width>0</width>
+                            <width>225</width>
                             <height>25</height>
                            </size>
                           </property>
                           <property name="maximumSize">
                            <size>
-                            <width>16777215</width>
+                            <width>225</width>
                             <height>30</height>
                            </size>
                           </property>
@@ -537,7 +424,7 @@
                             <widget class="QPushButton" name="pushButton_start_tone">
                              <property name="minimumSize">
                               <size>
-                               <width>90</width>
+                               <width>120</width>
                                <height>25</height>
                               </size>
                              </property>
@@ -548,7 +435,7 @@
                               </size>
                              </property>
                              <property name="text">
-                              <string>Set</string>
+                              <string>Set tone</string>
                              </property>
                             </widget>
                            </item>
@@ -568,6 +455,187 @@
                              </property>
                              <property name="text">
                               <string>Stop</string>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QWidget" name="widget_25" native="true">
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>45</height>
+                     </size>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_6">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QWidget" name="widget_26" native="true">
+                       <layout class="QVBoxLayout" name="verticalLayout_16">
+                        <property name="spacing">
+                         <number>0</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QLabel" name="label_11">
+                          <property name="text">
+                           <string>LCD Text</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLineEdit" name="lineEdit_lcdtext">
+                          <property name="minimumSize">
+                           <size>
+                            <width>0</width>
+                            <height>25</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>16777215</width>
+                            <height>25</height>
+                           </size>
+                          </property>
+                          <property name="maxLength">
+                           <number>32</number>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QWidget" name="widget_27" native="true">
+                       <property name="minimumSize">
+                        <size>
+                         <width>220</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>220</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <layout class="QVBoxLayout" name="verticalLayout_17">
+                        <property name="spacing">
+                         <number>0</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QWidget" name="widget_28" native="true"/>
+                        </item>
+                        <item>
+                         <widget class="QWidget" name="widget_29" native="true">
+                          <property name="minimumSize">
+                           <size>
+                            <width>225</width>
+                            <height>25</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>225</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <layout class="QHBoxLayout" name="horizontalLayout_7">
+                           <property name="spacing">
+                            <number>0</number>
+                           </property>
+                           <property name="leftMargin">
+                            <number>0</number>
+                           </property>
+                           <property name="topMargin">
+                            <number>0</number>
+                           </property>
+                           <property name="rightMargin">
+                            <number>0</number>
+                           </property>
+                           <property name="bottomMargin">
+                            <number>0</number>
+                           </property>
+                           <item>
+                            <widget class="QPushButton" name="pushButton_set_lcd_text">
+                             <property name="minimumSize">
+                              <size>
+                               <width>120</width>
+                               <height>25</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>90</width>
+                               <height>25</height>
+                              </size>
+                             </property>
+                             <property name="text">
+                              <string>Set text</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QPushButton" name="pushButton_reset_lcd_text">
+                             <property name="minimumSize">
+                              <size>
+                               <width>90</width>
+                               <height>25</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>90</width>
+                               <height>25</height>
+                              </size>
+                             </property>
+                             <property name="text">
+                              <string>Reset</string>
                              </property>
                             </widget>
                            </item>
@@ -848,6 +916,12 @@
         </item>
         <item>
          <widget class="QTableWidget" name="tableWidget_sensors">
+          <property name="cornerButtonEnabled">
+           <bool>false</bool>
+          </property>
+          <attribute name="verticalHeaderVisible">
+           <bool>false</bool>
+          </attribute>
           <column>
            <property name="text">
             <string>Device ID</string>
@@ -878,6 +952,175 @@
             <string>EM</string>
            </property>
           </column>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Server options</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QWidget" name="widget" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>90</height>
+           </size>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QWidget" name="widget_8" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>100</height>
+              </size>
+             </property>
+             <widget class="QLabel" name="label_2">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>0</y>
+                <width>20</width>
+                <height>16</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Port</string>
+              </property>
+             </widget>
+             <widget class="QLineEdit" name="lineEdit_port">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>20</y>
+                <width>133</width>
+                <height>25</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>51015</string>
+              </property>
+             </widget>
+             <widget class="QCheckBox" name="checkBox">
+              <property name="geometry">
+               <rect>
+                <x>160</x>
+                <y>20</y>
+                <width>197</width>
+                <height>25</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Automatic listening on program start</string>
+              </property>
+             </widget>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="widget_9" native="true"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="widget_6" native="true">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>35</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>35</height>
+           </size>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>5</number>
+           </property>
+           <item>
+            <widget class="QWidget" name="widget_7" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_listen">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>100</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string> Listen</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
        </layout>
