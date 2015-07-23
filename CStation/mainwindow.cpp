@@ -7,6 +7,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     server = 0;
+
+    load_settings(QCoreApplication::instance()->applicationDirPath()+"/config.cfg");
 }
 
 MainWindow::~MainWindow()
@@ -19,6 +21,51 @@ Server *MainWindow::getServer()
 {
     if (!server) ui->pushButton_listen->click();
     return server;
+}
+
+void MainWindow::save_settings(QString filename)
+{
+    QSettings settings(filename, QSettings::IniFormat);
+
+    settings.setValue("main/server_port", ui->lineEdit_port->text());
+    settings.setValue("main/autostart_server", ui->checkBox_autostart->isChecked());
+
+    settings.setValue("window/maximized", isMaximized());
+    settings.setValue("window/minimized", isMinimized());
+    if (!isMaximized() && !isMinimized()) {
+        QRect gg = this->geometry();
+        settings.setValue("window/left", gg.left());
+        settings.setValue("window/top", gg.top());
+        settings.setValue("window/width", gg.width());
+        settings.setValue("window/height", gg.height());
+    }
+}
+
+void MainWindow::load_settings(QString filename)
+{
+    QSettings settings(filename, QSettings::IniFormat);
+
+    ui->lineEdit_port->setText(QString::number(settings.value("main/server_port", 51015).toInt()));
+    ui->checkBox_autostart->setChecked(settings.value("main/autostart_server", false).toBool());
+
+    QWidget::move(settings.value("window/left", 300).toInt(), settings.value("window/top", 300).toInt());
+    QWidget::resize(settings.value("window/width", 640).toInt(), settings.value("window/height", 480).toInt());
+
+    if (settings.value("window/maximized", false).toBool()) {
+        showMaximized();
+    }
+    if (settings.value("window/minimized", false).toBool()) {
+        showMinimized();
+    }
+
+    if (ui->checkBox_autostart->isChecked()) {
+        ui->pushButton_listen->click();
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    save_settings(QCoreApplication::instance()->applicationDirPath()+"/config.cfg");
 }
 
 void MainWindow::get_message(QString message)

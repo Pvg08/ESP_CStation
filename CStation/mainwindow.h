@@ -25,23 +25,14 @@ private slots:
 
     void on_pushButton_send_clicked();
     void on_pushButton_listen_clicked();
-
     void on_pushButton_clearlog_clicked();
-
     void on_pushButton_write_clicked();
-
     void on_pushButton_reboot_clicked();
-
     void on_pushButton_setup_clicked();
-
     void on_pushButton_start_tone_clicked();
-
     void on_pushButton_stop_tone_clicked();
-
     void on_listWidget_devices_currentTextChanged(const QString &currentText);
-
     void on_pushButton_set_lcd_text_clicked();
-
     void on_pushButton_reset_lcd_text_clicked();
 
 private:
@@ -49,6 +40,9 @@ private:
     Server* server;
 
     Server *getServer();
+    void save_settings(QString filename);
+    void load_settings(QString filename);
+    void closeEvent(QCloseEvent *event);
 };
 
 #endif // MAINWINDOW_H
