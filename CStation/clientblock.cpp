@@ -78,6 +78,7 @@ void ClientBlock::addSensor(QString message)
 {
     Sensor* n_sensor = new Sensor(this, message);
     if (n_sensor->getIsValid() && !sensors->contains(n_sensor->getSensorLetter())) {
+        n_sensor->setBlockID(block_id);
         connect(n_sensor, SIGNAL(local_change()), this, SLOT(sensor_local_change()));
         sensors->insert(n_sensor->getSensorLetter(), n_sensor);
         emit sensors_values_changed();
