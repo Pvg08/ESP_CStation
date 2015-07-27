@@ -141,6 +141,24 @@ bool Server::SendLCDReturn(QString ip_to)
     return SendData(ip_to, "SERV_LR=1\r\n");
 }
 
+quint16 Server::getNextBlockID(quint16 block_id)
+{
+    if (clientblocks->isEmpty()) {
+        return 0;
+    }
+
+    QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->find(block_id);
+
+    if (i != clientblocks->constEnd()) {
+        i++;
+        if (i != clientblocks->constEnd()) {
+            return i.key();
+        }
+    }
+
+    return clientblocks->firstKey();
+}
+
 const QStringList Server::getIPsList()
 {
     QStringList result;

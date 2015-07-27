@@ -16,11 +16,17 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     server.cpp \
     clientblock.cpp \
-    sensor.cpp
+    sensor.cpp \
+    widgets/sensorblock.cpp \
+    widgets/sensorsdisplayform.cpp
 
 HEADERS  += mainwindow.h \
     server.h \
     clientblock.h \
-    sensor.h
+    sensor.h \
+    widgets/sensorblock.h \
+    widgets/sensorsdisplayform.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    widgets/sensorblock.ui \
+    widgets/sensorsdisplayform.ui

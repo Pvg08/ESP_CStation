@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QFile>
 #include <QDir>
+#include <math.h>
 #include <QDebug>
 
 #define SENSORS_LOG_BUFFER_FLUSH_SIZE 128
@@ -103,6 +104,7 @@ private slots:
     void reset_value();
 signals:
     void local_change();
+    void value_change();
 
 public slots:
 };

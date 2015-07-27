@@ -33,7 +33,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -1077,6 +1077,31 @@
                <string>Automatic listening on program start</string>
               </property>
              </widget>
+             <widget class="QCheckBox" name="checkBox_fullscreen">
+              <property name="geometry">
+               <rect>
+                <x>370</x>
+                <y>20</y>
+                <width>161</width>
+                <height>25</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Sensors window in fullscreen</string>
+              </property>
+             </widget>
             </widget>
            </item>
            <item>
@@ -1128,6 +1153,16 @@
                <width>16777215</width>
                <height>25</height>
               </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_sensors_display_show">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Sensors Window</string>
              </property>
             </widget>
            </item>

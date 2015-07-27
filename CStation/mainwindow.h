@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include "server.h"
+#include "./widgets/sensorsdisplayform.h"
 
 namespace Ui {
 class MainWindow;
@@ -23,6 +24,8 @@ private slots:
     void update_blocks_list();
     void update_sensors_values(quint16 block_id);
 
+    void sensors_form_destroyed();
+
     void on_pushButton_send_clicked();
     void on_pushButton_listen_clicked();
     void on_pushButton_clearlog_clicked();
@@ -34,10 +37,12 @@ private slots:
     void on_listWidget_devices_currentTextChanged(const QString &currentText);
     void on_pushButton_set_lcd_text_clicked();
     void on_pushButton_reset_lcd_text_clicked();
+    void on_pushButton_sensors_display_show_clicked();
 
 private:
     Ui::MainWindow *ui;
     Server* server;
+    SensorsDisplayForm* sensors_form;
 
     Server *getServer();
     void save_settings(QString filename);

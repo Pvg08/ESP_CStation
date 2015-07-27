@@ -25,6 +25,8 @@ public:
     bool SendLCDText(QString ip_to, QString text);
     bool SendLCDReturn(QString ip_to);
 
+    quint16 getNextBlockID(quint16 block_id);
+
     const QStringList getIPsList();
     ClientBlock *getClientBlock(quint32 ip_addr);
     ClientBlock *getClientBlockByID(quint16 block_id);

@@ -61,6 +61,7 @@ void Sensor::setValue(const QString &value)
         shotTimer->start();
     }
     writeLog(true);
+    emit value_change();
 }
 
 QString Sensor::getSensorEM() const

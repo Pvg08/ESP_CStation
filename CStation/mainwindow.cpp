@@ -6,7 +6,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    server = 0;
+    server = NULL;
+    sensors_form = NULL;
 
     load_settings(QCoreApplication::instance()->applicationDirPath()+"/config.cfg");
 }
@@ -29,6 +30,8 @@ void MainWindow::save_settings(QString filename)
 
     settings.setValue("main/server_port", ui->lineEdit_port->text());
     settings.setValue("main/autostart_server", ui->checkBox_autostart->isChecked());
+    settings.setValue("main/fullscreen_display", ui->checkBox_fullscreen->isChecked());
+    settings.setValue("main/display_opened", sensors_form ? true : false);
 
     settings.setValue("window/maximized", isMaximized());
     settings.setValue("window/minimized", isMinimized());
@@ -47,6 +50,7 @@ void MainWindow::load_settings(QString filename)
 
     ui->lineEdit_port->setText(QString::number(settings.value("main/server_port", 51015).toInt()));
     ui->checkBox_autostart->setChecked(settings.value("main/autostart_server", false).toBool());
+    ui->checkBox_fullscreen->setChecked(settings.value("main/fullscreen_display", false).toBool());
 
     QWidget::move(settings.value("window/left", 300).toInt(), settings.value("window/top", 300).toInt());
     QWidget::resize(settings.value("window/width", 640).toInt(), settings.value("window/height", 480).toInt());
@@ -60,6 +64,9 @@ void MainWindow::load_settings(QString filename)
 
     if (ui->checkBox_autostart->isChecked()) {
         ui->pushButton_listen->click();
+        if (settings.value("main/display_opened", false).toBool()) {
+            ui->pushButton_sensors_display_show->click();
+        }
     }
 }
 
@@ -192,6 +199,7 @@ void MainWindow::on_pushButton_listen_clicked()
         QObject::connect(server, SIGNAL(blocks_change()), this, SLOT(update_blocks_list()));
         QObject::connect(server, SIGNAL(sensors_change(quint16)), this, SLOT(update_sensors_values(quint16)));
         server->StartServer(ui->lineEdit_port->text().toInt());
+        ui->pushButton_sensors_display_show->setEnabled(true);
     } else {
         server->Reset(ui->lineEdit_port->text().toInt());
     }
@@ -244,4 +252,25 @@ void MainWindow::on_pushButton_set_lcd_text_clicked()
 void MainWindow::on_pushButton_reset_lcd_text_clicked()
 {
     getServer()->SendLCDReturn(ui->comboBox_ip->currentText());
+}
+
+void MainWindow::sensors_form_destroyed()
+{
+    ui->pushButton_sensors_display_show->setEnabled(true);
+    sensors_form = NULL;
+}
+
+void MainWindow::on_pushButton_sensors_display_show_clicked()
+{
+    ui->pushButton_sensors_display_show->setEnabled(false);
+
+    sensors_form = new SensorsDisplayForm(server, this);
+    sensors_form->setAttribute(Qt::WA_DeleteOnClose);
+    QObject::connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
+
+    if (ui->checkBox_fullscreen->isChecked()) {
+        sensors_form->showFullScreen();
+    } else {
+        sensors_form->show();
+    }
 }
