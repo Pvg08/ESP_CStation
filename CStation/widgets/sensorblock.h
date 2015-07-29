@@ -3,7 +3,8 @@
 
 #include <QWidget>
 #include <QPalette>
-#include "sensor.h"
+#include "../sensor.h"
+#include "./msensordrawsurface.h"
 
 namespace Ui {
 class SensorBlock;
@@ -33,8 +34,9 @@ signals:
 
 private:
     Ui::SensorBlock *ui;
-    QPalette basePallete, labelsPallete;
+    QPalette basePallete, labelsPallete, graphicsPallete;
     Sensor *sensor;
+    MSensorDrawSurface *widget_drawer;
     bool value_is_pressed;
 
     virtual void resizeEvent(QResizeEvent * event);

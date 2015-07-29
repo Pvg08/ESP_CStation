@@ -25,12 +25,20 @@ SensorBlock::SensorBlock(Sensor *d_sensor, QPalette base_pallete, QPalette label
     ui->label_em->setPalette(labelsPallete);
     ui->label_sensor_name->setPalette(labelsPallete);
 
+    widget_drawer = new MSensorDrawSurface(sensor, this);
+    widget_drawer->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    ui->widget_graphic->layout()->addWidget(widget_drawer);
+
+    graphicsPallete = QPalette(labelsPallete);
+    widget_drawer->setPalette(graphicsPallete);
+
     this->setVisible(false);
     sensor_update();
 }
 
 SensorBlock::~SensorBlock()
 {
+    delete widget_drawer;
     delete ui;
 }
 
@@ -49,23 +57,28 @@ void SensorBlock::setValueColor(QColor color)
 void SensorBlock::setLabelColors(QColor color)
 {
     labelsPallete.setColor(QPalette::Foreground, color);
+    graphicsPallete.setColor(QPalette::Text, color);
     ui->label_em->setPalette(labelsPallete);
     ui->label_sensor_name->setPalette(labelsPallete);
+    widget_drawer->setPalette(graphicsPallete);
 }
 
 void SensorBlock::setBgColor(QColor color)
 {
     basePallete.setColor(QPalette::Background, color);
     labelsPallete.setColor(QPalette::Background, color);
+    graphicsPallete.setColor(QPalette::Background, color);
     ui->lcdNumber_value->setPalette(basePallete);
     ui->label_value->setPalette(basePallete);
     ui->label_em->setPalette(labelsPallete);
     ui->label_sensor_name->setPalette(labelsPallete);
+    widget_drawer->setPalette(graphicsPallete);
 }
 
 void SensorBlock::setGraphicsColor(QColor color)
 {
-    //
+    graphicsPallete.setColor(QPalette::Foreground, color);
+    widget_drawer->setPalette(graphicsPallete);
 }
 
 void SensorBlock::setVisibility(quint16 block_id)
@@ -102,6 +115,7 @@ void SensorBlock::sensor_update()
             }
         }
     }
+    widget_drawer->repaint();
 }
 
 void SensorBlock::resizeEvent(QResizeEvent *event)

@@ -18,14 +18,16 @@ SOURCES += main.cpp\
     clientblock.cpp \
     sensor.cpp \
     widgets/sensorblock.cpp \
-    widgets/sensorsdisplayform.cpp
+    widgets/sensorsdisplayform.cpp \
+    widgets/msensordrawsurface.cpp
 
 HEADERS  += mainwindow.h \
     server.h \
     clientblock.h \
     sensor.h \
     widgets/sensorblock.h \
-    widgets/sensorsdisplayform.h
+    widgets/sensorsdisplayform.h \
+    widgets/msensordrawsurface.h
 
 FORMS    += mainwindow.ui \
     widgets/sensorblock.ui \

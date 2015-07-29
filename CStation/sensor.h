@@ -51,6 +51,7 @@ public:
     QString getValue();
     QString getValueWithEM();
     float getFloatValue();
+    bool valueIsCorrect();
     void setValue(const QString &value);
 
     QString getSensorEM() const;
@@ -99,6 +100,7 @@ private:
     quint16 counter_value;
 
     bool isValid;
+    bool skip_enum_check;
 
     void parseDescription();
     bool writeLog(bool check_precision);

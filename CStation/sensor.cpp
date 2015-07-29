@@ -6,6 +6,7 @@ Sensor::Sensor(QObject *parent, QString sensor_description) : QObject(parent)
     counter_value = 0;
     sensorValue = "";
     sensorDescription = sensor_description;
+    skip_enum_check = false;
     upd_time = QDateTime::currentDateTime();
     log_file = NULL;
     log_buffer = new QList<SensorLogItem>();
@@ -51,6 +52,13 @@ float Sensor::getFloatValue()
         result = getValue().toFloat();
     }
     return result;
+}
+
+bool Sensor::valueIsCorrect()
+{
+    if (sensorValue.isEmpty()) return false;
+    float ff = getFloatValue();
+    return ff>=fromValue && ff<=toValue;
 }
 
 void Sensor::setValue(const QString &value)
@@ -163,7 +171,7 @@ QList<SensorLogItem> *Sensor::startLogDataTracking(quint64 time_sub)
         c = 0;
         search = QDateTime::currentMSecsSinceEpoch() - time_sub;
 
-        while (a<b-1) {
+        while (a<b) {
             c = (a+b) / 2;
             log_file->seek(c*i_size);
             if (log_file->read((char*)(void*)&item, i_size)<i_size) break;
@@ -201,12 +209,29 @@ bool Sensor::writeLog(bool check_precision)
     item.log_time = QDateTime::currentMSecsSinceEpoch();
     item.log_value = getFloatValue();
 
-    if (!check_precision || !last_log_item.log_time || fabs(item.log_value-last_log_item.log_value)>SENSORS_LOG_BUFFER_PRECISION) {
+    if (!skip_enum_check && sensorDataType == SDT_ENUM) {
+        if (item.log_value == 1 && (last_log_item.log_value == 0 || (!log_buffer->isEmpty() && log_buffer->last().log_value == 0))) {
+            skip_enum_check = true;
+            sensorValue = enumFalse;
+            writeLog(false);
+            skip_enum_check = false;
+            sensorValue = enumTrue;
+        } else if (item.log_value == 0 && (last_log_item.log_value == 1 || (!log_buffer->isEmpty() && log_buffer->last().log_value == 1))) {
+            skip_enum_check = true;
+            sensorValue = enumTrue;
+            writeLog(false);
+            skip_enum_check = false;
+            sensorValue = enumFalse;
+        }
+    }
+
+    if (valueIsCorrect() && (!check_precision || !last_log_item.log_time || fabs(item.log_value-last_log_item.log_value)>SENSORS_LOG_BUFFER_PRECISION)) {
         if (initLogFile() && log_file->isWritable()) {
             log_file->seek(log_file->size());
             unsigned bytes = log_file->write((char*)(void*)&item, sizeof(item));
             result = bytes==sizeof(item);
         }
+
         last_log_item = item;
 
         if (log_buffer_time_sub) {
@@ -284,6 +309,8 @@ void Sensor::parseDescription()
         if (enums.length()==2) {
             enumFalse = enums.at(0);
             enumTrue = enums.at(1);
+            fromValue = 0;
+            toValue = 1;
             sensorValue = enumFalse;
         } else {
             return;
