@@ -3,6 +3,7 @@
 ClientBlock::ClientBlock(QObject *parent, quint16 id) : QObject(parent)
 {
     ip_addr = 0;
+    sensors_counter = 0;
     block_id = id;
     is_on = false;
     sensors = new QMap<char, Sensor *>();
@@ -79,8 +80,10 @@ void ClientBlock::addSensor(QString message)
     Sensor* n_sensor = new Sensor(this, message);
     if (n_sensor->getIsValid() && !sensors->contains(n_sensor->getSensorLetter())) {
         n_sensor->setBlockID(block_id);
+        n_sensor->setCounterValue(sensors_counter++);
         connect(n_sensor, SIGNAL(local_change()), this, SLOT(sensor_local_change()));
         sensors->insert(n_sensor->getSensorLetter(), n_sensor);
+        emit new_sensor(n_sensor);
         emit sensors_values_changed();
     } else {
         delete n_sensor;

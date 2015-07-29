@@ -32,6 +32,8 @@ void MainWindow::save_settings(QString filename)
     settings.setValue("main/autostart_server", ui->checkBox_autostart->isChecked());
     settings.setValue("main/fullscreen_display", ui->checkBox_fullscreen->isChecked());
     settings.setValue("main/display_opened", sensors_form ? true : false);
+    settings.setValue("main/next_page_timeout", ui->spinBox_nextpage_delay->value());
+    settings.setValue("main/sensor_codes", ui->lineEdit_sensor_codes->text());
 
     settings.setValue("window/maximized", isMaximized());
     settings.setValue("window/minimized", isMinimized());
@@ -51,6 +53,8 @@ void MainWindow::load_settings(QString filename)
     ui->lineEdit_port->setText(QString::number(settings.value("main/server_port", 51015).toInt()));
     ui->checkBox_autostart->setChecked(settings.value("main/autostart_server", false).toBool());
     ui->checkBox_fullscreen->setChecked(settings.value("main/fullscreen_display", false).toBool());
+    ui->spinBox_nextpage_delay->setValue(settings.value("main/next_page_timeout", 5000).toInt());
+    ui->lineEdit_sensor_codes->setText(settings.value("main/sensor_codes", "ATPHLRN").toString());
 
     QWidget::move(settings.value("window/left", 300).toInt(), settings.value("window/top", 300).toInt());
     QWidget::resize(settings.value("window/width", 640).toInt(), settings.value("window/height", 480).toInt());
@@ -266,11 +270,19 @@ void MainWindow::on_pushButton_sensors_display_show_clicked()
 
     sensors_form = new SensorsDisplayForm(server, this);
     sensors_form->setAttribute(Qt::WA_DeleteOnClose);
+    sensors_form->setNextPageTimeout(ui->spinBox_nextpage_delay->value());
+    sensors_form->setSensorCodes(ui->lineEdit_sensor_codes->text());
     QObject::connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
+
 
     if (ui->checkBox_fullscreen->isChecked()) {
         sensors_form->showFullScreen();
     } else {
         sensors_form->show();
     }
+}
+
+void MainWindow::on_spinBox_nextpage_delay_valueChanged(int arg1)
+{
+    if (sensors_form) sensors_form->setNextPageTimeout(ui->spinBox_nextpage_delay->value());
 }

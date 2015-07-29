@@ -22,10 +22,12 @@ public:
 private:
     quint32 ip_addr;
     quint16 block_id;
+    quint16 sensors_counter;
     bool is_on;
     QMap<char, Sensor *> *sensors;
 signals:
     void sensors_values_changed();
+    void new_sensor(Sensor* new_sensor);
 private slots:
     void sensor_local_change();
 protected:

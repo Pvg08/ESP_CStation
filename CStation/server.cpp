@@ -264,6 +264,11 @@ void Server::clientBlockSensorsChange()
     }
 }
 
+void Server::clientBlockNewSensor(Sensor* sensor_obj)
+{
+    emit new_sensor(sensor_obj);
+}
+
 ClientBlock *Server::getClientBlock(quint32 ip_addr)
 {
     QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
@@ -311,6 +316,7 @@ void Server::recieveData()
                         nblock->setIpAddr(i.key());
                         clientblocks->insert(dst_id, nblock);
                         connect(nblock, SIGNAL(sensors_values_changed()), this, SLOT(clientBlockSensorsChange()));
+                        connect(nblock, SIGNAL(new_sensor(Sensor*)), this, SLOT(clientBlockNewSensor(Sensor*)));
                         emit write_message(tr("Registered new block. ID=%1").arg(dst_id));
                     }
                     emit blocks_change();

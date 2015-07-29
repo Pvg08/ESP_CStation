@@ -17,16 +17,27 @@ public:
     explicit SensorsDisplayForm(Server* c_server, QWidget *parent = 0);
     ~SensorsDisplayForm();
 
+    quint16 getNextPageTimeout() const;
+    void setNextPageTimeout(const quint16 &value);
+    QString getSensorCodes() const;
+    void setSensorCodes(const QString &value);
+
 private slots:
     void update_blocks_list();
-    void update_sensors_values(quint16 block_id);
+    void new_sensor(Sensor* new_sensor);
+    void showNextSensorsPage();
+    void sensorBlockClicked();
 
 private:
     Ui::SensorsDisplayForm *ui;
     Server* server;
-    quint16 display_block_id;
+    QString sensor_codes;
 
-    void showNextSensorsPage();
+    bool fullscreen_block;
+
+    quint16 display_block_id;
+    quint16 next_page_timeout;
+    QMap<unsigned, unsigned> sensor_counters;
 };
 
 #endif // SENSORSDISPLAYFORM_H

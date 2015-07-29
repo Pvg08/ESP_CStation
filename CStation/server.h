@@ -36,6 +36,7 @@ signals:
     void write_message(QString message);
     void blocks_change();
     void sensors_change(quint16 block_id);
+    void new_sensor(Sensor* sensor_obj);
 
 private slots:
     void sessionOpened();
@@ -45,6 +46,7 @@ private slots:
     void socketStateChanged(QAbstractSocket::SocketState state);
     void displayError(QAbstractSocket::SocketError socketError);
     void clientBlockSensorsChange();
+    void clientBlockNewSensor(Sensor* sensor_obj);
 private:
     int port = 0;
     QMap<quint32, QTcpSocket *> *sockets;

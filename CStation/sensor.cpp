@@ -3,6 +3,7 @@
 Sensor::Sensor(QObject *parent, QString sensor_description) : QObject(parent)
 {
     block_id = 0;
+    counter_value = 0;
     sensorValue = "";
     sensorDescription = sensor_description;
     upd_time = QDateTime::currentDateTime();
@@ -138,6 +139,16 @@ quint16 Sensor::getBlockID() const
 void Sensor::setBlockID(const quint16 &value)
 {
     block_id = value;
+}
+
+quint16 Sensor::getCounterValue() const
+{
+    return counter_value;
+}
+
+void Sensor::setCounterValue(const quint16 &value)
+{
+    counter_value = value;
 }
 
 QList<SensorLogItem> *Sensor::startLogDataTracking(quint64 time_sub)

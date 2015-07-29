@@ -39,6 +39,8 @@ private slots:
     void on_pushButton_reset_lcd_text_clicked();
     void on_pushButton_sensors_display_show_clicked();
 
+    void on_spinBox_nextpage_delay_valueChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
     Server* server;

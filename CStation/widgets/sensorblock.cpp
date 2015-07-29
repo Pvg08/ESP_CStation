@@ -5,13 +5,19 @@ SensorBlock::SensorBlock(Sensor *d_sensor, QPalette base_pallete, QPalette label
     QWidget(parent),
     ui(new Ui::SensorBlock)
 {
+    value_is_pressed = false;
     ui->setupUi(this);
     basePallete = base_pallete;
     labelsPallete = labels_pallete;
     sensor = d_sensor;
     connect(sensor, SIGNAL(destroyed(QObject*)), this, SLOT(sensor_destroyed(QObject*)));
     connect(sensor, SIGNAL(value_change()), this, SLOT(sensor_update()));
+
+    ui->label_value->setAttribute(Qt::WA_TransparentForMouseEvents);
+    ui->lcdNumber_value->setAttribute(Qt::WA_TransparentForMouseEvents);
+
     this->setVisible(false);
+    sensor_update();
 }
 
 SensorBlock::~SensorBlock()
@@ -48,6 +54,13 @@ void SensorBlock::setBgColor(QColor color)
     ui->label_sensor_name->setPalette(labelsPallete);
 }
 
+void SensorBlock::setVisibility(quint16 block_id)
+{
+    if (sensor && sensor->getBlockID()) {
+        this->setVisible(block_id == sensor->getBlockID());
+    }
+}
+
 void SensorBlock::sensor_destroyed(QObject *obj)
 {
     sensor = NULL;
@@ -57,12 +70,13 @@ void SensorBlock::sensor_destroyed(QObject *obj)
 void SensorBlock::sensor_update()
 {
     if (sensor) {
-        if (sensor->getSensorDataType()==Sensor::SDT_ENUM) {
-            ui->label_value->setText(sensor->getValue());
-        } else {
-            ui->lcdNumber_value->display(sensor->getFloatValue());
+        if (!sensor->getValue().isEmpty()) {
+            if (sensor->getSensorDataType()==Sensor::SDT_ENUM) {
+                ui->label_value->setText(sensor->getValue());
+            } else {
+                ui->lcdNumber_value->display(sensor->getFloatValue());
+            }
         }
-
         if (!isVisible()) {
             ui->label_sensor_name->setText(sensor->getSensorName() + " (DS"+QString::number(sensor->getBlockID())+")");
             ui->label_em->setText(sensor->getSensorEM());
@@ -73,7 +87,6 @@ void SensorBlock::sensor_update()
                 ui->label_value->setVisible(false);
             }
         }
-
     }
 }
 
@@ -82,7 +95,20 @@ void SensorBlock::resizeEvent(QResizeEvent *event)
     if (ui->label_value->isVisible()) {
 
         QFont fnt = ui->label_value->font();
-        fnt.setPixelSize((ui->label_value->width()<ui->label_value->height()?ui->label_value->width():ui->label_value->height()) / 3);
+        fnt.setPixelSize((ui->label_value->width()<ui->label_value->height()?ui->label_value->width():ui->label_value->height()) / 2);
         ui->label_value->setFont(fnt);
     }
+}
+
+void SensorBlock::mousePressEvent(QMouseEvent *event)
+{
+    value_is_pressed = true;
+}
+
+void SensorBlock::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (value_is_pressed) {
+        emit sensor_click();
+    }
+    value_is_pressed = false;
 }
