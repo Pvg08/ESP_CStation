@@ -35,6 +35,11 @@ void MainWindow::save_settings(QString filename)
     settings.setValue("main/next_page_timeout", ui->spinBox_nextpage_delay->value());
     settings.setValue("main/sensor_codes", ui->lineEdit_sensor_codes->text());
 
+    settings.setValue("main/display_color_l", ui->toolButton_color_label->palette().background().color().name());
+    settings.setValue("main/display_color_v", ui->toolButton_color_value->palette().background().color().name());
+    settings.setValue("main/display_color_bg", ui->toolButton_color_bg->palette().background().color().name());
+    settings.setValue("main/display_color_gr", ui->toolButton_color_graphics->palette().background().color().name());
+
     settings.setValue("window/maximized", isMaximized());
     settings.setValue("window/minimized", isMinimized());
     if (!isMaximized() && !isMinimized()) {
@@ -55,6 +60,11 @@ void MainWindow::load_settings(QString filename)
     ui->checkBox_fullscreen->setChecked(settings.value("main/fullscreen_display", false).toBool());
     ui->spinBox_nextpage_delay->setValue(settings.value("main/next_page_timeout", 5000).toInt());
     ui->lineEdit_sensor_codes->setText(settings.value("main/sensor_codes", "ATPHLRN").toString());
+
+    setBtnColor(ui->toolButton_color_label, settings.value("main/display_color_l", "#000000").toString());
+    setBtnColor(ui->toolButton_color_value, settings.value("main/display_color_v", "#000000").toString());
+    setBtnColor(ui->toolButton_color_bg, settings.value("main/display_color_bg", "#ffffff").toString());
+    setBtnColor(ui->toolButton_color_graphics, settings.value("main/display_color_gr", "#000000").toString());
 
     QWidget::move(settings.value("window/left", 300).toInt(), settings.value("window/top", 300).toInt());
     QWidget::resize(settings.value("window/width", 640).toInt(), settings.value("window/height", 480).toInt());
@@ -261,19 +271,25 @@ void MainWindow::on_pushButton_reset_lcd_text_clicked()
 void MainWindow::sensors_form_destroyed()
 {
     ui->pushButton_sensors_display_show->setEnabled(true);
+    ui->pushButton_listen->setEnabled(true);
     sensors_form = NULL;
 }
 
 void MainWindow::on_pushButton_sensors_display_show_clicked()
 {
     ui->pushButton_sensors_display_show->setEnabled(false);
+    ui->pushButton_listen->setEnabled(false);
 
     sensors_form = new SensorsDisplayForm(server, this);
     sensors_form->setAttribute(Qt::WA_DeleteOnClose);
     sensors_form->setNextPageTimeout(ui->spinBox_nextpage_delay->value());
     sensors_form->setSensorCodes(ui->lineEdit_sensor_codes->text());
-    QObject::connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
+    sensors_form->setLabel_color(ui->toolButton_color_label->palette().background().color());
+    sensors_form->setValue_color(ui->toolButton_color_value->palette().background().color());
+    sensors_form->setBg_color(ui->toolButton_color_bg->palette().background().color());
+    sensors_form->setGraphics_color(ui->toolButton_color_graphics->palette().background().color());
 
+    QObject::connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
 
     if (ui->checkBox_fullscreen->isChecked()) {
         sensors_form->showFullScreen();
@@ -285,4 +301,45 @@ void MainWindow::on_pushButton_sensors_display_show_clicked()
 void MainWindow::on_spinBox_nextpage_delay_valueChanged(int arg1)
 {
     if (sensors_form) sensors_form->setNextPageTimeout(ui->spinBox_nextpage_delay->value());
+}
+
+void MainWindow::setBtnColor(QToolButton* button, QColor color)
+{
+    QString qss = QString("background-color: %1").arg(color.name());
+    button->setStyleSheet(qss);
+    QPalette p = button->palette();
+    p.setColor(QPalette::Background, color);
+    button->setPalette(p);
+}
+
+void MainWindow::colorPick(QToolButton *button)
+{
+    QColor color = QColorDialog::getColor(button->palette().background().color(), this);
+    if(color.isValid()) {
+        setBtnColor(button, color);
+    }
+}
+
+void MainWindow::on_toolButton_color_label_clicked()
+{
+    colorPick(ui->toolButton_color_label);
+    if (sensors_form) sensors_form->setLabel_color(ui->toolButton_color_label->palette().background().color());
+}
+
+void MainWindow::on_toolButton_color_value_clicked()
+{
+    colorPick(ui->toolButton_color_value);
+    if (sensors_form) sensors_form->setValue_color(ui->toolButton_color_value->palette().background().color());
+}
+
+void MainWindow::on_toolButton_color_bg_clicked()
+{
+    colorPick(ui->toolButton_color_bg);
+    if (sensors_form) sensors_form->setBg_color(ui->toolButton_color_bg->palette().background().color());
+}
+
+void MainWindow::on_toolButton_color_graphics_clicked()
+{
+    colorPick(ui->toolButton_color_graphics);
+    if (sensors_form) sensors_form->setGraphics_color(ui->toolButton_color_graphics->palette().background().color());
 }

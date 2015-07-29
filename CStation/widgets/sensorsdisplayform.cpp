@@ -12,15 +12,16 @@ SensorsDisplayForm::SensorsDisplayForm(Server* c_server, QWidget *parent) :
     next_page_timeout = 5000;
     fullscreen_block = false;
     server = c_server;
+}
 
+void SensorsDisplayForm::showEvent(QShowEvent *event)
+{
     quint16 first_display_block_id = display_block_id = server->getNextBlockID(display_block_id);
 
     do {
-        qDebug() << display_block_id;
         if (ClientBlock* nb = server->getClientBlockByID(display_block_id)) {
             QMap<char, Sensor *>::const_iterator i = nb->getSensors()->constBegin();
             while (i != nb->getSensors()->constEnd()) {
-                qDebug() << i.key();
                 new_sensor(i.value());
                 ++i;
             }
@@ -52,7 +53,15 @@ void SensorsDisplayForm::new_sensor(Sensor *new_sensor)
         }
 
         quint16 sc = sensor_counters.value(new_sensor->getBlockID());
-        SensorBlock* nblock = new SensorBlock(new_sensor, ui->label_waiting->palette(), ui->label_waiting->palette(), this);
+
+        QPalette p_b = ui->label_waiting->palette();
+        p_b.setColor(QPalette::Background, bg_color);
+        p_b.setColor(QPalette::Foreground, value_color);
+        QPalette p_l = QPalette(p_b);
+        p_l.setColor(QPalette::Foreground, label_color);
+
+        SensorBlock* nblock = new SensorBlock(new_sensor, p_b, p_l, this);
+        nblock->setGraphicsColor(graphics_color);
 
         connect(nblock, SIGNAL(sensor_click()), this, SLOT(sensorBlockClicked()));
 
@@ -70,7 +79,7 @@ void SensorsDisplayForm::showNextSensorsPage()
         int vis_count = 0;
         for (int i = 0; i < ui->layout_blocks->count(); ++i) {
             SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget());
-            if (sblock) {
+            if (sblock && sblock->getSensor() && !sblock->getSensor()->getValue().isEmpty()) {
                 sblock->setVisibility(display_block_id);
             }
             if (ui->layout_blocks->itemAt(i)->widget()->isVisible()) {
@@ -98,6 +107,73 @@ void SensorsDisplayForm::sensorBlockClicked()
     }
 }
 
+QColor SensorsDisplayForm::getGraphics_color() const
+{
+    return graphics_color;
+}
+
+void SensorsDisplayForm::setGraphics_color(const QColor &value)
+{
+    graphics_color = value;
+    for (int i = 0; i < ui->layout_blocks->count(); ++i) {
+        if (SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget())) {
+            sblock->setGraphicsColor(value);
+        }
+    }
+}
+
+QColor SensorsDisplayForm::getValue_color() const
+{
+    return value_color;
+}
+
+void SensorsDisplayForm::setValue_color(const QColor &value)
+{
+    value_color = value;
+    for (int i = 0; i < ui->layout_blocks->count(); ++i) {
+        if (SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget())) {
+            sblock->setValueColor(value);
+        }
+    }
+}
+
+QColor SensorsDisplayForm::getLabel_color() const
+{
+    return label_color;
+}
+
+void SensorsDisplayForm::setLabel_color(const QColor &value)
+{
+    label_color = value;
+    for (int i = 0; i < ui->layout_blocks->count(); ++i) {
+        if (SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget())) {
+            sblock->setLabelColors(value);
+        }
+    }
+    QPalette p_l = ui->label_waiting->palette();
+    p_l.setColor(QPalette::Foreground, value);
+    ui->label_waiting->setPalette(p_l);
+}
+
+QColor SensorsDisplayForm::getBg_color() const
+{
+    return bg_color;
+}
+
+void SensorsDisplayForm::setBg_color(const QColor &value)
+{
+    bg_color = value;
+    for (int i = 0; i < ui->layout_blocks->count(); ++i) {
+        if (SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget())) {
+            sblock->setBgColor(value);
+        }
+    }
+
+    QPalette p = this->palette();
+    p.setColor(QPalette::Background, bg_color);
+    this->setPalette(p);
+}
+
 QString SensorsDisplayForm::getSensorCodes() const
 {
     return sensor_codes;
@@ -107,7 +183,6 @@ void SensorsDisplayForm::setSensorCodes(const QString &value)
 {
     sensor_codes = value;
 }
-
 
 quint16 SensorsDisplayForm::getNextPageTimeout() const
 {

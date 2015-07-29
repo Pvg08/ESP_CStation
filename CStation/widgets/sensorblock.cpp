@@ -15,6 +15,15 @@ SensorBlock::SensorBlock(Sensor *d_sensor, QPalette base_pallete, QPalette label
 
     ui->label_value->setAttribute(Qt::WA_TransparentForMouseEvents);
     ui->lcdNumber_value->setAttribute(Qt::WA_TransparentForMouseEvents);
+    ui->lcdNumber_value->setAutoFillBackground(true);
+    ui->label_value->setAutoFillBackground(true);
+    ui->label_em->setAutoFillBackground(true);
+    ui->label_sensor_name->setAutoFillBackground(true);
+
+    ui->lcdNumber_value->setPalette(basePallete);
+    ui->label_value->setPalette(basePallete);
+    ui->label_em->setPalette(labelsPallete);
+    ui->label_sensor_name->setPalette(labelsPallete);
 
     this->setVisible(false);
     sensor_update();
@@ -52,6 +61,11 @@ void SensorBlock::setBgColor(QColor color)
     ui->label_value->setPalette(basePallete);
     ui->label_em->setPalette(labelsPallete);
     ui->label_sensor_name->setPalette(labelsPallete);
+}
+
+void SensorBlock::setGraphicsColor(QColor color)
+{
+    //
 }
 
 void SensorBlock::setVisibility(quint16 block_id)

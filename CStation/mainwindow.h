@@ -2,7 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QColorDialog>
 #include <QMessageBox>
+#include <QToolButton>
 #include "server.h"
 #include "./widgets/sensorsdisplayform.h"
 
@@ -41,6 +43,14 @@ private slots:
 
     void on_spinBox_nextpage_delay_valueChanged(int arg1);
 
+    void on_toolButton_color_label_clicked();
+
+    void on_toolButton_color_value_clicked();
+
+    void on_toolButton_color_bg_clicked();
+
+    void on_toolButton_color_graphics_clicked();
+
 private:
     Ui::MainWindow *ui;
     Server* server;
@@ -50,6 +60,9 @@ private:
     void save_settings(QString filename);
     void load_settings(QString filename);
     void closeEvent(QCloseEvent *event);
+
+    void setBtnColor(QToolButton* button, QColor color);
+    void colorPick(QToolButton* button);
 };
 
 #endif // MAINWINDOW_H

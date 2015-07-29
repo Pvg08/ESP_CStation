@@ -29,6 +29,7 @@ Server::~Server()
 void Server::Reset(int server_port)
 {
     emit write_message(tr("Reseting server."));
+
     if (!sockets->isEmpty()) {
         QMap<quint32, QTcpSocket *>::const_iterator i = sockets->constBegin();
         while (i != sockets->constEnd()) {
@@ -37,7 +38,6 @@ void Server::Reset(int server_port)
                 emit write_message(tr("Sending reset signal to %1.").arg(tcpSocket->peerAddress().toString()));
                 tcpSocket->write("RST\r\n\r\n");
                 tcpSocket->flush();
-                tcpSocket->disconnectFromHost();
             }
             ++i;
         }

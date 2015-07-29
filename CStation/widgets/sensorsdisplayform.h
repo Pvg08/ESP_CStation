@@ -22,6 +22,18 @@ public:
     QString getSensorCodes() const;
     void setSensorCodes(const QString &value);
 
+    QColor getBg_color() const;
+    void setBg_color(const QColor &value);
+
+    QColor getLabel_color() const;
+    void setLabel_color(const QColor &value);
+
+    QColor getValue_color() const;
+    void setValue_color(const QColor &value);
+
+    QColor getGraphics_color() const;
+    void setGraphics_color(const QColor &value);
+
 private slots:
     void update_blocks_list();
     void new_sensor(Sensor* new_sensor);
@@ -32,12 +44,15 @@ private:
     Ui::SensorsDisplayForm *ui;
     Server* server;
     QString sensor_codes;
+    QColor bg_color, label_color, value_color, graphics_color;
 
     bool fullscreen_block;
 
     quint16 display_block_id;
     quint16 next_page_timeout;
     QMap<unsigned, unsigned> sensor_counters;
+
+    virtual void showEvent(QShowEvent * event);
 };
 
 #endif // SENSORSDISPLAYFORM_H

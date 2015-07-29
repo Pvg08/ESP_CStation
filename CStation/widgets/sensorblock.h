@@ -19,6 +19,7 @@ public:
     void setValueColor(QColor color);
     void setLabelColors(QColor color);
     void setBgColor(QColor color);
+    void setGraphicsColor(QColor color);
     void setVisibility(quint16 block_id);
 
     Sensor *getSensor() const;
