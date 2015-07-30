@@ -9,6 +9,7 @@ Sensor::Sensor(QObject *parent, QString sensor_description) : QObject(parent)
     skip_enum_check = false;
     upd_time = QDateTime::currentDateTime();
     log_file = NULL;
+    buffer_is_loading = false;
     log_buffer = new QList<SensorLogItem>();
     log_buffer_time_sub = 0;
     last_log_item.log_time = 0;
@@ -161,6 +162,7 @@ void Sensor::setCounterValue(const quint16 &value)
 
 QList<SensorLogItem> *Sensor::startLogDataTracking(quint64 time_sub)
 {
+    buffer_is_loading = true;
     if (initLogFile() && log_file->isReadable()) {
         quint64 a, b, c, search;
         quint16 i_size = sizeof(SensorLogItem);
@@ -191,7 +193,7 @@ QList<SensorLogItem> *Sensor::startLogDataTracking(quint64 time_sub)
         }
     }
     log_buffer_time_sub = time_sub;
-
+    buffer_is_loading = false;
     return log_buffer;
 }
 
@@ -204,6 +206,8 @@ void Sensor::stopLogDataTracking()
 bool Sensor::writeLog(bool check_precision)
 {
     bool result = false;
+
+    if (buffer_is_loading) return result;
 
     SensorLogItem item;
     item.log_time = QDateTime::currentMSecsSinceEpoch();

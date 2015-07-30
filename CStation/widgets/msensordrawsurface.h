@@ -23,7 +23,10 @@ protected:
 private:
     float y_min, y_max;
     quint64 t_min, t_max, dt_grid;
-    void setMinMax();
+    float sy_top, sy_bottom, sx_left, sx_right;
+    bool show_dates;
+
+    void updateLogGraphicsParameters();
 };
 
 #endif // MSENSORDRAWSURFACE_H

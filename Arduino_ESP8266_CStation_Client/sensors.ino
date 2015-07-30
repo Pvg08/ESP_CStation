@@ -22,7 +22,7 @@
 
 #define ACTION_SIGNAL_PIN 48
 
-unsigned long int last_sending_millis, last_reset_millis;
+volatile unsigned long int last_sending_millis, last_reset_millis;
 
 SFE_BMP180 pressure;
 DHT dht(DHTPIN, DHTTYPE);
@@ -105,6 +105,12 @@ bool sendSensorsInfo(unsigned connection_id)
 
   reply = sendMessage(connection_id, "DS_INFO=N:enum(no,yes)[5]|Noise", MAX_ATTEMPTS);
   rok = replyIsOK(reply);
+  if (!rok) return rok;
+
+  reply = sendMessage(connection_id, "DS_V={A(on)}", MAX_ATTEMPTS);
+  rok = replyIsOK(reply);
+
+  last_sending_millis = 0;
 
   return rok;
 }
@@ -142,7 +148,7 @@ bool sensorsSending()
     millis_sum_delay = curr_millis - last_sending_millis;
   }
 
-  if (millis_sum_delay > SENDING_INTERVAL) 
+  if (!last_sending_millis || millis_sum_delay > SENDING_INTERVAL) 
   {
     char status;
     double T,P;

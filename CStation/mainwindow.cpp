@@ -49,6 +49,18 @@ void MainWindow::save_settings(QString filename)
         settings.setValue("window/width", gg.width());
         settings.setValue("window/height", gg.height());
     }
+
+    if (sensors_form) {
+        settings.setValue("sensors_window/maximized", sensors_form->isMaximized());
+        settings.setValue("sensors_window/minimized", sensors_form->isMinimized());
+        if (!sensors_form->isMaximized() && !sensors_form->isMinimized()) {
+            QRect gg = sensors_form->geometry();
+            settings.setValue("sensors_window/left", gg.left());
+            settings.setValue("sensors_window/top", gg.top());
+            settings.setValue("sensors_window/width", gg.width());
+            settings.setValue("sensors_window/height", gg.height());
+        }
+    }
 }
 
 void MainWindow::load_settings(QString filename)
@@ -80,6 +92,17 @@ void MainWindow::load_settings(QString filename)
         ui->pushButton_listen->click();
         if (settings.value("main/display_opened", false).toBool()) {
             ui->pushButton_sensors_display_show->click();
+            if (sensors_form) {
+                sensors_form->move(settings.value("sensors_window/left", 300).toInt(), settings.value("sensors_window/top", 300).toInt());
+                sensors_form->resize(settings.value("sensors_window/width", 640).toInt(), settings.value("sensors_window/height", 480).toInt());
+
+                if (settings.value("sensors_window/maximized", false).toBool()) {
+                    sensors_form->showMaximized();
+                }
+                if (settings.value("sensors_window/minimized", false).toBool()) {
+                    sensors_form->showMinimized();
+                }
+            }
         }
     }
 }

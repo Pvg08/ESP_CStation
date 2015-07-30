@@ -101,6 +101,7 @@ private:
 
     bool isValid;
     bool skip_enum_check;
+    bool buffer_is_loading;
 
     void parseDescription();
     bool writeLog(bool check_precision);

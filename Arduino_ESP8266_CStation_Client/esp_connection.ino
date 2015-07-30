@@ -360,7 +360,7 @@ void StartConnection(bool reconnect)
       rok = replyIsOK(reply);
       
       DEBUG_WRITELN("Send sensors info");
-      setLCDLines("Send semnsors", "info");
+      setLCDLines("Sending sensors", "info");
       rok = sendSensorsInfo(connection_id);
     } while (!rok);
     

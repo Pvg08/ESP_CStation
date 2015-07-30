@@ -6,7 +6,7 @@ SensorsDisplayForm::SensorsDisplayForm(Server* c_server, QWidget *parent) :
     ui(new Ui::SensorsDisplayForm)
 {
     ui->setupUi(this);
-    setWindowFlags(this->windowFlags() & ~Qt::WindowContextHelpButtonHint);
+    setWindowFlags(this->windowFlags() & ~Qt::WindowContextHelpButtonHint | Qt::WindowMinMaxButtonsHint);
 
     display_block_id = 0;
     next_page_timeout = 5000;
@@ -69,6 +69,7 @@ void SensorsDisplayForm::new_sensor(Sensor *new_sensor)
         ui->layout_blocks->addWidget(nblock, sc/2, sc % 2, 1, 1);
 
         sensor_counters[new_sensor->getBlockID()]++;
+        repaint();
     }
 }
 

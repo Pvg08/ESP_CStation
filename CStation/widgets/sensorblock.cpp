@@ -27,6 +27,9 @@ SensorBlock::SensorBlock(Sensor *d_sensor, QPalette base_pallete, QPalette label
 
     widget_drawer = new MSensorDrawSurface(sensor, this);
     widget_drawer->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    QFont fnt = widget_drawer->font();
+    fnt.setPixelSize(9);
+    widget_drawer->setFont(fnt);
     ui->widget_graphic->layout()->addWidget(widget_drawer);
 
     graphicsPallete = QPalette(labelsPallete);

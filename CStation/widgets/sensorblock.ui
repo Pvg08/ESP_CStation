@@ -16,6 +16,9 @@
     <height>100</height>
    </size>
   </property>
+  <property name="cursor">
+   <cursorShape>OpenHandCursor</cursorShape>
+  </property>
   <property name="windowTitle">
    <string/>
   </property>
@@ -94,6 +97,9 @@
        </property>
        <property name="cursor">
         <cursorShape>OpenHandCursor</cursorShape>
+       </property>
+       <property name="digitCount">
+        <number>6</number>
        </property>
        <property name="segmentStyle">
         <enum>QLCDNumber::Filled</enum>
