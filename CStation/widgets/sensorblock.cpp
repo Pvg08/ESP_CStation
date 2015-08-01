@@ -102,7 +102,7 @@ void SensorBlock::sensor_update()
     if (sensor) {
         if (sensor->valueIsCorrect()) {
             if (sensor->getSensorDataType()==Sensor::SDT_ENUM) {
-                ui->label_value->setText(sensor->getValue());
+                ui->label_value->setText(sensor->getValue() == sensor->getEnumTrue() ? sensor->getTrEnumTrue() : sensor->getTrEnumFalse());
             } else {
                 ui->lcdNumber_value->display(sensor->getFloatValue());
             }

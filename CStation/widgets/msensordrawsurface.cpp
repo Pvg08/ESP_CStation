@@ -48,8 +48,8 @@ void MSensorDrawSurface::updateLogGraphicsParameters()
     int min_w;
     int max_w;
     if (sensor && sensor->getSensorDataType() == Sensor::SDT_ENUM) {
-        min_w = fontMetrics().width(sensor->getEnumFalse());
-        max_w = fontMetrics().width(sensor->getEnumTrue());
+        min_w = fontMetrics().width(sensor->getTrEnumFalse());
+        max_w = fontMetrics().width(sensor->getTrEnumTrue());
     } else {
         min_w = fontMetrics().width(QString::number(y_min, 'g', 4));
         max_w = fontMetrics().width(QString::number(y_max, 'g', 4));
@@ -93,12 +93,12 @@ void MSensorDrawSurface::paintEvent(QPaintEvent *e)
     if (sensor && sensor->getSensorDataType() == Sensor::SDT_ENUM) {
         if (y_max > y_min) {
             painter.drawLine(0, y0, width(), y0);
-            painter.drawText(QPoint(1, y0-1), sensor->getEnumFalse());
+            painter.drawText(QPoint(1, y0-1), sensor->getTrEnumFalse());
             painter.drawLine(0, y1, width(), y1);
-            painter.drawText(QPoint(1, y1+fontMetrics().height()-1), sensor->getEnumTrue());
+            painter.drawText(QPoint(1, y1+fontMetrics().height()-1), sensor->getTrEnumTrue());
         } else {
             painter.drawLine(0, y0, width(), y0);
-            painter.drawText(QPoint(1, y0-1), y_min>0 ? sensor->getEnumTrue() : sensor->getEnumFalse());
+            painter.drawText(QPoint(1, y0-1), y_min>0 ? sensor->getTrEnumTrue() : sensor->getTrEnumFalse());
         }
     } else {
         painter.drawLine(0, y0, width(), y0);

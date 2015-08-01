@@ -62,6 +62,8 @@ public:
     float getToValue() const;
     QString getEnumTrue() const;
     QString getEnumFalse() const;
+    QString getTrEnumTrue() const;
+    QString getTrEnumFalse() const;
     Sensor::SensorDataTypes getSensorDataType() const;
     QString getSensorDescription() const;
     void setSensorDescription(const QString &value);

@@ -113,6 +113,16 @@ QString Sensor::getEnumFalse() const
     return enumFalse;
 }
 
+QString Sensor::getTrEnumTrue() const
+{
+    return tr(enumTrue.toUtf8());
+}
+
+QString Sensor::getTrEnumFalse() const
+{
+    return tr(enumFalse.toUtf8());
+}
+
 Sensor::SensorDataTypes Sensor::getSensorDataType() const
 {
     return sensorDataType;
@@ -339,12 +349,15 @@ void Sensor::parseDescription()
 
     QString emstr = sensorDescription;
     emstr.replace(QRegExp("^([^\\[\\]]*)\\[([^\\[\\]]*)\\]([^\\|]*)\\|.*"), "\\3");
-    sensorEM = emstr;
+    sensorEM = tr(emstr.toUtf8());
 
     QString namestr = sensorDescription;
     namestr.replace(QRegExp("^([^\\|]*)\\|(.*)"), "\\2");
 
-    if (namestr.isEmpty()) return;
+    QString namechk = QString(namestr);
+    namechk.replace(QRegExp("[A-Za-z0-9\\,\\.\\-\\:\\ ]*"), "");
+
+    if (namestr.isEmpty() || !namechk.isEmpty()) return;
 
     sensorName = tr(namestr.toUtf8());
 

@@ -33,6 +33,7 @@ void MainWindow::save_settings(QString filename)
     settings.setValue("main/fullscreen_display", ui->checkBox_fullscreen->isChecked());
     settings.setValue("main/display_opened", sensors_form ? true : false);
     settings.setValue("main/next_page_timeout", ui->spinBox_nextpage_delay->value());
+    settings.setValue("main/graphics_timeinterval", ui->spinBox_graphics_timeinterval->value());
     settings.setValue("main/sensor_codes", ui->lineEdit_sensor_codes->text());
 
     settings.setValue("main/display_color_l", ui->toolButton_color_label->palette().background().color().name());
@@ -71,6 +72,7 @@ void MainWindow::load_settings(QString filename)
     ui->checkBox_autostart->setChecked(settings.value("main/autostart_server", false).toBool());
     ui->checkBox_fullscreen->setChecked(settings.value("main/fullscreen_display", false).toBool());
     ui->spinBox_nextpage_delay->setValue(settings.value("main/next_page_timeout", 5000).toInt());
+    ui->spinBox_graphics_timeinterval->setValue(settings.value("main/graphics_timeinterval", 86400).toInt());
     ui->lineEdit_sensor_codes->setText(settings.value("main/sensor_codes", "ATPHLRN").toString());
 
     setBtnColor(ui->toolButton_color_label, settings.value("main/display_color_l", "#000000").toString());

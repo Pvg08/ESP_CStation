@@ -11,9 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = CStation
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
-        mainwindow.cpp \
+    mainwindow.cpp \
     server.cpp \
     clientblock.cpp \
     sensor.cpp \
@@ -32,3 +31,5 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     widgets/sensorblock.ui \
     widgets/sensorsdisplayform.ui
+
+TRANSLATIONS += translations/CStation_ru_RU.ts
