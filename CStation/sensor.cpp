@@ -3,7 +3,6 @@
 Sensor::Sensor(QObject *parent, QString sensor_description) : QObject(parent)
 {
     block_id = 0;
-    counter_value = 0;
     sensorValue = "";
     sensorDescription = sensor_description;
     skip_enum_check = false;
@@ -150,31 +149,25 @@ void Sensor::setBlockID(const quint16 &value)
     block_id = value;
 }
 
-quint16 Sensor::getCounterValue() const
-{
-    return counter_value;
-}
-
-void Sensor::setCounterValue(const quint16 &value)
-{
-    counter_value = value;
-}
-
 QList<SensorLogItem> *Sensor::startLogDataTracking(quint64 time_sub)
 {
     buffer_is_loading = true;
     if (initLogFile() && log_file->isReadable()) {
+
+        if (log_buffer_time_sub) {
+            stopLogDataTracking();
+        }
+
         quint64 a, b, c, search;
         quint16 i_size = sizeof(SensorLogItem);
         SensorLogItem item;
 
         a = 0;
         b = log_file->size()/i_size - 1;
-        c = 0;
+        c = (a+b) / 2;
         search = QDateTime::currentMSecsSinceEpoch() - time_sub;
 
-        while (a<b) {
-            c = (a+b) / 2;
+        while (a<b && c>a) {
             log_file->seek(c*i_size);
             if (log_file->read((char*)(void*)&item, i_size)<i_size) break;
 
@@ -185,6 +178,7 @@ QList<SensorLogItem> *Sensor::startLogDataTracking(quint64 time_sub)
             } else {
                 break;
             }
+            c = (a+b) / 2;
         }
 
         log_file->seek(c*i_size);
@@ -201,6 +195,16 @@ void Sensor::stopLogDataTracking()
 {
     log_buffer->clear();
     log_buffer_time_sub = 0;
+}
+
+qint64 Sensor::getLogBufferTimeSub() const
+{
+    return log_buffer_time_sub;
+}
+
+QList<SensorLogItem> *Sensor::getLogBuffer()
+{
+    return log_buffer;
 }
 
 bool Sensor::writeLog(bool check_precision)
@@ -251,11 +255,11 @@ void Sensor::cutLogBuffer()
 {
     if (log_buffer->size()>2) {
         quint64 current_start = last_log_item.log_time - log_buffer_time_sub;
-        unsigned int i;
+        int i;
 
         for(i=0; i<log_buffer->size() && log_buffer->at(i).log_time<current_start; i++);
 
-        if (i<log_buffer->size() && i>0) {
+        if (i<log_buffer->size()-1 && i>0) {
             while (i>0) {
                 log_buffer->removeFirst();
                 i--;

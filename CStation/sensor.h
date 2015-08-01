@@ -70,11 +70,13 @@ public:
 
     quint16 getBlockID() const;
     void setBlockID(const quint16 &value);
-    quint16 getCounterValue() const;
-    void setCounterValue(const quint16 &value);
 
     QList<SensorLogItem>* startLogDataTracking(quint64 time_sub);
     void stopLogDataTracking();
+    qint64 getLogBufferTimeSub() const;
+
+    QList<SensorLogItem> *getLogBuffer();
+
 private:
     QFile *log_file;
     QList<SensorLogItem>* log_buffer;
@@ -96,8 +98,6 @@ private:
     quint16 block_id;
 
     QDateTime upd_time;
-
-    quint16 counter_value;
 
     bool isValid;
     bool skip_enum_check;

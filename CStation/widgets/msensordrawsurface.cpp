@@ -4,11 +4,20 @@ MSensorDrawSurface::MSensorDrawSurface(Sensor *d_sensor, QWidget *parent) :
     QWidget(parent)
 {
     sensor = d_sensor;
-    draw_data = sensor->startLogDataTracking(24*60*60*1000);
+    if (sensor->getLogBufferTimeSub()) {
+        draw_data = sensor->getLogBuffer();
+    } else {
+        draw_data = sensor->startLogDataTracking(24*60*60*1000);
+    }
     sy_top = 0;
     sy_bottom = height();
     sx_left = 0;
     sx_right = width();
+}
+
+Sensor *MSensorDrawSurface::getSensor() const
+{
+    return sensor;
 }
 
 void MSensorDrawSurface::updateLogGraphicsParameters()
@@ -69,6 +78,8 @@ void MSensorDrawSurface::paintEvent(QPaintEvent *e)
     if (!draw_data || draw_data->size()<2) return;
 
     updateLogGraphicsParameters();
+
+    if (t_min>=t_max) return;
 
     float x0, y0, x1, y1;
     quint64 t = t_min;

@@ -100,7 +100,7 @@ void SensorBlock::sensor_destroyed(QObject *obj)
 void SensorBlock::sensor_update()
 {
     if (sensor) {
-        if (!sensor->getValue().isEmpty()) {
+        if (sensor->valueIsCorrect()) {
             if (sensor->getSensorDataType()==Sensor::SDT_ENUM) {
                 ui->label_value->setText(sensor->getValue());
             } else {

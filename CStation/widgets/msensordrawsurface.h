@@ -11,6 +11,7 @@ class MSensorDrawSurface : public QWidget
     Q_OBJECT
 public:
     explicit MSensorDrawSurface(Sensor* d_sensor, QWidget *parent);
+    Sensor *getSensor() const;
 
 protected:
     Sensor* sensor;

@@ -311,6 +311,7 @@ void MainWindow::on_pushButton_sensors_display_show_clicked()
     sensors_form->setValue_color(ui->toolButton_color_value->palette().background().color());
     sensors_form->setBg_color(ui->toolButton_color_bg->palette().background().color());
     sensors_form->setGraphics_color(ui->toolButton_color_graphics->palette().background().color());
+    sensors_form->setSensorGraphicsLogInterval((quint64)ui->spinBox_graphics_timeinterval->value() * 1000);
 
     QObject::connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
 
@@ -365,4 +366,9 @@ void MainWindow::on_toolButton_color_graphics_clicked()
 {
     colorPick(ui->toolButton_color_graphics);
     if (sensors_form) sensors_form->setGraphics_color(ui->toolButton_color_graphics->palette().background().color());
+}
+
+void MainWindow::on_spinBox_graphics_timeinterval_valueChanged(int arg1)
+{
+    if (sensors_form) sensors_form->setSensorGraphicsLogInterval((quint64)arg1*1000);
 }

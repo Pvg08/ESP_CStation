@@ -51,6 +51,8 @@ private slots:
 
     void on_toolButton_color_graphics_clicked();
 
+    void on_spinBox_graphics_timeinterval_valueChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
     Server* server;

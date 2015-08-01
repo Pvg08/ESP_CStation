@@ -34,6 +34,9 @@ public:
     QColor getGraphics_color() const;
     void setGraphics_color(const QColor &value);
 
+    quint64 getSensorGraphicsLogInterval() const;
+    void setSensorGraphicsLogInterval(const quint64 &value);
+
 private slots:
     void update_blocks_list();
     void new_sensor(Sensor* new_sensor);
@@ -45,6 +48,7 @@ private:
     Server* server;
     QString sensor_codes;
     QColor bg_color, label_color, value_color, graphics_color;
+    quint64 sensor_graphics_log_interval;
 
     bool fullscreen_block;
 

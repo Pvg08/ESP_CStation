@@ -10,6 +10,7 @@ SensorsDisplayForm::SensorsDisplayForm(Server* c_server, QWidget *parent) :
 
     display_block_id = 0;
     next_page_timeout = 5000;
+    sensor_graphics_log_interval = 24*60*60*1000;
     fullscreen_block = false;
     server = c_server;
 }
@@ -60,6 +61,8 @@ void SensorsDisplayForm::new_sensor(Sensor *new_sensor)
         QPalette p_l = QPalette(p_b);
         p_l.setColor(QPalette::Foreground, label_color);
 
+        new_sensor->startLogDataTracking(sensor_graphics_log_interval);
+
         SensorBlock* nblock = new SensorBlock(new_sensor, p_b, p_l, this);
         nblock->setGraphicsColor(graphics_color);
 
@@ -105,6 +108,22 @@ void SensorsDisplayForm::sensorBlockClicked()
         }
     } else {
         showNextSensorsPage();
+    }
+}
+
+quint64 SensorsDisplayForm::getSensorGraphicsLogInterval() const
+{
+    return sensor_graphics_log_interval;
+}
+
+void SensorsDisplayForm::setSensorGraphicsLogInterval(const quint64 &value)
+{
+    sensor_graphics_log_interval = value;
+    for (int i = 0; i < ui->layout_blocks->count(); ++i) {
+        if (SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget())) {
+            sblock->getSensor()->startLogDataTracking(sensor_graphics_log_interval);
+            sblock->repaint();
+        }
     }
 }
 
