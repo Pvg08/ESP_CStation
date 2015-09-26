@@ -20,6 +20,14 @@ Sensor::Sensor(QObject *parent, QString sensor_description) : QObject(parent)
 
 Sensor::~Sensor()
 {
+    if (shotTimer->isActive() && shotTimer->isSingleShot()) {
+        shotTimer->stop();
+        if (sensorDataType == SDT_ENUM) {
+            sensorValue = enumFalse;
+        } else {
+            sensorValue = QString::number(fromValue, 'f', 6);
+        }
+    }
     delete shotTimer;
     if (log_file) {
         writeLog(false);
@@ -252,7 +260,7 @@ bool Sensor::writeLog(bool check_precision)
 
         last_log_item = item;
 
-        if (log_buffer_time_sub) {
+        if (log_buffer_time_sub && !buffer_is_loading) {
             log_buffer->append(item);
             cutLogBuffer();
         }

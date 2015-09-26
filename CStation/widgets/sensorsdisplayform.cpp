@@ -72,7 +72,7 @@ void SensorsDisplayForm::new_sensor(Sensor *new_sensor)
         ui->layout_blocks->addWidget(nblock, sc/2, sc % 2, 1, 1);
 
         sensor_counters[new_sensor->getBlockID()]++;
-        repaint();
+        nblock->repaint();
     }
 }
 

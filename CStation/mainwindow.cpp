@@ -73,7 +73,7 @@ void MainWindow::load_settings(QString filename)
     ui->checkBox_fullscreen->setChecked(settings.value("main/fullscreen_display", false).toBool());
     ui->spinBox_nextpage_delay->setValue(settings.value("main/next_page_timeout", 5000).toInt());
     ui->spinBox_graphics_timeinterval->setValue(settings.value("main/graphics_timeinterval", 86400).toInt());
-    ui->lineEdit_sensor_codes->setText(settings.value("main/sensor_codes", "ATPHLRN").toString());
+    ui->lineEdit_sensor_codes->setText(settings.value("main/sensor_codes", "ATPHLRNXYZ").toString());
 
     setBtnColor(ui->toolButton_color_label, settings.value("main/display_color_l", "#000000").toString());
     setBtnColor(ui->toolButton_color_value, settings.value("main/display_color_v", "#000000").toString());
@@ -116,14 +116,16 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::get_message(QString message)
 {
+    QString dateTimeString = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     ui->statusBar->showMessage(message, 10000);
-    ui->textEdit_log->append(message);
+    ui->textEdit_log->append(dateTimeString + ": " + message);
 }
 
 void MainWindow::get_error(QString message)
 {
+    QString dateTimeString = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     QMessageBox::information(this, tr("CStation"), message);
-    ui->textEdit_log->append(message);
+    ui->textEdit_log->append(dateTimeString + ": " + message);
 }
 
 void MainWindow::update_blocks_list()

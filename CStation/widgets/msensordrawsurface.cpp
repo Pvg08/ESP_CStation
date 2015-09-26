@@ -4,9 +4,8 @@ MSensorDrawSurface::MSensorDrawSurface(Sensor *d_sensor, QWidget *parent) :
     QWidget(parent)
 {
     sensor = d_sensor;
-    if (sensor->getLogBufferTimeSub()) {
-        draw_data = sensor->getLogBuffer();
-    } else {
+    draw_data = sensor->getLogBuffer();
+    if (!sensor->getLogBufferTimeSub() || draw_data->isEmpty()) {
         draw_data = sensor->startLogDataTracking(24*60*60*1000);
     }
     sy_top = 0;
@@ -26,24 +25,33 @@ void MSensorDrawSurface::updateLogGraphicsParameters()
     y_max = y_min;
     bool min_set = false;
     bool max_set = false;
-    float tmp;
+    float tmpy;
+    quint64 tmpx;
+
+    t_min = draw_data->first().log_time;
+    t_max = draw_data->last().log_time;
     for(int i=0; i<draw_data->size(); ++i) {
-        tmp = draw_data->at(i).log_value;
-        if (tmp>=sensor->getFromValue() && tmp<=sensor->getToValue()) {
-            if (!min_set || tmp < y_min) {
-                y_min = tmp;
+        tmpx = draw_data->at(i).log_time;
+        tmpy = draw_data->at(i).log_value;
+        if (tmpy>=sensor->getFromValue() && tmpy<=sensor->getToValue()) {
+            if (!min_set || tmpy < y_min) {
+                y_min = tmpy;
                 min_set = true;
             }
-            if (!max_set || tmp > y_max) {
-                y_max = tmp;
+            if (!max_set || tmpy > y_max) {
+                y_max = tmpy;
                 max_set = true;
             }
         }
+        if (tmpx < t_min) {
+            t_min = tmpx;
+        }
+        if (tmpx > t_max) {
+            t_max = tmpx;
+        }
     }
-    t_min = draw_data->first().log_time;
-    t_max = draw_data->last().log_time;
     dt_grid = (t_max-t_min) / 4;
-    show_dates = (t_max - t_min) > 24*60*60*1000;
+    show_dates = (t_max - t_min) >= 86400000;
 
     int min_w;
     int max_w;

@@ -7,7 +7,7 @@
         <location filename="../mainwindow.ui" line="14"/>
         <location filename="../mainwindow.cpp" line="125"/>
         <source>CStation</source>
-        <translation type="unfinished"></translation>
+        <translation>CStation</translation>
     </message>
     <message>
         <location filename="../mainwindow.ui" line="40"/>
@@ -231,7 +231,7 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="3170"/>
-        <source> Listen</source>
+        <source>Listen</source>
         <translation>Запуск сервера</translation>
     </message>
     <message>
@@ -379,10 +379,8 @@
     </message>
     <message>
         <location filename="../server.cpp" line="211"/>
-        <source>The server is running on IP: %1 port: %2
-</source>
-        <translation>Сервер запущен на IP: %1 порт: %2
-</translation>
+        <source>The server is running on IP: %1 port: %2</source>
+        <translation>Сервер запущен на IP: %1 порт: %2</translation>
     </message>
     <message>
         <location filename="../server.cpp" line="222"/>
