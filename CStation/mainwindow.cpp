@@ -29,6 +29,7 @@ void MainWindow::save_settings(QString filename)
     QSettings settings(filename, QSettings::IniFormat);
 
     settings.setValue("main/server_port", ui->lineEdit_port->text());
+    settings.setValue("main/remote_port", ui->lineEdit_remote_port->text());
     settings.setValue("main/autostart_server", ui->checkBox_autostart->isChecked());
     settings.setValue("main/fullscreen_display", ui->checkBox_fullscreen->isChecked());
     settings.setValue("main/display_opened", sensors_form ? true : false);
@@ -69,6 +70,7 @@ void MainWindow::load_settings(QString filename)
     QSettings settings(filename, QSettings::IniFormat);
 
     ui->lineEdit_port->setText(QString::number(settings.value("main/server_port", 51015).toInt()));
+    ui->lineEdit_remote_port->setText(QString::number(settings.value("main/remote_port", 51016).toInt()));
     ui->checkBox_autostart->setChecked(settings.value("main/autostart_server", false).toBool());
     ui->checkBox_fullscreen->setChecked(settings.value("main/fullscreen_display", false).toBool());
     ui->spinBox_nextpage_delay->setValue(settings.value("main/next_page_timeout", 5000).toInt());
@@ -239,10 +241,14 @@ void MainWindow::on_pushButton_listen_clicked()
         QObject::connect(server, SIGNAL(write_message(QString)), this, SLOT(get_message(QString)));
         QObject::connect(server, SIGNAL(blocks_change()), this, SLOT(update_blocks_list()));
         QObject::connect(server, SIGNAL(sensors_change(quint16)), this, SLOT(update_sensors_values(quint16)));
-        server->StartServer(ui->lineEdit_port->text().toInt());
+        server->setPort(ui->lineEdit_port->text().toInt());
+        server->setRemotePort(ui->lineEdit_remote_port->text().toInt());
+        server->StartServer();
         ui->pushButton_sensors_display_show->setEnabled(true);
     } else {
-        server->Reset(ui->lineEdit_port->text().toInt());
+        server->setPort(ui->lineEdit_port->text().toInt());
+        server->setRemotePort(ui->lineEdit_remote_port->text().toInt());
+        server->Reset();
     }
 }
 

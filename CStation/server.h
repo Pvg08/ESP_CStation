@@ -15,8 +15,8 @@ class Server : public QObject
 public:
     Server();
     ~Server();
-    void Reset(int server_port);
-    void StartServer(int server_port);
+    void Reset();
+    void StartServer();
     bool SendData(QString ip_to, QString message);
     bool SendReboot(QString ip_to);
     bool SendRunSetup(QString ip_to);
@@ -30,6 +30,11 @@ public:
     const QStringList getIPsList();
     ClientBlock *getClientBlock(quint32 ip_addr);
     ClientBlock *getClientBlockByID(quint16 block_id);
+
+    int getRemotePort() const;
+    void setRemotePort(int value);
+    int getPort() const;
+    void setPort(int value);
 
 signals:
     void error(QString message);
@@ -49,11 +54,15 @@ private slots:
     void clientBlockNewSensor(Sensor* sensor_obj);
 private:
     int port = 0;
+    int remote_port = 0;
     QMap<quint32, QTcpSocket *> *sockets;
     QMap<quint16, ClientBlock *> *clientblocks;
     QString ipAddress;
     QTcpServer *tcpServer;
     QNetworkSession *networkSession;
+
+    void processMessageGroup(QString message_gr, quint32 ipaddr);
+    void processMessage(QString message, quint32 ipaddr);
 };
 
 #endif

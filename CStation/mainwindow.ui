@@ -1055,7 +1055,7 @@
              <widget class="QCheckBox" name="checkBox_autostart">
               <property name="geometry">
                <rect>
-                <x>180</x>
+                <x>330</x>
                 <y>20</y>
                 <width>211</width>
                 <height>25</height>
@@ -1080,8 +1080,8 @@
              <widget class="QCheckBox" name="checkBox_fullscreen">
               <property name="geometry">
                <rect>
-                <x>400</x>
-                <y>20</y>
+                <x>340</x>
+                <y>80</y>
                 <width>171</width>
                 <height>25</height>
                </rect>
@@ -3005,6 +3005,44 @@
               </property>
               <property name="text">
                <string>Graphics time interval (seconds)</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_20">
+              <property name="geometry">
+               <rect>
+                <x>170</x>
+                <y>0</y>
+                <width>131</width>
+                <height>16</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Remote port</string>
+              </property>
+             </widget>
+             <widget class="QLineEdit" name="lineEdit_remote_port">
+              <property name="geometry">
+               <rect>
+                <x>170</x>
+                <y>20</y>
+                <width>151</width>
+                <height>25</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>51016</string>
               </property>
              </widget>
             </widget>

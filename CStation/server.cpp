@@ -4,6 +4,7 @@ Server::Server()
 :   QObject(0), tcpServer(0), networkSession(0)
 {
     port = 0;
+    remote_port = 0;
     ipAddress = "";
     tcpServer = 0;
     networkSession = 0;
@@ -26,7 +27,7 @@ Server::~Server()
     delete sockets;
 }
 
-void Server::Reset(int server_port)
+void Server::Reset()
 {
     emit write_message(tr("Reseting server."));
 
@@ -46,13 +47,11 @@ void Server::Reset(int server_port)
     if (tcpServer) {
         tcpServer->close();
     }
-    if (server_port) port = server_port;
     sessionOpened();
 }
 
-void Server::StartServer(int server_port)
+void Server::StartServer()
 {
-    port = server_port;
     emit write_message(tr("Network session starting."));
 
     QNetworkConfigurationManager manager;
@@ -93,7 +92,7 @@ bool Server::SendData(QString ip_to, QString message)
         result = tcpSocket->waitForBytesWritten();
     } else {
         tcpSocket = new QTcpSocket();
-        tcpSocket->connectToHost(QHostAddress(ip_to), port, QIODevice::ReadWrite);
+        tcpSocket->connectToHost(QHostAddress(ip_to), remote_port, QIODevice::ReadWrite);
         tcpSocket->waitForConnected(5000);
 
         if (tcpSocket->state()==QAbstractSocket::ConnectedState) {
@@ -269,6 +268,26 @@ void Server::clientBlockNewSensor(Sensor* sensor_obj)
     emit new_sensor(sensor_obj);
 }
 
+int Server::getPort() const
+{
+    return port;
+}
+
+void Server::setPort(int value)
+{
+    port = value;
+}
+
+int Server::getRemotePort() const
+{
+    return remote_port;
+}
+
+void Server::setRemotePort(int value)
+{
+    remote_port = value;
+}
+
 ClientBlock *Server::getClientBlock(quint32 ip_addr)
 {
     QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
@@ -301,35 +320,46 @@ void Server::recieveData()
             in.setVersion(QDataStream::Qt_4_0);
             char *mem = new char[size];
             in.readRawData(mem, size);
-            QString message = QString::fromLatin1(mem, size);
+            QString message = QString::fromLatin1(mem, size).trimmed();
             delete mem;
             emit write_message(tr("Recieved data (size=%1) from %2. Content: \"%3\"").arg(size).arg(tcpSocket->peerAddress().toString()).arg(message));
-
-            if (message.length()>3 && message.length()<=5 && message.startsWith("DS=")) {
-                int dst_id = message.remove(0,3).toInt();
-                if (dst_id) {
-                    if (clientblocks->contains(dst_id)) {
-                        clientblocks->value(dst_id)->setIpAddr(i.key());
-                        emit write_message(tr("Block with ID=%1 connected.").arg(dst_id));
-                    } else {
-                        ClientBlock *nblock = new ClientBlock(this, dst_id);
-                        nblock->setIpAddr(i.key());
-                        clientblocks->insert(dst_id, nblock);
-                        connect(nblock, SIGNAL(sensors_values_changed()), this, SLOT(clientBlockSensorsChange()));
-                        connect(nblock, SIGNAL(new_sensor(Sensor*)), this, SLOT(clientBlockNewSensor(Sensor*)));
-                        emit write_message(tr("Registered new block. ID=%1").arg(dst_id));
-                    }
-                    emit blocks_change();
-                }
-            } else {
-                ClientBlock *rblock = getClientBlock(i.key());
-                if (rblock) {
-                    rblock->BlockMessage(message);
-                }
-            }
-
+            processMessageGroup(message, i.key());
         }
         ++i;
+    }
+}
+
+void Server::processMessageGroup(QString message_gr, quint32 ipaddr)
+{
+    QStringList message_list = message_gr.split("\r\n", QString::KeepEmptyParts);
+    for(int i=0; i<message_list.size(); i++) {
+        processMessage(message_list.at(i), ipaddr);
+    }
+}
+
+void Server::processMessage(QString message, quint32 ipaddr)
+{
+    if (message.length()>3 && message.length()<=5 && message.startsWith("DS=")) {
+        int dst_id = message.remove(0,3).toInt();
+        if (dst_id) {
+            if (clientblocks->contains(dst_id)) {
+                clientblocks->value(dst_id)->setIpAddr(ipaddr);
+                emit write_message(tr("Block with ID=%1 connected.").arg(dst_id));
+            } else {
+                ClientBlock *nblock = new ClientBlock(this, dst_id);
+                nblock->setIpAddr(ipaddr);
+                clientblocks->insert(dst_id, nblock);
+                connect(nblock, SIGNAL(sensors_values_changed()), this, SLOT(clientBlockSensorsChange()));
+                connect(nblock, SIGNAL(new_sensor(Sensor*)), this, SLOT(clientBlockNewSensor(Sensor*)));
+                emit write_message(tr("Registered new block. ID=%1").arg(dst_id));
+            }
+            emit blocks_change();
+        }
+    } else {
+        ClientBlock *rblock = getClientBlock(ipaddr);
+        if (rblock) {
+            rblock->BlockMessage(message);
+        }
     }
 }
 
