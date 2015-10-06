@@ -8,12 +8,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     server = NULL;
     sensors_form = NULL;
+    actions_form = NULL;
 
     load_settings(QCoreApplication::instance()->applicationDirPath()+"/config.cfg");
 }
 
 MainWindow::~MainWindow()
 {
+    if (actions_form) delete actions_form;
     delete ui;
     if (server) delete server;
 }
@@ -245,6 +247,10 @@ void MainWindow::on_pushButton_listen_clicked()
         server->setRemotePort(ui->lineEdit_remote_port->text().toInt());
         server->StartServer();
         ui->pushButton_sensors_display_show->setEnabled(true);
+
+        actions_form = new ClientBlocksListActionsForm(ui->widget_actions, server);
+        actions_form->setIPString(ui->comboBox_ip->currentText());
+        ui->verticalLayout_actions->addWidget(actions_form);
     } else {
         server->setPort(ui->lineEdit_port->text().toInt());
         server->setRemotePort(ui->lineEdit_remote_port->text().toInt());
@@ -351,4 +357,11 @@ void MainWindow::on_toolButton_color_graphics_clicked()
 void MainWindow::on_spinBox_graphics_timeinterval_valueChanged(int arg1)
 {
     if (sensors_form) sensors_form->setSensorGraphicsLogInterval((quint64)arg1*1000);
+}
+
+void MainWindow::on_comboBox_ip_currentTextChanged(const QString &arg1)
+{
+    if (actions_form) {
+        actions_form->setIPString(arg1);
+    }
 }

@@ -1,7 +1,7 @@
 #include "server.h"
 
 Server::Server()
-:   QObject(0), tcpServer(0), networkSession(0)
+:   AbstractServer(0), tcpServer(0), networkSession(0)
 {
     port = 0;
     remote_port = 0;
@@ -83,28 +83,43 @@ void Server::StartServer()
 
 bool Server::SendData(QString ip_to, QString message)
 {
-    bool result = false;
     ip_to = ip_to.replace(QRegExp("(\\s){0,}\\(.*\\)(\\s){0,}"), "");
-    QTcpSocket* tcpSocket = sockets->value(QHostAddress(ip_to).toIPv4Address(), 0);
+    return SendData(QHostAddress(ip_to), message);
+}
+
+bool Server::SendData(QHostAddress ip_to, QString message)
+{
+    bool result = false;
+    QTcpSocket* tcpSocket = sockets->value(ip_to.toIPv4Address(), 0);
     if (tcpSocket && tcpSocket->state()==QAbstractSocket::ConnectedState && tcpSocket->isWritable()) {
-        emit write_message(tr("Sending data (size=%1) to %2. Content: \"%3\"").arg(message.length()).arg(ip_to).arg(message));
+        emit write_message(tr("Sending data (size=%1) to %2. Content: \"%3\"").arg(message.length()).arg(ip_to.toString()).arg(message));
         tcpSocket->write(message.toLocal8Bit());
         result = tcpSocket->waitForBytesWritten();
     } else {
         tcpSocket = new QTcpSocket();
-        tcpSocket->connectToHost(QHostAddress(ip_to), remote_port, QIODevice::ReadWrite);
+        tcpSocket->connectToHost(ip_to, remote_port, QIODevice::ReadWrite);
         tcpSocket->waitForConnected(5000);
 
         if (tcpSocket->state()==QAbstractSocket::ConnectedState) {
-            emit write_message(tr("Sending data (size=%1) from new socket to %2. Content: \"%3\"").arg(message.length()).arg(ip_to).arg(message));
+            emit write_message(tr("Sending data (size=%1) from new socket to %2. Content: \"%3\"").arg(message.length()).arg(ip_to.toString()).arg(message));
             tcpSocket->write(message.toLocal8Bit());
             result = tcpSocket->waitForBytesWritten(5000);
         } else {
-            emit error(tr("Client \"%1\" not found").arg(ip_to));
+            emit error(tr("Client \"%1\" not found").arg(ip_to.toString()));
         }
 
         tcpSocket->abort();
         delete tcpSocket;
+    }
+    return result;
+}
+
+bool Server::SendData(quint16 block_id, QString message)
+{
+    bool result = false;
+    ClientBlock *bl = clientblocks->value(block_id, NULL);
+    if (bl) {
+        result = SendData(QHostAddress(bl->getIpAddr()), message);
     }
     return result;
 }
@@ -243,6 +258,14 @@ void Server::clientBlockNewSensor(Sensor* sensor_obj)
     emit new_sensor(sensor_obj);
 }
 
+void Server::clientBlockReady()
+{
+    ClientBlock *cblock = dynamic_cast<ClientBlock*>(this->sender());
+    if (cblock) {
+        emit new_block_ready(cblock->getblockId());
+    }
+}
+
 int Server::getPort() const
 {
     return port;
@@ -318,6 +341,7 @@ void Server::processMessage(QString message, quint32 ipaddr)
         int dst_id = message.remove(0,3).toInt();
         if (dst_id) {
             if (clientblocks->contains(dst_id)) {
+                clientblocks->value(dst_id)->reset();
                 clientblocks->value(dst_id)->setIpAddr(ipaddr);
                 emit write_message(tr("Block with ID=%1 connected.").arg(dst_id));
             } else {
@@ -326,6 +350,7 @@ void Server::processMessage(QString message, quint32 ipaddr)
                 clientblocks->insert(dst_id, nblock);
                 connect(nblock, SIGNAL(sensors_values_changed()), this, SLOT(clientBlockSensorsChange()));
                 connect(nblock, SIGNAL(new_sensor(Sensor*)), this, SLOT(clientBlockNewSensor(Sensor*)));
+                connect(nblock, SIGNAL(block_ready()), this, SLOT(clientBlockReady()));
                 emit write_message(tr("Registered new block. ID=%1").arg(dst_id));
             }
             emit blocks_change();

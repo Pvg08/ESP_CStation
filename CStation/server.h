@@ -6,9 +6,10 @@
 #include <QNetworkSession>
 #include <QtNetwork>
 #include <stdlib.h>
+#include "abstractserver.h"
 #include "clientblock.h"
 
-class Server : public QObject
+class Server : public AbstractServer
 {
     Q_OBJECT
 
@@ -18,6 +19,8 @@ public:
     void Reset();
     void StartServer();
     bool SendData(QString ip_to, QString message);
+    bool SendData(QHostAddress ip_to, QString message);
+    bool SendData(quint16 block_id, QString message);
     bool SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid);
 
     quint16 getNextBlockID(quint16 block_id);
@@ -32,11 +35,10 @@ public:
     void setPort(int value);
 
 signals:
-    void error(QString message);
-    void write_message(QString message);
     void blocks_change();
     void sensors_change(quint16 block_id);
     void new_sensor(Sensor* sensor_obj);
+    void new_block_ready(quint16 block_id);
 
 private slots:
     void sessionOpened();
@@ -47,6 +49,8 @@ private slots:
     void displayError(QAbstractSocket::SocketError socketError);
     void clientBlockSensorsChange();
     void clientBlockNewSensor(Sensor* sensor_obj);
+    void clientBlockReady();
+
 private:
     int port = 0;
     int remote_port = 0;

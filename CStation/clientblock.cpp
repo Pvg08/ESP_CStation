@@ -1,10 +1,11 @@
 #include "clientblock.h"
 
-ClientBlock::ClientBlock(QObject *parent, quint16 id) : QObject(parent)
+ClientBlock::ClientBlock(AbstractServer *parent, quint16 id) : QObject(parent)
 {
     ip_addr = 0;
     block_id = id;
     is_on = false;
+    is_ready = false;
     sensors = new ClientSensors();
     client_actions = new ClientActions();
 }
@@ -61,6 +62,9 @@ void ClientBlock::BlockMessage(QString message)
         message = message.remove(0,6);
         message.truncate(message.length()-1);
         setSensorsValues(message);
+    } else if (message.length()>9 && message.startsWith("DS_READY=1")) {
+        is_ready = true;
+        emit block_ready();
     }
 }
 
@@ -96,7 +100,7 @@ void ClientBlock::addSensor(QString message)
 
 void ClientBlock::addAction(QString message)
 {
-    ClientAction* n_action = new ClientAction(this, message);
+    ClientAction* n_action = new ClientAction(dynamic_cast<AbstractServer*>(this->parent()), message);
     if (n_action->actionIsReady() && !client_actions->contains(n_action->getCode())) {
         n_action->setBlockID(block_id);
         client_actions->insert(n_action->getCode(), n_action);
@@ -111,12 +115,22 @@ quint16 ClientBlock::getblockId() const
     return block_id;
 }
 
-ClientSensors *ClientBlock::getSensors() const
+bool ClientBlock::isReady() const
+{
+    return is_ready;
+}
+
+void ClientBlock::reset()
+{
+    is_ready = false;
+}
+
+ClientSensors *ClientBlock::getSensors()
 {
     return sensors;
 }
 
-ClientActions *ClientBlock::getClientActions() const
+ClientActions *ClientBlock::getClientActions()
 {
     return client_actions;
 }
@@ -125,5 +139,4 @@ void ClientBlock::sensor_local_change()
 {
     emit sensors_values_changed();
 }
-
 

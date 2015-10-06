@@ -7,6 +7,7 @@
 #include <QToolButton>
 #include "server.h"
 #include "./widgets/sensorsdisplayform.h"
+#include "./widgets/clientblockslistactionsform.h"
 
 namespace Ui {
 class MainWindow;
@@ -40,11 +41,13 @@ private slots:
     void on_toolButton_color_bg_clicked();
     void on_toolButton_color_graphics_clicked();
     void on_spinBox_graphics_timeinterval_valueChanged(int arg1);
+    void on_comboBox_ip_currentTextChanged(const QString &arg1);
 
 private:
     Ui::MainWindow *ui;
     Server* server;
     SensorsDisplayForm* sensors_form;
+    ClientBlocksListActionsForm* actions_form;
 
     Server *getServer();
     void save_settings(QString filename);
