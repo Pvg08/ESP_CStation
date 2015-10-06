@@ -43,7 +43,7 @@ public:
     enum SensorDataTypes {
         SDT_FLOAT,
         SDT_INT,
-        SDT_ENUM
+        SDT_ENUM_BOOL
     };
     explicit Sensor(QObject *parent, QString sensor_description);
     ~Sensor();

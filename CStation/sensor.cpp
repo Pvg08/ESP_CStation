@@ -22,7 +22,7 @@ Sensor::~Sensor()
 {
     if (shotTimer->isActive() && shotTimer->isSingleShot()) {
         shotTimer->stop();
-        if (sensorDataType == SDT_ENUM) {
+        if (sensorDataType == SDT_ENUM_BOOL) {
             sensorValue = enumFalse;
         } else {
             sensorValue = QString::number(fromValue, 'f', 6);
@@ -54,7 +54,7 @@ QString Sensor::getValueWithEM()
 float Sensor::getFloatValue()
 {
     float result = 0;
-    if (sensorDataType == SDT_ENUM) {
+    if (sensorDataType == SDT_ENUM_BOOL) {
         result = getValue()==enumTrue ? 1 : 0;
     } else {
         result = getValue().toFloat();
@@ -74,7 +74,7 @@ void Sensor::setValue(const QString &value)
     upd_time = QDateTime::currentDateTime();
     sensorValue = value;
 
-    if (resetTime && ((sensorDataType == SDT_ENUM && getValue()==enumTrue) || (sensorDataType != SDT_ENUM && getValue().toFloat()!=fromValue))) {
+    if (resetTime && ((sensorDataType == SDT_ENUM_BOOL && getValue()==enumTrue) || (sensorDataType != SDT_ENUM_BOOL && getValue().toFloat()!=fromValue))) {
         shotTimer->start();
     }
     writeLog(true);
@@ -235,7 +235,7 @@ bool Sensor::writeLog(bool check_precision)
     item.log_time = QDateTime::currentMSecsSinceEpoch();
     item.log_value = getFloatValue();
 
-    if (!skip_enum_check && sensorDataType == SDT_ENUM) {
+    if (!skip_enum_check && sensorDataType == SDT_ENUM_BOOL) {
         if (item.log_value == 1 && (last_log_item.log_value == 0 || (!log_buffer->isEmpty() && log_buffer->last().log_value == 0))) {
             skip_enum_check = true;
             sensorValue = enumFalse;
@@ -322,7 +322,7 @@ void Sensor::parseDescription()
     if (stype == "int") {
         sensorDataType = SDT_INT;
     } else if (stype == "enum") {
-        sensorDataType = SDT_ENUM;
+        sensorDataType = SDT_ENUM_BOOL;
     } else if (stype != "float") {
         return;
     }
@@ -330,7 +330,7 @@ void Sensor::parseDescription()
     QString range = sensorDescription;
     range.replace(QRegExp("^([^\\(\\)]*)\\(([^\\(\\)]*)\\).*$"), "\\2");
 
-    if (sensorDataType == SDT_ENUM) {
+    if (sensorDataType == SDT_ENUM_BOOL) {
         QStringList enums = range.split(',', QString::SkipEmptyParts);
         if (enums.length()==2) {
             enumFalse = enums.at(0);
@@ -376,7 +376,7 @@ void Sensor::parseDescription()
 
 void Sensor::reset_value()
 {
-    if (sensorDataType == SDT_ENUM) {
+    if (sensorDataType == SDT_ENUM_BOOL) {
         if (sensorValue != enumFalse) {
             setValue(enumFalse);
             emit local_change();

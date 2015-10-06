@@ -101,7 +101,7 @@ void SensorBlock::sensor_update()
 {
     if (sensor) {
         if (sensor->valueIsCorrect()) {
-            if (sensor->getSensorDataType()==Sensor::SDT_ENUM) {
+            if (sensor->getSensorDataType()==Sensor::SDT_ENUM_BOOL) {
                 ui->label_value->setText(sensor->getValue() == sensor->getEnumTrue() ? sensor->getTrEnumTrue() : sensor->getTrEnumFalse());
             } else {
                 ui->lcdNumber_value->display(sensor->getFloatValue());
@@ -111,7 +111,7 @@ void SensorBlock::sensor_update()
             ui->label_sensor_name->setText(sensor->getSensorName() + " (DS"+QString::number(sensor->getBlockID())+")");
             ui->label_em->setText(sensor->getSensorEM());
             if (ui->label_em->text().isEmpty()) ui->label_em->setVisible(false);
-            if (sensor->getSensorDataType()==Sensor::SDT_ENUM) {
+            if (sensor->getSensorDataType()==Sensor::SDT_ENUM_BOOL) {
                 ui->lcdNumber_value->setVisible(false);
             } else {
                 ui->label_value->setVisible(false);

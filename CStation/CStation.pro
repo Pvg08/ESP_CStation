@@ -16,6 +16,7 @@ SOURCES += main.cpp\
     server.cpp \
     clientblock.cpp \
     sensor.cpp \
+    clientaction.cpp \
     widgets/sensorblock.cpp \
     widgets/sensorsdisplayform.cpp \
     widgets/msensordrawsurface.cpp
@@ -24,6 +25,7 @@ HEADERS  += mainwindow.h \
     server.h \
     clientblock.h \
     sensor.h \
+    clientaction.h \
     widgets/sensorblock.h \
     widgets/sensorsdisplayform.h \
     widgets/msensordrawsurface.h

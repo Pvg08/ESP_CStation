@@ -55,7 +55,7 @@ void MSensorDrawSurface::updateLogGraphicsParameters()
 
     int min_w;
     int max_w;
-    if (sensor && sensor->getSensorDataType() == Sensor::SDT_ENUM) {
+    if (sensor && sensor->getSensorDataType() == Sensor::SDT_ENUM_BOOL) {
         min_w = fontMetrics().width(sensor->getTrEnumFalse());
         max_w = fontMetrics().width(sensor->getTrEnumTrue());
     } else {
@@ -98,7 +98,7 @@ void MSensorDrawSurface::paintEvent(QPaintEvent *e)
     y0 = y_to_screen(y_min);
     y1 = y_to_screen(y_max);
 
-    if (sensor && sensor->getSensorDataType() == Sensor::SDT_ENUM) {
+    if (sensor && sensor->getSensorDataType() == Sensor::SDT_ENUM_BOOL) {
         if (y_max > y_min) {
             painter.drawLine(0, y0, width(), y0);
             painter.drawText(QPoint(1, y0-1), sensor->getTrEnumFalse());
@@ -138,7 +138,7 @@ void MSensorDrawSurface::paintEvent(QPaintEvent *e)
         y0 = y1;
         x1 = x_to_screen(draw_data->at(i).log_time);
         y1 = y_to_screen(draw_data->at(i).log_value);
-        if (sensor && sensor->getSensorDataType() == Sensor::SDT_ENUM) {
+        if (sensor && sensor->getSensorDataType() == Sensor::SDT_ENUM_BOOL) {
             if (draw_data->at(i).log_value>0 && draw_data->at(i-1).log_value>0) {
                 painter.fillRect(x0, y0, x1-x0, y_to_screen(y_min)-y0+1, QBrush(this->palette().foreground().color(), Qt::DiagCrossPattern));
             }

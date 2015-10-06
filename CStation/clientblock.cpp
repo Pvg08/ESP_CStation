@@ -5,17 +5,19 @@ ClientBlock::ClientBlock(QObject *parent, quint16 id) : QObject(parent)
     ip_addr = 0;
     block_id = id;
     is_on = false;
-    sensors = new QMap<char, Sensor *>();
+    sensors = new ClientSensors();
+    client_actions = new ClientActions();
 }
 
 ClientBlock::~ClientBlock()
 {
-    QMap<char, Sensor *>::const_iterator i = sensors->constBegin();
+    ClientSensors::const_iterator i = sensors->constBegin();
     while (i != sensors->constEnd()) {
         delete i.value();
         ++i;
     }
     delete sensors;
+    delete client_actions;
 }
 
 quint32 ClientBlock::getIpAddr() const
@@ -28,13 +30,14 @@ void ClientBlock::setIpAddr(const quint32 &value)
     ip_addr = value;
 }
 
+ClientAction *ClientBlock::getAction(QString actionCode)
+{
+    return client_actions->value(actionCode, NULL);
+}
+
 Sensor *ClientBlock::getSensor(char sensorLetter)
 {
-    if (sensors->contains(sensorLetter)) {
-        return sensors->value(sensorLetter);
-    } else {
-        return NULL;
-    }
+    return sensors->value(sensorLetter, NULL);
 }
 
 QString ClientBlock::getSensorValue(char sensorLetter)
@@ -51,6 +54,9 @@ void ClientBlock::BlockMessage(QString message)
     if (message.length()>9 && message.startsWith("DS_INFO=")) {
         message = message.remove(0,8);
         addSensor(message);
+    } else if (message.length()>9 && message.startsWith("DC_INFO=")) {
+        message = message.remove(0,8);
+        addAction(message);
     } else if (message.length()>7 && message.startsWith("DS_V={")) {
         message = message.remove(0,6);
         message.truncate(message.length()-1);
@@ -88,14 +94,31 @@ void ClientBlock::addSensor(QString message)
     }
 }
 
+void ClientBlock::addAction(QString message)
+{
+    ClientAction* n_action = new ClientAction(this, message);
+    if (n_action->actionIsReady() && !client_actions->contains(n_action->getCode())) {
+        n_action->setBlockID(block_id);
+        client_actions->insert(n_action->getCode(), n_action);
+        emit new_action(n_action);
+    } else {
+        delete n_action;
+    }
+}
+
 quint16 ClientBlock::getblockId() const
 {
     return block_id;
 }
 
-QMap<char, Sensor *> *ClientBlock::getSensors() const
+ClientSensors *ClientBlock::getSensors() const
 {
     return sensors;
+}
+
+ClientActions *ClientBlock::getClientActions() const
+{
+    return client_actions;
 }
 
 void ClientBlock::sensor_local_change()

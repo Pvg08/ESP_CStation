@@ -32,25 +32,13 @@ private slots:
     void on_pushButton_listen_clicked();
     void on_pushButton_clearlog_clicked();
     void on_pushButton_write_clicked();
-    void on_pushButton_reboot_clicked();
-    void on_pushButton_setup_clicked();
-    void on_pushButton_start_tone_clicked();
-    void on_pushButton_stop_tone_clicked();
     void on_listWidget_devices_currentTextChanged(const QString &currentText);
-    void on_pushButton_set_lcd_text_clicked();
-    void on_pushButton_reset_lcd_text_clicked();
     void on_pushButton_sensors_display_show_clicked();
-
     void on_spinBox_nextpage_delay_valueChanged(int arg1);
-
     void on_toolButton_color_label_clicked();
-
     void on_toolButton_color_value_clicked();
-
     void on_toolButton_color_bg_clicked();
-
     void on_toolButton_color_graphics_clicked();
-
     void on_spinBox_graphics_timeinterval_valueChanged(int arg1);
 
 private:

@@ -37,7 +37,7 @@ void Server::Reset()
             QTcpSocket* tcpSocket = i.value();
             if (tcpSocket) {
                 emit write_message(tr("Sending reset signal to %1.").arg(tcpSocket->peerAddress().toString()));
-                tcpSocket->write("RST\r\n\r\n");
+                tcpSocket->write("SERV_RST=1\r\n\r\n");
                 tcpSocket->flush();
             }
             ++i;
@@ -109,35 +109,10 @@ bool Server::SendData(QString ip_to, QString message)
     return result;
 }
 
-bool Server::SendReboot(QString ip_to)
-{
-    return SendData(ip_to, "SERV_RST=1\r\n");
-}
-
-bool Server::SendRunSetup(QString ip_to)
-{
-    return SendData(ip_to, "SERV_CONF=1\r\n");
-}
-
 bool Server::SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid)
 {
     QString command = "DS_SETUP:\r\n"+ssid+"\r\n"+pssw+"\r\n"+servip+"\r\n"+QString::number(stid)+"\r\n";
     return SendData(ip_to, command);
-}
-
-bool Server::SendTone(QString ip_to, quint16 frequency, quint32 period)
-{
-    return SendData(ip_to, "TONE="+QString::number(frequency)+","+QString::number(period)+"\r\n");
-}
-
-bool Server::SendLCDText(QString ip_to, QString text)
-{
-    return SendData(ip_to, "SERV_LT="+text+"\r\n");
-}
-
-bool Server::SendLCDReturn(QString ip_to)
-{
-    return SendData(ip_to, "SERV_LR=1\r\n");
 }
 
 quint16 Server::getNextBlockID(quint16 block_id)

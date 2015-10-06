@@ -263,42 +263,12 @@ void MainWindow::on_pushButton_write_clicked()
     getServer()->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->spinBox_cid->value());
 }
 
-void MainWindow::on_pushButton_reboot_clicked()
-{
-    getServer()->SendReboot(ui->comboBox_ip->currentText());
-}
-
-void MainWindow::on_pushButton_setup_clicked()
-{
-    getServer()->SendRunSetup(ui->comboBox_ip->currentText());
-}
-
-void MainWindow::on_pushButton_start_tone_clicked()
-{
-    getServer()->SendTone(ui->comboBox_ip->currentText(), ui->spinBox_frequency->value(), ui->spinBox_period->value());
-}
-
-void MainWindow::on_pushButton_stop_tone_clicked()
-{
-    getServer()->SendTone(ui->comboBox_ip->currentText(), 0, 0);
-}
-
 void MainWindow::on_listWidget_devices_currentTextChanged(const QString &currentText)
 {
     QString sitem = currentText;
     sitem.replace(QRegExp("^([^\\(\\)]*)\\(DS([0-9]*)\\).*$"), "\\2");
     int block_code = sitem.toInt();
     update_sensors_values(block_code);
-}
-
-void MainWindow::on_pushButton_set_lcd_text_clicked()
-{
-    getServer()->SendLCDText(ui->comboBox_ip->currentText(), ui->lineEdit_lcdtext->text());
-}
-
-void MainWindow::on_pushButton_reset_lcd_text_clicked()
-{
-    getServer()->SendLCDReturn(ui->comboBox_ip->currentText());
 }
 
 void MainWindow::sensors_form_destroyed()
