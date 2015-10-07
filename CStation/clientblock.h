@@ -8,7 +8,7 @@
 #include "sensor.h"
 #include "clientaction.h"
 
-typedef QMap<char, Sensor *> ClientSensors;
+typedef QMap<QString, Sensor *> ClientSensors;
 typedef QMap<QString, ClientAction *> ClientActions;
 
 class ClientBlock : public QObject
@@ -23,8 +23,8 @@ public:
     ClientActions *getClientActions();
 
     ClientAction* getAction(QString actionCode);
-    Sensor* getSensor(char sensorLetter);
-    QString getSensorValue(char sensorLetter);
+    Sensor* getSensor(QString actionCode);
+    QString getSensorValue(QString actionCode);
 
     void BlockMessage(QString message);
     quint16 getblockId() const;

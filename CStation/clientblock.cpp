@@ -36,15 +36,15 @@ ClientAction *ClientBlock::getAction(QString actionCode)
     return client_actions->value(actionCode, NULL);
 }
 
-Sensor *ClientBlock::getSensor(char sensorLetter)
+Sensor *ClientBlock::getSensor(QString sensorCode)
 {
-    return sensors->value(sensorLetter, NULL);
+    return sensors->value(sensorCode, NULL);
 }
 
-QString ClientBlock::getSensorValue(char sensorLetter)
+QString ClientBlock::getSensorValue(QString sensorCode)
 {
-    if (sensors->contains(sensorLetter)) {
-        return sensors->value(sensorLetter)->getValue();
+    if (sensors->contains(sensorCode)) {
+        return sensors->value(sensorCode)->getValue();
     } else {
         return "";
     }
@@ -59,8 +59,7 @@ void ClientBlock::BlockMessage(QString message)
         message = message.remove(0,8);
         addAction(message);
     } else if (message.length()>7 && message.startsWith("DS_V={")) {
-        message = message.remove(0,6);
-        message.truncate(message.length()-1);
+        message = message.remove(0,5);
         setSensorsValues(message);
     } else if (message.length()>9 && message.startsWith("DS_READY=1")) {
         is_ready = true;
@@ -70,15 +69,22 @@ void ClientBlock::BlockMessage(QString message)
 
 void ClientBlock::setSensorsValues(QString message)
 {
-    QStringList sensor_values = message.split(';', QString::SkipEmptyParts);
-    for(int i=0; i<sensor_values.length(); i++) {
-        QString sensor_msg = sensor_values.at(i);
-        if (sensor_msg.length()>=3 && sensor_msg.at(0)>='A' && sensor_msg.at(0)<='Z') {
-            char sensor_letter = sensor_msg.at(0).toLatin1();
-            if (sensors->contains(sensor_letter)) {
-                sensor_msg.replace(QRegExp("^([^\\(\\)]*)\\(([^\\(\\)]*)\\).*$"), "\\2");
-                sensors->value(sensor_letter)->setValue(sensor_msg);
-            }
+    message.replace('\'', '"');
+    QJsonParseError jerror;
+    QJsonDocument jdoc= QJsonDocument::fromJson(message.toLocal8Bit(),&jerror);
+    if(jerror.error != QJsonParseError::NoError) return;
+    QJsonObject obj = jdoc.object();
+    QStringList sensor_keys = obj.keys();
+    for(int i=0; i<sensor_keys.length(); i++) {
+        QString sensor_code = sensor_keys.at(i);
+        QString sensor_value;
+        if (obj.value(sensor_code).isString()) {
+            sensor_value = obj.value(sensor_code).toString();
+        } else {
+            sensor_value = QString::number(obj.value(sensor_code).toDouble());
+        }
+        if (sensors->contains(sensor_code)) {
+            sensors->value(sensor_code)->setValue(sensor_value);
         }
     }
     emit sensors_values_changed();
@@ -87,10 +93,10 @@ void ClientBlock::setSensorsValues(QString message)
 void ClientBlock::addSensor(QString message)
 {
     Sensor* n_sensor = new Sensor(this, message);
-    if (n_sensor->getIsValid() && !sensors->contains(n_sensor->getSensorLetter())) {
+    if (n_sensor->getIsValid() && !sensors->contains(n_sensor->getSensorCode())) {
         n_sensor->setBlockID(block_id);
         connect(n_sensor, SIGNAL(local_change()), this, SLOT(sensor_local_change()));
-        sensors->insert(n_sensor->getSensorLetter(), n_sensor);
+        sensors->insert(n_sensor->getSensorCode(), n_sensor);
         emit new_sensor(n_sensor);
         emit sensors_values_changed();
     } else {

@@ -160,7 +160,7 @@ void MainWindow::update_sensors_values(quint16 block_id)
                     ui->tableWidget_sensors->removeRow(i);
                 }
             }
-            QMap<char, Sensor *>::const_iterator j = active_bl->getSensors()->constBegin();
+            ClientSensors::const_iterator j = active_bl->getSensors()->constBegin();
             while (j != active_bl->getSensors()->constEnd()) {
                 if (rows_cnt <= i) ui->tableWidget_sensors->insertRow(i);
 

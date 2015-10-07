@@ -8,8 +8,11 @@
 #include <QTimer>
 #include <QFile>
 #include <QDir>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonParseError>
 #include <math.h>
-#include <QDebug>
 
 #define SENSORS_LOG_BUFFER_FLUSH_SIZE 128
 #define SENSORS_LOG_BUFFER_PRECISION 1E-08
@@ -57,7 +60,7 @@ public:
     QString getSensorEM() const;
     quint16 getResetTime() const;
     QString getSensorName() const;
-    char getSensorLetter() const;
+    QString getSensorCode() const;
     float getFromValue() const;
     float getToValue() const;
     QString getEnumTrue() const;
@@ -90,7 +93,7 @@ private:
 
     QTimer *shotTimer;
 
-    char sensorLetter;
+    QString sensorCode;
     float fromValue, toValue;
     QString enumTrue, enumFalse;
     SensorDataTypes sensorDataType;
@@ -109,6 +112,7 @@ private:
     bool writeLog(bool check_precision);
     bool initLogFile();
     void cutLogBuffer();
+    QString html_decode(const QString &str);
 private slots:
     void reset_value();
 signals:

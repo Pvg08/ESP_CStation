@@ -93,7 +93,7 @@ bool Server::SendData(QHostAddress ip_to, QString message)
     QTcpSocket* tcpSocket = sockets->value(ip_to.toIPv4Address(), 0);
     if (tcpSocket && tcpSocket->state()==QAbstractSocket::ConnectedState && tcpSocket->isWritable()) {
         emit write_message(tr("Sending data (size=%1) to %2. Content: \"%3\"").arg(message.length()).arg(ip_to.toString()).arg(message));
-        tcpSocket->write(message.toLocal8Bit());
+        tcpSocket->write(message.toUtf8());
         result = tcpSocket->waitForBytesWritten();
     } else {
         tcpSocket = new QTcpSocket();
@@ -102,7 +102,7 @@ bool Server::SendData(QHostAddress ip_to, QString message)
 
         if (tcpSocket->state()==QAbstractSocket::ConnectedState) {
             emit write_message(tr("Sending data (size=%1) from new socket to %2. Content: \"%3\"").arg(message.length()).arg(ip_to.toString()).arg(message));
-            tcpSocket->write(message.toLocal8Bit());
+            tcpSocket->write(message.toUtf8());
             result = tcpSocket->waitForBytesWritten(5000);
         } else {
             emit error(tr("Client \"%1\" not found").arg(ip_to.toString()));
@@ -318,7 +318,7 @@ void Server::recieveData()
             in.setVersion(QDataStream::Qt_4_0);
             char *mem = new char[size];
             in.readRawData(mem, size);
-            QString message = QString::fromLatin1(mem, size).trimmed();
+            QString message = QString::fromUtf8(mem, size).trimmed();
             delete mem;
             emit write_message(tr("Recieved data (size=%1) from %2. Content: \"%3\"").arg(size).arg(tcpSocket->peerAddress().toString()).arg(message));
             processMessageGroup(message, i.key());

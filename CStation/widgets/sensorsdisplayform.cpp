@@ -21,7 +21,7 @@ void SensorsDisplayForm::showEvent(QShowEvent *event)
 
     do {
         if (ClientBlock* nb = server->getClientBlockByID(display_block_id)) {
-            QMap<char, Sensor *>::const_iterator i = nb->getSensors()->constBegin();
+            ClientSensors::const_iterator i = nb->getSensors()->constBegin();
             while (i != nb->getSensors()->constEnd()) {
                 new_sensor(i.value());
                 ++i;
@@ -48,7 +48,7 @@ void SensorsDisplayForm::update_blocks_list()
 
 void SensorsDisplayForm::new_sensor(Sensor *new_sensor)
 {
-    if (new_sensor && sensor_codes.contains(QChar(new_sensor->getSensorLetter()), Qt::CaseInsensitive)) {
+    if (new_sensor && sensor_codes.contains(new_sensor->getSensorCode(), Qt::CaseInsensitive)) {
         if (!sensor_counters.contains(new_sensor->getBlockID())) {
             sensor_counters.insert(new_sensor->getBlockID(), 0);
         }

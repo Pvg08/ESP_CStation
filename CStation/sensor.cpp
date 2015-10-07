@@ -96,9 +96,9 @@ QString Sensor::getSensorName() const
     return sensorName;
 }
 
-char Sensor::getSensorLetter() const
+QString Sensor::getSensorCode() const
 {
-    return sensorLetter;
+    return sensorCode;
 }
 
 float Sensor::getFromValue() const
@@ -293,7 +293,7 @@ bool Sensor::initLogFile()
         if (!dir.exists()) {
             dir.mkpath(".");
         }
-        log_file = new QFile(QCoreApplication::instance()->applicationDirPath()+"/sensors_logs/DS"+QString::number(block_id)+"_"+sensorLetter+".slog");
+        log_file = new QFile(QCoreApplication::instance()->applicationDirPath()+"/sensors_logs/DS"+QString::number(block_id)+"_"+sensorCode+".slog");
         log_file->open(QIODevice::ReadWrite);
     }
     return log_file && log_file->isOpen();
@@ -308,33 +308,40 @@ void Sensor::parseDescription()
     sensorName = "";
     fromValue = 0;
     toValue = 0;
-    sensorLetter = 'Z';
+    sensorCode = "Z";
     resetTime = 0;
     sensorEM = "";
-    if (sensorDescription.length()<10) return;
-    sensorLetter = sensorDescription.at(0).toLatin1();
 
-    if (sensorLetter<'A' || sensorLetter>'Z') return;
+    sensorDescription.replace('\'', '"');
+    QJsonParseError jerror;
+    QJsonDocument jdoc= QJsonDocument::fromJson(sensorDescription.toUtf8(),&jerror);
 
-    QString stype = sensorDescription;
-    stype.replace(QRegExp("^([^:]*):([^\\(\\)]*)\\(.*"), "\\2");
+    if (jerror.error != QJsonParseError::NoError) return;
+    QJsonObject obj = jdoc.object();
 
-    if (stype == "int") {
+    sensorCode = obj.value("CODE").toString();
+    sensorName = tr(obj.value("NAME").toString().toUtf8());
+
+    if (sensorCode.isEmpty() || sensorCode.length()>16 || sensorName.isEmpty() || sensorName.length()>32 ) return;
+
+    resetTime = obj.value("TIMEOUT").toInt();
+    sensorEM = tr(obj.value("EM").toString().toUtf8());
+
+    QString stype = obj.value("TYPE").toString();
+
+    if (stype == "INT") {
         sensorDataType = SDT_INT;
-    } else if (stype == "enum") {
+    } else if (stype == "ENUM") {
         sensorDataType = SDT_ENUM_BOOL;
-    } else if (stype != "float") {
+    } else if (stype != "FLOAT") {
         return;
     }
 
-    QString range = sensorDescription;
-    range.replace(QRegExp("^([^\\(\\)]*)\\(([^\\(\\)]*)\\).*$"), "\\2");
-
     if (sensorDataType == SDT_ENUM_BOOL) {
-        QStringList enums = range.split(',', QString::SkipEmptyParts);
-        if (enums.length()==2) {
-            enumFalse = enums.at(0);
-            enumTrue = enums.at(1);
+        QJsonArray enums = obj.value("ENUMS").toArray();
+        if (enums.size()==2) {
+            enumFalse = enums.at(0).toString();
+            enumTrue = enums.at(1).toString();
             fromValue = 0;
             toValue = 1;
             sensorValue = enumFalse;
@@ -342,35 +349,14 @@ void Sensor::parseDescription()
             return;
         }
     } else {
-        QStringList enums = range.split("..", QString::SkipEmptyParts);
-        if (enums.length()==2) {
-            fromValue = enums.at(0).toFloat();
-            toValue = enums.at(1).toFloat();
-        } else {
+        fromValue = obj.value("MIN").toDouble();
+        toValue = obj.value("MAX").toDouble();
+        if (fromValue == toValue) {
             return;
         }
     }
 
-    QString stime = sensorDescription;
-    stime.replace(QRegExp("^([^\\[\\]]*)\\[([^\\[\\]]*)\\].*"), "\\2");
-    resetTime = stime.toInt();
-
-    QString emstr = sensorDescription;
-    emstr.replace(QRegExp("^([^\\[\\]]*)\\[([^\\[\\]]*)\\]([^\\|]*)\\|.*"), "\\3");
-    sensorEM = tr(emstr.toUtf8());
-
-    QString namestr = sensorDescription;
-    namestr.replace(QRegExp("^([^\\|]*)\\|(.*)"), "\\2");
-
-    QString namechk = QString(namestr);
-    namechk.replace(QRegExp("[A-Za-z0-9\\,\\.\\-\\:\\ ]*"), "");
-
-    if (namestr.isEmpty() || !namechk.isEmpty()) return;
-
-    sensorName = tr(namestr.toUtf8());
-
     shotTimer->setInterval(resetTime*1000);
-
     isValid = true;
 }
 
