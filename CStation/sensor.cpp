@@ -12,6 +12,7 @@ Sensor::Sensor(QObject *parent, QString sensor_description) : QObject(parent)
     log_buffer = new QList<SensorLogItem>();
     log_buffer_time_sub = 0;
     last_log_item.log_time = 0;
+    last_log_item.log_value = -100000;
     shotTimer = new QTimer(this);
     shotTimer->setSingleShot(true);
     connect(shotTimer, SIGNAL(timeout()), this, SLOT(reset_value()));
@@ -228,6 +229,7 @@ QList<SensorLogItem> *Sensor::getLogBuffer()
 bool Sensor::writeLog(bool check_precision)
 {
     bool result = false;
+    bool log_appended = false;
 
     if (buffer_is_loading) return result;
 
@@ -251,7 +253,16 @@ bool Sensor::writeLog(bool check_precision)
         }
     }
 
-    if (valueIsCorrect() && (!check_precision || !last_log_item.log_time || fabs(item.log_value-last_log_item.log_value)>SENSORS_LOG_BUFFER_PRECISION)) {
+    bool log_changed = fabs(item.log_value-last_log_item.log_value)>SENSORS_LOG_BUFFER_PRECISION;
+
+    if (
+            valueIsCorrect() &&
+            (
+                !check_precision ||
+                !last_log_item.log_time ||
+                log_changed
+             )
+        ) {
         if (initLogFile() && log_file->isWritable()) {
             log_file->seek(log_file->size());
             unsigned bytes = log_file->write((char*)(void*)&item, sizeof(item));
@@ -263,7 +274,21 @@ bool Sensor::writeLog(bool check_precision)
         if (log_buffer_time_sub && !buffer_is_loading) {
             log_buffer->append(item);
             cutLogBuffer();
+            log_appended = true;
         }
+    }
+
+    if (
+            !log_appended &&
+            valueIsCorrect() &&
+            !log_changed &&
+            log_buffer->size()>=2 &&
+            fabs(log_buffer->last().log_value-item.log_value)<SENSORS_LOG_BUFFER_PRECISION
+        ) {
+        if (sensorDataType == SDT_ENUM_BOOL && fabs(log_buffer->at(log_buffer->size()-2).log_value-item.log_value)<SENSORS_LOG_BUFFER_PRECISION) {
+            log_buffer->removeLast();
+        }
+        log_buffer->append(item);
     }
 
     return result;

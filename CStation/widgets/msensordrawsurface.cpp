@@ -142,8 +142,11 @@ void MSensorDrawSurface::paintEvent(QPaintEvent *e)
             if (draw_data->at(i).log_value>0 && draw_data->at(i-1).log_value>0) {
                 painter.fillRect(x0, y0, x1-x0, y_to_screen(y_min)-y0+1, QBrush(this->palette().foreground().color(), Qt::DiagCrossPattern));
             }
+            painter.drawLine(x0, y0, x1, y0);
+            painter.drawLine(x1, y0, x1, y1);
+        } else {
+            painter.drawLine(x0, y0, x1, y1);
         }
-        painter.drawLine(x0, y0, x1, y1);
     }
 }
 

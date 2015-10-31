@@ -65,6 +65,7 @@ void SensorsDisplayForm::new_sensor(Sensor *new_sensor)
 
         SensorBlock* nblock = new SensorBlock(new_sensor, p_b, p_l, this);
         nblock->setGraphicsColor(graphics_color);
+        nblock->setLabelColors(label_color);
 
         connect(nblock, SIGNAL(sensor_click()), this, SLOT(sensorBlockClicked()));
 
