@@ -31,6 +31,11 @@ public:
     bool isReady() const;
 
     void reset();
+
+    QString getWifiSSID() const;
+    QString getWifiPassw() const;
+    QString getDSServerAddr() const;
+
 private:
     quint32 ip_addr;
     quint16 block_id;
@@ -38,6 +43,8 @@ private:
     bool is_ready;
     ClientSensors *sensors;
     ClientActions *client_actions;
+    QString wifi_ssid, wifi_passw, ds_server_addr;
+
 signals:
     void sensors_values_changed();
     void new_sensor(Sensor* new_sensor);
@@ -45,6 +52,7 @@ signals:
     void block_ready();
 private slots:
     void sensor_local_change();
+    void action_time_send();
 protected:
     void setSensorsValues(QString message);
     void addSensor(QString message);

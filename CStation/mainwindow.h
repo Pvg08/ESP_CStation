@@ -24,7 +24,7 @@ public:
 private slots:
     void get_message(QString message);
     void get_error(QString message);
-    void update_blocks_list();
+    void update_blocks_list(quint16 new_block_id);
     void update_sensors_values(quint16 block_id);
 
     void sensors_form_destroyed();
@@ -42,6 +42,7 @@ private slots:
     void on_toolButton_color_graphics_clicked();
     void on_spinBox_graphics_timeinterval_valueChanged(int arg1);
     void on_comboBox_ip_currentTextChanged(const QString &arg1);
+    void on_checkBox_log_clicked(bool checked);
 
 private:
     Ui::MainWindow *ui;

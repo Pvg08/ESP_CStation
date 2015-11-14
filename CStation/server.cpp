@@ -286,6 +286,12 @@ void Server::setRemotePort(int value)
     remote_port = value;
 }
 
+ClientBlock *Server::getClientBlock(QString ip_addr)
+{
+    ip_addr = ip_addr.replace(QRegExp("(\\s){0,}\\(.*\\)(\\s){0,}"), "");
+    return getClientBlock(QHostAddress(ip_addr).toIPv4Address());
+}
+
 ClientBlock *Server::getClientBlock(quint32 ip_addr)
 {
     QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();

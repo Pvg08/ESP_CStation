@@ -30,6 +30,7 @@ void MainWindow::save_settings(QString filename)
 {
     QSettings settings(filename, QSettings::IniFormat);
 
+    settings.setValue("main/keep_log", ui->checkBox_log->isChecked());
     settings.setValue("main/server_port", ui->lineEdit_port->text());
     settings.setValue("main/remote_port", ui->lineEdit_remote_port->text());
     settings.setValue("main/autostart_server", ui->checkBox_autostart->isChecked());
@@ -71,13 +72,16 @@ void MainWindow::load_settings(QString filename)
 {
     QSettings settings(filename, QSettings::IniFormat);
 
+    ui->checkBox_log->setChecked(settings.value("main/keep_log", true).toBool());
+    on_checkBox_log_clicked(ui->checkBox_log->isChecked());
+
     ui->lineEdit_port->setText(QString::number(settings.value("main/server_port", 51015).toInt()));
     ui->lineEdit_remote_port->setText(QString::number(settings.value("main/remote_port", 51016).toInt()));
     ui->checkBox_autostart->setChecked(settings.value("main/autostart_server", false).toBool());
     ui->checkBox_fullscreen->setChecked(settings.value("main/fullscreen_display", false).toBool());
     ui->spinBox_nextpage_delay->setValue(settings.value("main/next_page_timeout", 5000).toInt());
     ui->spinBox_graphics_timeinterval->setValue(settings.value("main/graphics_timeinterval", 86400).toInt());
-    ui->lineEdit_sensor_codes->setText(settings.value("main/sensor_codes", "ATPHLRNXYZ").toString());
+    ui->lineEdit_sensor_codes->setText(settings.value("main/sensor_codes", "ATPHLRNOBMxMyMz").toString());
 
     setBtnColor(ui->toolButton_color_label, settings.value("main/display_color_l", "#000000").toString());
     setBtnColor(ui->toolButton_color_value, settings.value("main/display_color_v", "#000000").toString());
@@ -120,26 +124,36 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::get_message(QString message)
 {
-    QString dateTimeString = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     ui->statusBar->showMessage(message, 10000);
-    ui->textEdit_log->append(dateTimeString + ": " + message);
+    if (ui->checkBox_log->isChecked()) {
+        QString dateTimeString = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+        ui->textEdit_log->append(dateTimeString + ": " + message);
+    }
 }
 
 void MainWindow::get_error(QString message)
 {
-    QString dateTimeString = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-    QMessageBox::information(this, tr("CStation"), message);
-    ui->textEdit_log->append(dateTimeString + ": " + message);
+    ui->statusBar->showMessage(message, 30000);
+    if (ui->checkBox_log->isChecked()) {
+        QString dateTimeString = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+        QMessageBox::information(this, tr("CStation"), message);
+        ui->textEdit_log->append(dateTimeString + ": " + message);
+    }
 }
 
-void MainWindow::update_blocks_list()
+void MainWindow::update_blocks_list(quint16 new_block_id)
 {
     if (server) {
+        int sel_index;
+        sel_index = ui->comboBox_ip->currentIndex();
         QStringList devices = server->getIPsList();
+        if (sel_index<0 && devices.count()>0) sel_index = 0;
         ui->comboBox_ip->clear();
         ui->comboBox_ip->addItems(devices);
+        ui->comboBox_ip->setCurrentIndex(sel_index);
+        on_comboBox_ip_currentTextChanged(ui->comboBox_ip->currentText());
 
-        int sel_index = ui->listWidget_devices->currentItem() ? ui->listWidget_devices->currentRow() : 0;
+        sel_index = ui->listWidget_devices->currentItem() ? ui->listWidget_devices->currentRow() : 0;
         ui->listWidget_devices->clear();
         ui->listWidget_devices->addItems(devices);
         if (ui->listWidget_devices->count()>sel_index) {
@@ -241,7 +255,7 @@ void MainWindow::on_pushButton_listen_clicked()
         server = new Server();
         QObject::connect(server, SIGNAL(error(QString)), this, SLOT(get_error(QString)));
         QObject::connect(server, SIGNAL(write_message(QString)), this, SLOT(get_message(QString)));
-        QObject::connect(server, SIGNAL(blocks_change()), this, SLOT(update_blocks_list()));
+        QObject::connect(server, SIGNAL(new_block_ready(quint16)), this, SLOT(update_blocks_list(quint16)));
         QObject::connect(server, SIGNAL(sensors_change(quint16)), this, SLOT(update_sensors_values(quint16)));
         server->setPort(ui->lineEdit_port->text().toInt());
         server->setRemotePort(ui->lineEdit_remote_port->text().toInt());
@@ -363,5 +377,19 @@ void MainWindow::on_comboBox_ip_currentTextChanged(const QString &arg1)
 {
     if (actions_form) {
         actions_form->setIPString(arg1);
+        ClientBlock* cblock = getServer()->getClientBlock(ui->comboBox_ip->currentText());
+        if (cblock) {
+            ui->lineEdit_ssid->setText(cblock->getWifiSSID());
+            ui->lineEdit_passw->setText(cblock->getWifiPassw());
+            ui->lineEdit_serv->setText(cblock->getDSServerAddr());
+            ui->spinBox_cid->setValue(cblock->getblockId());
+        }
     }
+}
+
+void MainWindow::on_checkBox_log_clicked(bool checked)
+{
+    if (!checked) on_pushButton_clearlog_clicked();
+    ui->textEdit_log->setEnabled(checked);
+    ui->pushButton_clearlog->setEnabled(checked);
 }

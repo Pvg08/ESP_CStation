@@ -52,18 +52,45 @@ QString ClientBlock::getSensorValue(QString sensorCode)
 
 void ClientBlock::BlockMessage(QString message)
 {
-    if (message.length()>9 && message.startsWith("DS_INFO=")) {
-        message = message.remove(0,8);
-        addSensor(message);
-    } else if (message.length()>9 && message.startsWith("DC_INFO=")) {
-        message = message.remove(0,8);
-        addAction(message);
-    } else if (message.length()>7 && message.startsWith("DS_V={")) {
-        message = message.remove(0,5);
-        setSensorsValues(message);
-    } else if (message.length()>9 && message.startsWith("DS_READY=1")) {
-        is_ready = true;
-        emit block_ready();
+    QString cmd_name = message;
+    cmd_name.replace(QRegExp("=(.*)$"), "");
+    if(cmd_name.length()==message.length()) cmd_name="";
+    if (cmd_name.isEmpty()) return;
+
+    QString cmd_param = message;
+    cmd_param.replace(QRegExp("^([^=]*)=(.*)$"), "\\2");
+
+    if (cmd_name=="DS_INFO") {
+        addSensor(cmd_param);
+    } else if (cmd_name=="DC_INFO") {
+        addAction(cmd_param);
+    } else if (cmd_name=="DS_V") {
+        setSensorsValues(cmd_param);
+    } else if (cmd_name=="DS_READY") {
+        if (cmd_param=="1") {
+            is_ready = true;
+            emit block_ready();
+        }
+    } else if (cmd_name=="DS_GETTIME") {
+        if (cmd_param=="1" && client_actions->contains("settime")) {
+            QTimer::singleShot(100, this, SLOT(action_time_send()));
+        }
+    } else if (cmd_name=="DS_WIFI_SSID") {
+        wifi_ssid = cmd_param;
+    } else if (cmd_name=="DS_WIFI_PASSW") {
+        wifi_passw = cmd_param;
+    } else if (cmd_name=="DS_SERVER") {
+        ds_server_addr = cmd_param;
+    }
+}
+
+void ClientBlock::action_time_send()
+{
+    if (client_actions->contains("settime")) {
+        QDateTime dateTime1 = QDateTime::currentDateTime();
+        dateTime1.setTimeSpec(Qt::LocalTime);
+        quint64 tt = dateTime1.offsetFromUtc() + (QDateTime::currentMSecsSinceEpoch()/1000);
+        client_actions->value("settime")->sendCommand(QString::number(tt));
     }
 }
 
@@ -129,6 +156,21 @@ bool ClientBlock::isReady() const
 void ClientBlock::reset()
 {
     is_ready = false;
+}
+
+QString ClientBlock::getWifiSSID() const
+{
+    return wifi_ssid;
+}
+
+QString ClientBlock::getWifiPassw() const
+{
+    return wifi_passw;
+}
+
+QString ClientBlock::getDSServerAddr() const
+{
+    return ds_server_addr;
 }
 
 ClientSensors *ClientBlock::getSensors()

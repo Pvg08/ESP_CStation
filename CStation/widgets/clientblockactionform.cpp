@@ -73,7 +73,30 @@ void ClientBlockActionForm::createControls()
                     if (param.type == "UINT") {
                         new_sb->setMinimum(0);
                     }
-                    new_sb->setMaximum(1000000);
+                    new_sb->setMaximum(1000000000);
+                    if (!param.default_value.isEmpty()) {
+                        new_sb->setValue(param.default_value.toInt());
+                    }
+                    ui->gridLayout_controls->addWidget(new_sb, 1, column++);
+                    new_widget = new_sb;
+                } else if (param.type == "DOUBLE" || param.type == "TIMESTAMP") {
+                    ui->gridLayout_controls->setColumnStretch(column, 2);
+
+                    QLabel * new_lb = new QLabel(tr(param.name.toLocal8Bit().data()), this);
+                    new_lb->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+                    ui->gridLayout_controls->addWidget(new_lb, 0, column);
+
+                    QDoubleSpinBox *new_sb = new QDoubleSpinBox(this);
+                    new_sb->setMinimumHeight(ui->pushButton_send->minimumHeight()-5);
+                    new_sb->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+                    if (param.type == "TIMESTAMP") {
+                        new_sb->setMinimum(0);
+                        new_sb->setDecimals(0);
+                    } else {
+                        new_sb->setMinimum(-100000000000000);
+                        new_sb->setDecimals(4);
+                    }
+                    new_sb->setMaximum(100000000000000);
                     if (!param.default_value.isEmpty()) {
                         new_sb->setValue(param.default_value.toInt());
                     }
@@ -135,6 +158,8 @@ void ClientBlockActionForm::sendParams(ClientParamButton* cbtn)
     for(int i=0; i<params_controls->size(); i++) {
         if (QCheckBox *cb = dynamic_cast<QCheckBox*>(params_controls->at(i))) {
             param_values->append(cb->isChecked() ? "1" : "0");
+        } else if (QDoubleSpinBox *sb = dynamic_cast<QDoubleSpinBox*>(params_controls->at(i))) {
+            param_values->append(QString::number(sb->value(), 'f', sb->decimals()));
         } else if (QSpinBox *sb = dynamic_cast<QSpinBox*>(params_controls->at(i))) {
             param_values->append(QString::number(sb->value()));
         } else if (QLineEdit *tb = dynamic_cast<QLineEdit*>(params_controls->at(i))) {

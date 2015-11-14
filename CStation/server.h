@@ -26,6 +26,7 @@ public:
     quint16 getNextBlockID(quint16 block_id);
 
     const QStringList getIPsList();
+    ClientBlock *getClientBlock(QString ip_addr);
     ClientBlock *getClientBlock(quint32 ip_addr);
     ClientBlock *getClientBlockByID(quint16 block_id);
 
@@ -33,7 +34,6 @@ public:
     void setRemotePort(int value);
     int getPort() const;
     void setPort(int value);
-
 signals:
     void blocks_change();
     void sensors_change(quint16 block_id);

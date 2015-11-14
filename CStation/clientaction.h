@@ -41,6 +41,7 @@ public:
     void setBlockID(const quint16 &value);
 
     void sendCommand(QVector<QString>* param_values);
+    void sendCommand(QString param_values);
     void sendCommandButton(QVector<QString>* param_values, ClientParamButton* clicked_btn);
 
 private:

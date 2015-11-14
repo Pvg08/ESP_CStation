@@ -64,6 +64,14 @@ void ClientAction::sendCommand(QVector<QString> *param_values)
     //need_to_listen_answer
 }
 
+void ClientAction::sendCommand(QString param_values)
+{
+    AbstractServer *server = dynamic_cast<AbstractServer*>(this->parent());
+    if (server && block_id) {
+        server->SendData(block_id, prefix + "=" + param_values);
+    }
+}
+
 void ClientAction::sendCommandButton(QVector<QString> *param_values, ClientParamButton *clicked_btn)
 {
     AbstractServer *server = dynamic_cast<AbstractServer*>(this->parent());
@@ -106,6 +114,10 @@ QString ClientAction::getCommand(QVector<QString> *param_values, ClientParamButt
                         pval = QString::number(pval.toInt());
                     } else if (parameters->at(i).type=="UINT") {
                         pval = QString::number(fmax(pval.toInt(), 0));
+                    } else if (parameters->at(i).type=="DOUBLE") {
+                        pval = QString::number(pval.toDouble(), 'f');
+                    } else if (parameters->at(i).type=="TIMESTAMP") {
+                        pval = QString::number(pval.toDouble(), 'f', 0);
                     }
 
                     if (parameters->at(i).type!="CONST" && (pval=="0" || pval.isEmpty()) && parameters->at(i).skip) {
@@ -161,7 +173,7 @@ bool ClientAction::parseDescription(QString description)
         if (param.value("LISTEN").toInt() != 0) {
             need_to_listen_answer = true;
         }
-        if (newparam.type!="BOOL" && newparam.type!="INT" && newparam.type!="UINT" && newparam.type!="STRING" && newparam.type!="CONST") {
+        if (newparam.type!="BOOL" && newparam.type!="INT" && newparam.type!="UINT" && newparam.type!="DOUBLE" && newparam.type!="TIMESTAMP" && newparam.type!="STRING" && newparam.type!="CONST") {
             newparam.type = "";
         }
         if (!newparam.type.isEmpty() && ((!newparam.value.isEmpty() && newparam.skip) || !newparam.name.isEmpty())) {
