@@ -1,6 +1,19 @@
 
 #include <math.h>
 #include <IRremote.h>
+#include <LedControl.h>
+#include <TM1637Display.h>
+#include <Time.h>
+#include <DS1302RTC.h>
+
+#define TM_CLK 22
+#define TM_DIO 24
+
+#define DS1302_CLK_PIN 34
+#define DS1302_DAT_PIN 32
+#define DS1302_RST_PIN 30
+#define DS1302_GND_PIN 26
+#define DS1302_VCC_PIN 28
 
 #define RECV_PIN 13
 #define PIN_W 5
@@ -54,6 +67,30 @@ byte onstate = 0;
 
 IRrecv irrecv(RECV_PIN);
 decode_results ir_results;
+LedControl lc=LedControl(12, 11, 10, 3);
+TM1637Display display(TM_CLK, TM_DIO);
+DS1302RTC RTC(DS1302_RST_PIN, DS1302_DAT_PIN, DS1302_CLK_PIN);
+
+bool show_dots = false;
+time_t last_rtc = 0;
+
+void showTime() {
+  time_t c_rtc = RTC.get();
+  if (c_rtc == last_rtc) return;
+  last_rtc = c_rtc;
+  tmElements_t tm;
+  if (! RTC.read(tm)) {
+    unsigned int cont = tm.Hour*100 + tm.Minute;
+    if (show_dots) {
+      uint8_t segto;
+      segto = 0x80 | display.encodeDigit((cont / 100)%10);
+      display.setSegments(&segto, 1, 1);
+    } else {
+      display.showNumberDec(cont, true);
+    }
+    show_dots = !show_dots;
+  }
+}
 
 void writeColor(byte rr, byte gg, byte bb, byte ww) {
   //Serial.println(ww);
@@ -102,6 +139,36 @@ void setup() {
   pinMode(PIN_B, OUTPUT);
   pinMode(PIN_W, OUTPUT);
   turnOff();
+
+  lc.shutdown(0,false);
+  lc.shutdown(1,false);
+  lc.shutdown(2,false);
+  /* Set the brightness to a medium values */
+  lc.setIntensity(0,8);
+  lc.setIntensity(1,1);
+  lc.setIntensity(2,4);
+  /* and clear the display */
+  lc.clearDisplay(0);
+  lc.clearDisplay(1);
+  lc.clearDisplay(2);
+
+  display.setBrightness(0x0f);
+
+  // Activate RTC module
+  digitalWrite(DS1302_GND_PIN, LOW);
+  pinMode(DS1302_GND_PIN, OUTPUT);
+  digitalWrite(DS1302_VCC_PIN, HIGH);
+  pinMode(DS1302_VCC_PIN, OUTPUT);
+
+  if (RTC.haltRTC()) {
+    //Serial.println("The DS1302 is stopped.  Please run the SetTime");
+    //Serial.println("example to initialize the time and begin running.");
+    //Serial.println();
+  }
+  if (!RTC.writeEN()) {
+    //Serial.println("The DS1302 is write protected. This normal.");
+    //Serial.println();
+  }
 }
 
 unsigned long int current_com = 0;
@@ -401,5 +468,6 @@ void loop() {
       break;
     }
   }
-  
+
+  showTime();
 }
