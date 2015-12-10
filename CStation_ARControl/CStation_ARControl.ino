@@ -1,20 +1,30 @@
 
 #include <math.h>
+#include <Servo.h>
 #include <IRremote.h>
 #include <LedControl.h>
 #include <TM1637Display.h>
 #include <Time.h>
 #include <DS1302RTC.h>
 
+// Clock Display pins
 #define TM_CLK 22
 #define TM_DIO 24
 
+// RTC pins
 #define DS1302_CLK_PIN 34
 #define DS1302_DAT_PIN 32
 #define DS1302_RST_PIN 30
 #define DS1302_GND_PIN 26
 #define DS1302_VCC_PIN 28
 
+// Laser & Servo pins
+#define LASER_GND_PIN 46
+#define LASER_VCC_PIN 48
+#define SERVO1_PIN 50
+#define SERVO2_PIN 52
+
+// LED Strip pins
 #define RECV_PIN 13
 #define PIN_W 5
 #define PIN_B 4
@@ -22,6 +32,15 @@
 #define PIN_R 2
 // Yellow Orange Green Blue White
 
+// Servo restrictions
+#define SERVO1_MIN_ANGLE 45
+#define SERVO1_MAX_ANGLE 135
+#define SERVO2_MIN_ANGLE 15
+#define SERVO2_MAX_ANGLE 100
+#define SERVO1_FACE_DIR_ANGLE 100
+#define SERVO2_FACE_DIR_ANGLE 65
+
+// Button codes
 #define CM_ON 0xFFB04F
 #define CM_OFF 0xFFF807
 #define CM_B_DOWN 0xFFB847
@@ -122,6 +141,26 @@ void turnOn() {
   return;
 }
 
+Servo myservo1;
+Servo myservo2;
+void servoMovement(int angle1, int angle2) {
+  myservo1.attach(SERVO1_PIN);
+  myservo2.attach(SERVO2_PIN);
+  if (angle1<SERVO1_MIN_ANGLE) angle1 = SERVO1_MIN_ANGLE;
+  if (angle1>SERVO1_MAX_ANGLE) angle1 = SERVO1_MAX_ANGLE;
+  if (angle2<SERVO2_MIN_ANGLE) angle2 = SERVO2_MIN_ANGLE;
+  if (angle2>SERVO2_MAX_ANGLE) angle2 = SERVO2_MAX_ANGLE;
+  myservo1.write(angle1);
+  myservo2.write(angle2);
+  delay(20);
+  myservo1.detach();
+  myservo2.detach();
+}
+
+void setLaser(bool state) {
+  digitalWrite(LASER_VCC_PIN, state ? HIGH : LOW);
+}
+
 void setup() {
   //Serial.begin(9600);
   
@@ -154,11 +193,17 @@ void setup() {
 
   display.setBrightness(0x0f);
 
+  // Init laser
+  pinMode(LASER_GND_PIN, OUTPUT);
+  pinMode(LASER_VCC_PIN, OUTPUT);
+  digitalWrite(LASER_GND_PIN, LOW);
+  digitalWrite(LASER_VCC_PIN, LOW);
+
   // Activate RTC module
-  digitalWrite(DS1302_GND_PIN, LOW);
   pinMode(DS1302_GND_PIN, OUTPUT);
-  digitalWrite(DS1302_VCC_PIN, HIGH);
   pinMode(DS1302_VCC_PIN, OUTPUT);
+  digitalWrite(DS1302_GND_PIN, LOW);
+  digitalWrite(DS1302_VCC_PIN, HIGH);
 
   if (RTC.haltRTC()) {
     //Serial.println("The DS1302 is stopped.  Please run the SetTime");
