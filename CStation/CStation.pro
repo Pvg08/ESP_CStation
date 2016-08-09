@@ -28,7 +28,9 @@ SOURCES += main.cpp\
     widgets/msensordrawsurface.cpp \
     widgets/clientblockactionform.cpp \
     widgets/clientblockactionlistform.cpp \
-    widgets/clientblockslistactionsform.cpp
+    widgets/clientblockslistactionsform.cpp \
+    widgets/ipcamviewer.cpp \
+    ipcamthread.cpp
 
 HEADERS  += mainwindow.h \
     abstractserver.h \
@@ -129,14 +131,17 @@ HEADERS  += mainwindow.h \
     vlc/libvlc_structures.h \
     vlc/libvlc_version.h \
     vlc/libvlc_vlm.h \
-    vlc/vlc.h
+    vlc/vlc.h \
+    widgets/ipcamviewer.h \
+    ipcamthread.h
 
 FORMS    += mainwindow.ui \
     widgets/sensorblock.ui \
     widgets/sensorsdisplayform.ui \
     widgets/clientblockactionform.ui \
     widgets/clientblockactionlistform.ui \
-    widgets/clientblockslistactionsform.ui
+    widgets/clientblockslistactionsform.ui \
+    widgets/ipcamviewer.ui
 
 TRANSLATIONS += translations/CStation_ru_RU.ts
 
