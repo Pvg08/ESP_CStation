@@ -33,11 +33,12 @@ IPCamThread::IPCamThread(QObject *parent) : QThread(parent), quit(false)
 {
     fps = 1;
     addrName = "";
+    current_frame = NULL;
 }
 
 IPCamThread::~IPCamThread()
 {
-
+    if (current_frame) delete current_frame;
 }
 
 void IPCamThread::listen(const QString &addrName, unsigned fps)
@@ -50,6 +51,8 @@ void IPCamThread::listen(const QString &addrName, unsigned fps)
 
 void IPCamThread::run()
 {
+    qDebug() << "Playing thread started\n";
+
     // VLC pointers
     libvlc_instance_t *inst;
     libvlc_media_t *m;
@@ -64,7 +67,7 @@ void IPCamThread::run()
 
     // RV24
     sprintf(smem_options,
-        "#transcode{vcodec=RV24,scale=0.4,fps=%d}:smem{"
+        "#transcode{vcodec=RV24,scale=0.5,fps=%d}:smem{"
         "video-prerender-callback=%lld,"
         "video-postrender-callback=%lld,"
         "video-data=%lld,"
@@ -91,26 +94,58 @@ void IPCamThread::run()
     /* Create a media player playing environement */
     mp = libvlc_media_player_new_from_media (m);
 
-    libvlc_event_manager_t* eventManager = libvlc_media_player_event_manager(mp);
+    /*libvlc_event_manager_t* eventManager = libvlc_media_player_event_manager(mp);
     libvlc_event_attach(eventManager, libvlc_MediaPlayerTimeChanged, handleEvent, pUserData);
     libvlc_event_attach(eventManager, libvlc_MediaPlayerEndReached, handleEvent, pUserData);
-    libvlc_event_attach(eventManager, libvlc_MediaPlayerPositionChanged, handleEvent, pUserData);
+    libvlc_event_attach(eventManager, libvlc_MediaPlayerPositionChanged, handleEvent, pUserData);*/
 
-    /* play the media_player */
-    libvlc_media_player_play(mp);
+    libvlc_state_t last_state;
+    bool playing;
+    unsigned nplay_counter;
 
     while (!quit) {
-        if(videoBuffer && frame_index && (frame_old_index!=frame_index))
-        {
-            mutex.lock();
-            QImage tmp(videoBuffer, video_width ? video_width : 1, video_height ? video_height : 1, QImage::Format_RGB888);
-            tmp.save("bf"+QString::number(frame_index)+".bmp");
-            frame_old_index = frame_index;
-            mutex.unlock();
+
+        /* play the media_player */
+        playing = libvlc_media_player_play(mp)==0;
+        nplay_counter = 0;
+
+        qDebug() << "Playing start: " << (playing?1:0);
+
+        while (!quit && playing && nplay_counter<100) {
+            if(videoBuffer && frame_index && (frame_old_index!=frame_index))
+            {
+                mutex.lock();
+                nplay_counter = 0;
+                if (current_frame) delete current_frame;
+                try {
+                    current_frame = new QImage(videoBuffer, video_width ? video_width : 1, video_height ? video_height : 1, QImage::Format_RGB888);
+                } catch (int err) {
+                    current_frame = NULL;
+                }
+                frame_old_index = frame_index;
+                emit new_frame_ready();
+                mutex.unlock();
+            }
+            QThread::msleep (120);
+
+            last_state = libvlc_media_player_get_state(mp);
+            playing = (last_state==libvlc_Buffering) || (last_state==libvlc_Playing) || (last_state==libvlc_Opening);
+            if (last_state!=libvlc_Playing) nplay_counter++;
+            qDebug() << "Playing: " << (playing?1:0) << " State: " << last_state;
         }
-        QThread::msleep (120);
+        libvlc_media_player_stop(mp);
+
+        if (!quit) QThread::msleep(10000);
     }
+
     libvlc_release(inst);
+
+    qDebug() << "Playing thread closed\n";
+}
+
+QImage *IPCamThread::getCurrentFrame() const
+{
+    return current_frame;
 }
 
 uint8_t *IPCamThread::getVideoBuffer()

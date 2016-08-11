@@ -10,6 +10,9 @@ MainWindow::MainWindow(QWidget *parent) :
     sensors_form = NULL;
     actions_form = NULL;
 
+    camviewer = new IPCamViewer(ui->widget_frame_cont);
+    IPCamThread::Instance()->listen("rtsp://192.168.1.10:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=100", 4);
+
     load_settings(QCoreApplication::instance()->applicationDirPath()+"/config.cfg");
 }
 

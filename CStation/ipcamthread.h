@@ -2,6 +2,7 @@
 #define IPCAMTHREAD_H
 
 #include <QObject>
+#include <QDebug>
 #include <QThread>
 #include <QMutex>
 #include <QImage>
@@ -34,10 +35,10 @@ private:
     uint64_t frame_index = 0;
     uint64_t frame_old_index = 0;
     int videoBufferSize = 0;
+    QImage* current_frame;
 
 signals:
-public slots:
-
+    void new_frame_ready();
 public:
     static IPCamThread* Instance();
     static bool DeleteInstance();
@@ -49,6 +50,7 @@ public:
 
     uint8_t *getVideoBuffer();
     void setVideoBuffer(uint8_t *value);
+    QImage *getCurrentFrame() const;
 };
 
 #endif // IPCAMTHREAD_H
