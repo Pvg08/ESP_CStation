@@ -24,6 +24,7 @@ public:
     bool SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid);
 
     quint16 getNextBlockID(quint16 block_id);
+    quint16 getFirstBlockID();
 
     const QStringList getIPsList();
     ClientBlock *getClientBlock(QString ip_addr);

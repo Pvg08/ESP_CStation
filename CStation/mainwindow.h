@@ -50,7 +50,6 @@ private:
     Server* server;
     SensorsDisplayForm* sensors_form;
     ClientBlocksListActionsForm* actions_form;
-    IPCamViewer* camviewer;
 
     Server *getServer();
     void save_settings(QString filename);

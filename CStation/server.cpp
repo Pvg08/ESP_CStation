@@ -148,6 +148,14 @@ quint16 Server::getNextBlockID(quint16 block_id)
     return clientblocks->firstKey();
 }
 
+quint16 Server::getFirstBlockID()
+{
+    if (clientblocks->isEmpty()) {
+        return 0;
+    }
+    return clientblocks->firstKey();
+}
+
 const QStringList Server::getIPsList()
 {
     QStringList result;

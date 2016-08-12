@@ -67,7 +67,7 @@ void IPCamThread::run()
 
     // RV24
     sprintf(smem_options,
-        "#transcode{vcodec=RV24,scale=0.5,fps=%d}:smem{"
+        "#transcode{vcodec=RV24,width=640,height=480,fps=%d,vfilter=croppadd{croptop=20,cropbottom=20}}:smem{"
         "video-prerender-callback=%lld,"
         "video-postrender-callback=%lld,"
         "video-data=%lld,"
@@ -81,7 +81,8 @@ void IPCamThread::run()
     const char * const vlc_args[] = {
         "-I", "dummy",            // Don't use any interface
         "--ignore-config",        // Don't use VLC's config
-        "--verbose=1",            // Be verbose
+        "--verbose=0",            // Be verbose
+        "--no-sout-audio",        // no audio
         "--sout", smem_options    // Stream to memory
     };
 
@@ -114,17 +115,9 @@ void IPCamThread::run()
         while (!quit && playing && nplay_counter<100) {
             if(videoBuffer && frame_index && (frame_old_index!=frame_index))
             {
-                mutex.lock();
                 nplay_counter = 0;
-                if (current_frame) delete current_frame;
-                try {
-                    current_frame = new QImage(videoBuffer, video_width ? video_width : 1, video_height ? video_height : 1, QImage::Format_RGB888);
-                } catch (int err) {
-                    current_frame = NULL;
-                }
                 frame_old_index = frame_index;
                 emit new_frame_ready();
-                mutex.unlock();
             }
             QThread::msleep (120);
 
@@ -140,11 +133,30 @@ void IPCamThread::run()
 
     libvlc_release(inst);
 
+    mutex.lock();
+    free(videoBuffer);
+    videoBuffer = NULL;
+    videoBufferSize = 0;
+    if (current_frame) delete current_frame;
+    current_frame = NULL;
+    mutex.unlock();
+
     qDebug() << "Playing thread closed\n";
 }
 
-QImage *IPCamThread::getCurrentFrame() const
+QImage *IPCamThread::getCurrentFrame()
 {
+    mutex.lock();
+    if (current_frame) delete current_frame;
+    current_frame = NULL;
+    if (videoBuffer && video_width && video_height && videoBufferSize>=(video_width*video_height*3)) {
+        try {
+            current_frame = new QImage(videoBuffer, video_width, video_height, QImage::Format_RGB888);
+        } catch (int err) {
+            current_frame = NULL;
+        }
+    }
+    mutex.unlock();
     return current_frame;
 }
 
@@ -171,6 +183,8 @@ void IPCamThread::prerenderActions(int buf_size)
         free(videoBuffer);
         videoBuffer = (uint8_t *) malloc(buf_size);
         videoBufferSize = buf_size;
+
+        qDebug() << "Bufsize: " << buf_size;
     }
 }
 
@@ -179,6 +193,9 @@ void IPCamThread::postrenderActions(int width, int height)
     video_width = width;
     video_height = height;
     frame_index++;
+
+    qDebug() << "w: " << video_width << ", h: " << video_height << ", i: " << frame_index;
+
     mutex.unlock();
 }
 

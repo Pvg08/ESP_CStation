@@ -13,6 +13,11 @@ SensorsDisplayForm::SensorsDisplayForm(Server* c_server, QWidget *parent) :
     sensor_graphics_log_interval = 24*60*60*1000;
     fullscreen_block = false;
     server = c_server;
+
+    camviewer = new IPCamViewer(this);
+    ui->layout_blocks->addWidget(camviewer, 0, 0, 2, 2);
+    camviewer->setVisible(false);
+    camviewer->setEnabled(false);
 }
 
 void SensorsDisplayForm::showEvent(QShowEvent *event)
@@ -38,6 +43,7 @@ void SensorsDisplayForm::showEvent(QShowEvent *event)
 
 SensorsDisplayForm::~SensorsDisplayForm()
 {
+    delete camviewer;
     delete ui;
 }
 
@@ -80,18 +86,31 @@ void SensorsDisplayForm::new_sensor(Sensor *new_sensor)
 void SensorsDisplayForm::showNextSensorsPage()
 {
     if (!fullscreen_block) {
-        display_block_id = server->getNextBlockID(display_block_id);
-        int vis_count = 0;
-        for (int i = 0; i < ui->layout_blocks->count(); ++i) {
-            SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget());
-            if (sblock && sblock->getSensor() && !sblock->getSensor()->getValue().isEmpty()) {
-                sblock->setVisibility(display_block_id);
+
+        if (camviewer->isEnabled() && !camviewer->isVisible() && server->getNextBlockID(display_block_id)==server->getFirstBlockID()) {
+            for (int i = 0; i < ui->layout_blocks->count(); ++i) {
+                SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget());
+                if (sblock && sblock->getSensor() && !sblock->getSensor()->getValue().isEmpty()) {
+                    sblock->setVisibility(false);
+                }
             }
-            if (ui->layout_blocks->itemAt(i)->widget()->isVisible()) {
-                vis_count++;
+            camviewer->setVisible(true);
+            ui->label_waiting->setVisible(false);
+        } else {
+            camviewer->setVisible(false);
+            display_block_id = server->getNextBlockID(display_block_id);
+            int vis_count = 0;
+            for (int i = 0; i < ui->layout_blocks->count(); ++i) {
+                SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget());
+                if (sblock && sblock->getSensor() && !sblock->getSensor()->getValue().isEmpty()) {
+                    sblock->setVisibility(display_block_id);
+                }
+                if (ui->layout_blocks->itemAt(i)->widget()->isVisible()) {
+                    vis_count++;
+                }
             }
+            ui->label_waiting->setVisible(vis_count==0);
         }
-        ui->label_waiting->setVisible(vis_count==0);
     }
 
     QTimer::singleShot(next_page_timeout, this, SLOT(showNextSensorsPage()));
@@ -126,6 +145,12 @@ void SensorsDisplayForm::setSensorGraphicsLogInterval(const quint64 &value)
             sblock->repaint();
         }
     }
+}
+
+void SensorsDisplayForm::setIPCamVisibility(bool isvisible)
+{
+    camviewer->setEnabled(isvisible);
+    camviewer->setVisible(isvisible);
 }
 
 QColor SensorsDisplayForm::getGraphics_color() const

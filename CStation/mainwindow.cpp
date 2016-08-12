@@ -10,9 +10,6 @@ MainWindow::MainWindow(QWidget *parent) :
     sensors_form = NULL;
     actions_form = NULL;
 
-    camviewer = new IPCamViewer(ui->widget_frame_cont);
-    IPCamThread::Instance()->listen("rtsp://192.168.1.10:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=100", 4);
-
     load_settings(QCoreApplication::instance()->applicationDirPath()+"/config.cfg");
 }
 
@@ -296,6 +293,9 @@ void MainWindow::on_listWidget_devices_currentTextChanged(const QString &current
 
 void MainWindow::sensors_form_destroyed()
 {
+    if (IPCamThread::Instance()->isRunning()) {
+        IPCamThread::Instance()->do_stop();
+    }
     ui->pushButton_sensors_display_show->setEnabled(true);
     ui->pushButton_listen->setEnabled(true);
     sensors_form = NULL;
@@ -315,6 +315,11 @@ void MainWindow::on_pushButton_sensors_display_show_clicked()
     sensors_form->setBg_color(ui->toolButton_color_bg->palette().background().color());
     sensors_form->setGraphics_color(ui->toolButton_color_graphics->palette().background().color());
     sensors_form->setSensorGraphicsLogInterval((quint64)ui->spinBox_graphics_timeinterval->value() * 1000);
+    sensors_form->setIPCamVisibility(ui->checkBox_ipcam_show->isChecked());
+
+    if (ui->checkBox_ipcam_show->isChecked() && !IPCamThread::Instance()->isRunning()) {
+        IPCamThread::Instance()->listen(ui->lineEdit_ipcam_url->text(), 4);
+    }
 
     QObject::connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
 

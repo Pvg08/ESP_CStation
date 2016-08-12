@@ -23,10 +23,14 @@ void IPCamViewer::new_frame_ready()
 
 void IPCamViewer::paintEvent(QPaintEvent *)
 {
+    if (!isVisible() || !isEnabled()) return;
     if (!show_next_img) return;
     show_next_img = false;
     QPainter p;
-    p.begin(this);
-    p.drawImage(QPointF(0, 0), *(IPCamThread::Instance()->getCurrentFrame()));
-    p.end();
+    QImage *img = IPCamThread::Instance()->getCurrentFrame();
+    if (img && img->width()>1 && img->height()>1) {
+        p.begin(this);
+        p.drawImage(QPointF(0, 0), *img);
+        p.end();
+    }
 }

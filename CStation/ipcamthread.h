@@ -50,7 +50,7 @@ public:
 
     uint8_t *getVideoBuffer();
     void setVideoBuffer(uint8_t *value);
-    QImage *getCurrentFrame() const;
+    QImage *getCurrentFrame();
 };
 
 #endif // IPCAMTHREAD_H

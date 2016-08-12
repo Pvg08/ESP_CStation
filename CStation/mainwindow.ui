@@ -33,7 +33,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -566,13 +566,13 @@
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>300</height>
+               <height>330</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>300</height>
+               <height>330</height>
               </size>
              </property>
              <widget class="QLabel" name="label_2">
@@ -2606,6 +2606,72 @@
                <string>51016</string>
               </property>
              </widget>
+             <widget class="QLabel" name="label_8">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>250</y>
+                <width>91</width>
+                <height>16</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>IP Camera URL</string>
+              </property>
+             </widget>
+             <widget class="QLineEdit" name="lineEdit_ipcam_url">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>270</y>
+                <width>321</width>
+                <height>25</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>rtsp://192.168.1.10:554/user=admin&amp;password=&amp;channel=1&amp;stream=0.sdp?real_stream--rtp-caching=100</string>
+              </property>
+             </widget>
+             <widget class="QCheckBox" name="checkBox_ipcam_show">
+              <property name="geometry">
+               <rect>
+                <x>340</x>
+                <y>270</y>
+                <width>141</width>
+                <height>25</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Show in sensors window</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
             </widget>
            </item>
            <item>
@@ -2699,22 +2765,6 @@
          </widget>
         </item>
        </layout>
-      </widget>
-      <widget class="QWidget" name="tab_7">
-       <attribute name="title">
-        <string>IP Camera</string>
-       </attribute>
-       <widget class="QWidget" name="widget_frame_cont" native="true">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>651</width>
-          <height>461</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_4"/>
-       </widget>
       </widget>
      </widget>
     </item>
