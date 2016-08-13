@@ -33,7 +33,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -2647,7 +2647,7 @@
              <widget class="QCheckBox" name="checkBox_ipcam_show">
               <property name="geometry">
                <rect>
-                <x>340</x>
+                <x>510</x>
                 <y>270</y>
                 <width>141</width>
                 <height>25</height>
@@ -2670,6 +2670,47 @@
               </property>
               <property name="checked">
                <bool>true</bool>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_21">
+              <property name="geometry">
+               <rect>
+                <x>340</x>
+                <y>250</y>
+                <width>151</width>
+                <height>16</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Desired FPS</string>
+              </property>
+             </widget>
+             <widget class="QSpinBox" name="spinBox_ipcam_fps">
+              <property name="geometry">
+               <rect>
+                <x>340</x>
+                <y>270</y>
+                <width>151</width>
+                <height>25</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>50</number>
+              </property>
+              <property name="singleStep">
+               <number>1</number>
+              </property>
+              <property name="value">
+               <number>4</number>
               </property>
              </widget>
             </widget>

@@ -15,7 +15,7 @@ SensorsDisplayForm::SensorsDisplayForm(Server* c_server, QWidget *parent) :
     server = c_server;
 
     camviewer = new IPCamViewer(this);
-    ui->layout_blocks->addWidget(camviewer, 0, 0, 2, 2);
+    ui->layout_blocks->addWidget(camviewer, 0, 0, 0, 2);
     camviewer->setVisible(false);
     camviewer->setEnabled(false);
 }
@@ -91,18 +91,21 @@ void SensorsDisplayForm::showNextSensorsPage()
             for (int i = 0; i < ui->layout_blocks->count(); ++i) {
                 SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget());
                 if (sblock && sblock->getSensor() && !sblock->getSensor()->getValue().isEmpty()) {
+                    sblock->setVisible(false);
                     sblock->setVisibility(false);
                 }
             }
             camviewer->setVisible(true);
-            ui->label_waiting->setVisible(false);
+            ui->widget_params->setVisible(false);
         } else {
+            ui->widget_params->setVisible(true);
             camviewer->setVisible(false);
             display_block_id = server->getNextBlockID(display_block_id);
             int vis_count = 0;
             for (int i = 0; i < ui->layout_blocks->count(); ++i) {
                 SensorBlock *sblock = dynamic_cast<SensorBlock*>(ui->layout_blocks->itemAt(i)->widget());
                 if (sblock && sblock->getSensor() && !sblock->getSensor()->getValue().isEmpty()) {
+                    sblock->setVisible(true);
                     sblock->setVisibility(display_block_id);
                 }
                 if (ui->layout_blocks->itemAt(i)->widget()->isVisible()) {

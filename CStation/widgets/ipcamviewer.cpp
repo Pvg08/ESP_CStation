@@ -29,8 +29,12 @@ void IPCamViewer::paintEvent(QPaintEvent *)
     QPainter p;
     QImage *img = IPCamThread::Instance()->getCurrentFrame();
     if (img && img->width()>1 && img->height()>1) {
+        if (ui->label_status->isVisible()) ui->label_status->setVisible(false);
         p.begin(this);
-        p.drawImage(QPointF(0, 0), *img);
+        p.drawImage(QPointF(width()/2 - img->width()/2, height()/2 - img->height()/2), *img);
         p.end();
+    } else {
+        ui->label_status->setText(IPCamThread::Instance()->getStatusText());
+        ui->label_status->setVisible(true);
     }
 }

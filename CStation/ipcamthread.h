@@ -25,10 +25,11 @@ private:
 
     void run();
 
-    QString addrName;
+    QString addrName, statusText;
     unsigned fps;
     QMutex mutex;
     bool quit;
+    bool buffer_changed;
     uint8_t *videoBuffer = 0;
     uint16_t video_width = 0;
     uint16_t video_height = 0;
@@ -36,6 +37,8 @@ private:
     uint64_t frame_old_index = 0;
     int videoBufferSize = 0;
     QImage* current_frame;
+
+    void setStatusText(QString newtext, bool do_show);
 
 signals:
     void new_frame_ready();
@@ -51,6 +54,7 @@ public:
     uint8_t *getVideoBuffer();
     void setVideoBuffer(uint8_t *value);
     QImage *getCurrentFrame();
+    QString getStatusText() const;
 };
 
 #endif // IPCAMTHREAD_H

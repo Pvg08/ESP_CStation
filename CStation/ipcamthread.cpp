@@ -11,29 +11,12 @@ void cbVideoPostrender(void *p_video_data, uint8_t *p_pixel_buffer, int width, i
     IPCamThread::Instance()->postrenderActions(width, height);
 }
 
-static void handleEvent(const libvlc_event_t* pEvt, void* pUserData)
-{
-    /*libvlc_time_t time;
-    switch(pEvt->type)
-    {
-        case libvlc_MediaPlayerTimeChanged:
-            time = libvlc_media_player_get_time(mp);
-            printf("MediaPlayerTimeChanged %lld ms\n", (long long)time);
-            break;
-        case libvlc_MediaPlayerEndReached:
-            printf ("MediaPlayerEndReached\n");
-            done = 1;
-            break;
-        default:
-            printf("%s\n", libvlc_event_type_name(pEvt->type));
-    }*/
-}
-
 IPCamThread::IPCamThread(QObject *parent) : QThread(parent), quit(false)
 {
     fps = 1;
     addrName = "";
     current_frame = NULL;
+    setStatusText(tr("No camera action"), false);
 }
 
 IPCamThread::~IPCamThread()
@@ -46,7 +29,9 @@ void IPCamThread::listen(const QString &addrName, unsigned fps)
     this->addrName = addrName;
     this->fps = fps;
     quit = false;
+    buffer_changed = false;
     if (!isRunning()) start();
+    setStatusText(tr("Camera Initialization"), false);
 }
 
 void IPCamThread::run()
@@ -57,7 +42,6 @@ void IPCamThread::run()
     libvlc_instance_t *inst;
     libvlc_media_t *m;
     libvlc_media_player_t *mp;
-    void *pUserData = 0;
 
     IPCamVideoDataStruct dataStruct;
     dataStruct.param = 0;
@@ -95,14 +79,13 @@ void IPCamThread::run()
     /* Create a media player playing environement */
     mp = libvlc_media_player_new_from_media (m);
 
-    /*libvlc_event_manager_t* eventManager = libvlc_media_player_event_manager(mp);
-    libvlc_event_attach(eventManager, libvlc_MediaPlayerTimeChanged, handleEvent, pUserData);
-    libvlc_event_attach(eventManager, libvlc_MediaPlayerEndReached, handleEvent, pUserData);
-    libvlc_event_attach(eventManager, libvlc_MediaPlayerPositionChanged, handleEvent, pUserData);*/
-
     libvlc_state_t last_state;
     bool playing;
     unsigned nplay_counter;
+    unsigned fps_delay = 1000 / fps;
+    if (fps_delay < 50) fps_delay = 50;
+    if (fps_delay > 1000) fps_delay = 1000;
+    fps_delay = fps_delay*0.8;
 
     while (!quit) {
 
@@ -112,21 +95,25 @@ void IPCamThread::run()
 
         qDebug() << "Playing start: " << (playing?1:0);
 
+        setStatusText(tr("Camera buffering..."), false);
+
         while (!quit && playing && nplay_counter<100) {
             if(videoBuffer && frame_index && (frame_old_index!=frame_index))
             {
                 nplay_counter = 0;
                 frame_old_index = frame_index;
+                buffer_changed = true;
                 emit new_frame_ready();
             }
-            QThread::msleep (120);
+            QThread::msleep(fps_delay);
 
             last_state = libvlc_media_player_get_state(mp);
             playing = (last_state==libvlc_Buffering) || (last_state==libvlc_Playing) || (last_state==libvlc_Opening);
             if (last_state!=libvlc_Playing) nplay_counter++;
-            qDebug() << "Playing: " << (playing?1:0) << " State: " << last_state;
         }
         libvlc_media_player_stop(mp);
+
+        setStatusText(tr("Camera error..."), true);
 
         if (!quit) QThread::msleep(10000);
     }
@@ -135,25 +122,51 @@ void IPCamThread::run()
 
     mutex.lock();
     free(videoBuffer);
+    buffer_changed = false;
     videoBuffer = NULL;
     videoBufferSize = 0;
     if (current_frame) delete current_frame;
     current_frame = NULL;
     mutex.unlock();
 
+    setStatusText(tr("No camera action"), false);
+
     qDebug() << "Playing thread closed\n";
+}
+
+void IPCamThread::setStatusText(QString newtext, bool do_show)
+{
+    if (do_show) {
+        mutex.lock();
+        buffer_changed = false;
+        if (current_frame) delete current_frame;
+        current_frame = NULL;
+    }
+    statusText = newtext;
+    if (do_show) {
+        mutex.unlock();
+    }
+    emit new_frame_ready();
+}
+
+QString IPCamThread::getStatusText() const
+{
+    return statusText;
 }
 
 QImage *IPCamThread::getCurrentFrame()
 {
     mutex.lock();
-    if (current_frame) delete current_frame;
-    current_frame = NULL;
-    if (videoBuffer && video_width && video_height && videoBufferSize>=(video_width*video_height*3)) {
-        try {
-            current_frame = new QImage(videoBuffer, video_width, video_height, QImage::Format_RGB888);
-        } catch (int err) {
-            current_frame = NULL;
+    if (buffer_changed) {
+        buffer_changed = false;
+        if (current_frame) delete current_frame;
+        current_frame = NULL;
+        if (videoBuffer && video_width && video_height && videoBufferSize>=(video_width*video_height*3)) {
+            try {
+                current_frame = new QImage(videoBuffer, video_width, video_height, QImage::Format_RGB888);
+            } catch (int err) {
+                current_frame = NULL;
+            }
         }
     }
     mutex.unlock();
@@ -183,8 +196,6 @@ void IPCamThread::prerenderActions(int buf_size)
         free(videoBuffer);
         videoBuffer = (uint8_t *) malloc(buf_size);
         videoBufferSize = buf_size;
-
-        qDebug() << "Bufsize: " << buf_size;
     }
 }
 
@@ -193,9 +204,6 @@ void IPCamThread::postrenderActions(int width, int height)
     video_width = width;
     video_height = height;
     frame_index++;
-
-    qDebug() << "w: " << video_width << ", h: " << video_height << ", i: " << frame_index;
-
     mutex.unlock();
 }
 
