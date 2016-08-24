@@ -288,7 +288,7 @@ void MainWindow::on_pushButton_clearlog_clicked()
 
 void MainWindow::on_pushButton_write_clicked()
 {
-    getServer()->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->spinBox_cid->value());
+    getServer()->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->spinBox_cid->value(), ui->spinBox_i2c_addr->value());
 }
 
 void MainWindow::on_listWidget_devices_currentTextChanged(const QString &currentText)
