@@ -156,7 +156,7 @@ bool ClientAction::parseDescription(QString description)
 
     QJsonArray params = obj.value("PARAM").toArray();
     parameters->clear();
-    for(auto&& item: params)
+    foreach (const QJsonValue & item, params)
     {
         const QJsonObject& param = item.toObject();
         ClientActionParam newparam;
@@ -183,15 +183,17 @@ bool ClientAction::parseDescription(QString description)
 
     QJsonArray btns = obj.value("BUTTONS").toArray();
     buttons->clear();
-    for(auto&& item: btns)
-    {
+
+    foreach (const QJsonValue & item, btns) {
+
         const QJsonObject& btn = item.toObject();
         ClientParamButton newbtn;
         newbtn.name = btn.value("NAME").toString();
         newbtn.message_set = "";
 
         QJsonArray paramsets = btn.value("PARAMSET").toArray();
-        for(auto&& sitem: paramsets)
+
+        foreach (const QJsonValue & sitem, paramsets)
         {
             newbtn.message_set += (!newbtn.message_set.isEmpty() ? "," : "") + sitem.toString();
         }
