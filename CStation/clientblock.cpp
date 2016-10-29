@@ -75,6 +75,10 @@ void ClientBlock::BlockMessage(QString message)
         if (cmd_param=="1" && client_actions->contains("settime")) {
             QTimer::singleShot(100, this, SLOT(action_time_send()));
         }
+    } else if (cmd_name=="DS_GETFORECAST") {
+        if (cmd_param=="1" && client_actions->contains("setforecast")) {
+            QTimer::singleShot(100, this, SLOT(action_forecast_send()));
+        }
     } else if (cmd_name=="DS_WIFI_SSID") {
         wifi_ssid = cmd_param;
     } else if (cmd_name=="DS_WIFI_PASSW") {
@@ -92,6 +96,87 @@ void ClientBlock::action_time_send()
         quint64 tt = dateTime1.offsetFromUtc() + (QDateTime::currentMSecsSinceEpoch()/1000);
         client_actions->value("settime")->sendCommand(QString::number(tt));
     }
+}
+
+void ClientBlock::action_forecast_send()
+{
+    if (client_actions->contains("setforecast")) {
+        QNetworkAccessManager* m_manager;
+        m_manager = new QNetworkAccessManager(this);
+        connect(m_manager, SIGNAL(finished(QNetworkReply*)),
+                 this, SLOT(replyFinished(QNetworkReply*)));
+
+        QUrl url = QUrl("http://api.openweathermap.org/data/2.5/weather?q=shebekino&APPID=5437baa043723201a6fb434e5366ec57", QUrl::TolerantMode);
+        QNetworkRequest rq=QNetworkRequest(url);
+        m_manager->get(rq);
+
+        QTimer timer;
+        timer.setSingleShot(true);
+        QEventLoop loop;
+        connect(m_manager,  SIGNAL(finished(QNetworkReply*)), &loop, SLOT(quit()) );
+        connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
+        timer.start(5000);
+        loop.exec();
+
+        if(timer.isActive()) {
+            QTimer::singleShot(1000, &loop, SLOT(quit()));
+            loop.exec();
+        }
+
+        delete m_manager;
+    }
+}
+
+void ClientBlock::replyFinished(QNetworkReply *reply)
+{
+    QByteArray data=reply->readAll();
+    QString str(data);
+
+    QJsonParseError jerror;
+    QJsonDocument jdoc= QJsonDocument::fromJson(str.toLocal8Bit(),&jerror);
+    if(jerror.error != QJsonParseError::NoError) return;
+    QJsonObject obj = jdoc.object();
+
+    double temp = obj.value("main").toObject().value("temp").toDouble() - 273.15;
+    double wind_speed = obj.value("wind").toObject().value("speed").toDouble();
+    double wind_deg = obj.value("wind").toObject().value("deg").toDouble();
+    QString command = "";
+    command = obj.value("weather").toArray().at(0).toObject().value("main").toString();
+    if (command.length() > 16) {
+        command.resize(16);
+    }
+    unsigned len = (16 - command.length()) / 2;
+
+    command = command.leftJustified(len+command.length(), ' ');
+    command = command.rightJustified(16, ' ');
+
+    command = command + QString::number(round(temp)) + "\337C ";
+    command = command + QString::number(round(wind_speed)) + "m/s ";
+
+    QString cwind = "";
+    if (wind_deg >=0 && wind_deg <= 22.5) {
+        cwind = "N";
+    } else if (wind_deg >= 22.5 && wind_deg <= 67.5) {
+        cwind = "NE";
+    } else if (wind_deg >= 67.5 && wind_deg <= 112.5) {
+        cwind = "E";
+    } else if (wind_deg >= 112.5 && wind_deg <= 157.5) {
+        cwind = "SE";
+    } else if (wind_deg >= 157.5 && wind_deg <= 202.5) {
+        cwind = "S";
+    } else if (wind_deg >= 202.5 && wind_deg <= 247.5) {
+        cwind = "SW";
+    } else if (wind_deg >= 247.5 && wind_deg <= 292.5) {
+        cwind = "W";
+    } else if (wind_deg >= 292.5 && wind_deg <= 337.5) {
+        cwind = "NW";
+    } else if (wind_deg >= 337.5 && wind_deg <= 360) {
+        cwind = "N";
+    }
+
+    command = command + cwind;
+
+    client_actions->value("setforecast")->sendCommand(command);
 }
 
 void ClientBlock::setSensorsValues(QString message)

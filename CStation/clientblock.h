@@ -4,6 +4,10 @@
 #include <QObject>
 #include <QMap>
 #include <QTextStream>
+#include <QNetworkAccessManager>
+#include <QUrl>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 #include "abstractserver.h"
 #include "sensor.h"
 #include "clientaction.h"
@@ -53,6 +57,9 @@ signals:
 private slots:
     void sensor_local_change();
     void action_time_send();
+    void action_forecast_send();
+
+    void replyFinished(QNetworkReply* reply);
 protected:
     void setSensorsValues(QString message);
     void addSensor(QString message);
