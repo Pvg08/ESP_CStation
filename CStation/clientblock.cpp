@@ -137,6 +137,14 @@ void ClientBlock::replyFinished(QNetworkReply *reply)
     if(jerror.error != QJsonParseError::NoError) return;
     QJsonObject obj = jdoc.object();
 
+    if (
+            obj.value("main").isUndefined() ||
+            obj.value("wind").isUndefined() ||
+            obj.value("weather").isUndefined()
+        ) {
+        return;
+    }
+
     double temp = obj.value("main").toObject().value("temp").toDouble() - 273.15;
     double wind_speed = obj.value("wind").toObject().value("speed").toDouble();
     double wind_deg = obj.value("wind").toObject().value("deg").toDouble();
@@ -150,7 +158,7 @@ void ClientBlock::replyFinished(QNetworkReply *reply)
     command = command.leftJustified(len+command.length(), ' ');
     command = command.rightJustified(16, ' ');
 
-    command = command + QString::number(round(temp)) + "\337C ";
+    command = command + QString::number(round(temp)) + "*C ";
     command = command + QString::number(round(wind_speed)) + "m/s ";
 
     QString cwind = "";
