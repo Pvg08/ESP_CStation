@@ -8,6 +8,7 @@
 #include "server.h"
 #include "./widgets/sensorsdisplayform.h"
 #include "./widgets/clientblockslistactionsform.h"
+#include "./widgets/ipcamviewer.h"
 
 namespace Ui {
 class MainWindow;

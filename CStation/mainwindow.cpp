@@ -48,6 +48,10 @@ void MainWindow::save_settings(QString filename)
     settings.setValue("main/event_time_from", ui->spinBox_evt_from->value());
     settings.setValue("main/event_time_to", ui->spinBox_evt_to->value());
 
+    settings.setValue("ip_camera/url", ui->lineEdit_ipcam_url->text());
+    settings.setValue("ip_camera/sensors_display_show", ui->checkBox_ipcam_show->isChecked());
+    settings.setValue("ip_camera/fps", ui->spinBox_ipcam_fps->value());
+
     settings.setValue("window/maximized", isMaximized());
     settings.setValue("window/minimized", isMinimized());
     if (!isMaximized() && !isMinimized()) {
@@ -93,6 +97,10 @@ void MainWindow::load_settings(QString filename)
     setBtnColor(ui->toolButton_color_value, settings.value("main/display_color_v", "#000000").toString());
     setBtnColor(ui->toolButton_color_bg, settings.value("main/display_color_bg", "#ffffff").toString());
     setBtnColor(ui->toolButton_color_graphics, settings.value("main/display_color_gr", "#000000").toString());
+
+    ui->lineEdit_ipcam_url->setText(settings.value("ip_camera/url", ui->lineEdit_ipcam_url->text()).toString());
+    ui->checkBox_ipcam_show->setChecked(settings.value("ip_camera/sensors_display_show", ui->checkBox_ipcam_show->isChecked()).toBool());
+    ui->spinBox_ipcam_fps->setValue(settings.value("ip_camera/fps", ui->spinBox_ipcam_fps->value()).toInt());
 
     QWidget::move(settings.value("window/left", 300).toInt(), settings.value("window/top", 300).toInt());
     QWidget::resize(settings.value("window/width", 640).toInt(), settings.value("window/height", 480).toInt());
@@ -289,7 +297,7 @@ void MainWindow::on_pushButton_clearlog_clicked()
 
 void MainWindow::on_pushButton_write_clicked()
 {
-    getServer()->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->spinBox_cid->value());
+    getServer()->SendSetConfigsAndReset(ui->comboBox_ip->currentText(), ui->lineEdit_ssid->text(), ui->lineEdit_passw->text(), ui->lineEdit_serv->text(), ui->spinBox_cid->value(), ui->spinBox_i2c_addr->value());
 }
 
 void MainWindow::on_listWidget_devices_currentTextChanged(const QString &currentText)
@@ -302,6 +310,9 @@ void MainWindow::on_listWidget_devices_currentTextChanged(const QString &current
 
 void MainWindow::sensors_form_destroyed()
 {
+    if (IPCamThread::Instance()->isRunning()) {
+        IPCamThread::Instance()->do_stop();
+    }
     ui->pushButton_sensors_display_show->setEnabled(true);
     ui->pushButton_listen->setEnabled(true);
     sensors_form = NULL;
@@ -321,6 +332,11 @@ void MainWindow::on_pushButton_sensors_display_show_clicked()
     sensors_form->setBg_color(ui->toolButton_color_bg->palette().background().color());
     sensors_form->setGraphics_color(ui->toolButton_color_graphics->palette().background().color());
     sensors_form->setSensorGraphicsLogInterval((quint64)ui->spinBox_graphics_timeinterval->value() * 1000);
+    sensors_form->setIPCamVisibility(ui->checkBox_ipcam_show->isChecked());
+
+    if (ui->checkBox_ipcam_show->isChecked() && !IPCamThread::Instance()->isRunning()) {
+        IPCamThread::Instance()->listen(ui->lineEdit_ipcam_url->text(), ui->spinBox_ipcam_fps->value());
+    }
 
     QObject::connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
 

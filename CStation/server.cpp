@@ -124,9 +124,9 @@ bool Server::SendData(quint16 block_id, QString message)
     return result;
 }
 
-bool Server::SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid)
+bool Server::SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid, quint8 lcd_i2c_addr)
 {
-    QString command = "DS_SETUP:\r\n"+ssid+"\r\n"+pssw+"\r\n"+servip+"\r\n"+QString::number(stid)+"\r\n";
+    QString command = "DS_SETUP:\r\n"+ssid+"\r\n"+pssw+"\r\n"+servip+"\r\n"+QString::number(stid)+"\r\n"+QString::number(lcd_i2c_addr)+"\r\n";
     return SendData(ip_to, command);
 }
 
@@ -145,6 +145,14 @@ quint16 Server::getNextBlockID(quint16 block_id)
         }
     }
 
+    return clientblocks->firstKey();
+}
+
+quint16 Server::getFirstBlockID()
+{
+    if (clientblocks->isEmpty()) {
+        return 0;
+    }
     return clientblocks->firstKey();
 }
 

@@ -86,7 +86,7 @@ byte onstate = 0;
 
 IRrecv irrecv(RECV_PIN);
 decode_results ir_results;
-LedControl lc=LedControl(12, 11, 10, 3);
+LedControl lc=LedControl(12, 11, 10, 5);
 TM1637Display display(TM_CLK, TM_DIO);
 DS1302RTC RTC(DS1302_RST_PIN, DS1302_DAT_PIN, DS1302_CLK_PIN);
 
@@ -182,14 +182,23 @@ void setup() {
   lc.shutdown(0,false);
   lc.shutdown(1,false);
   lc.shutdown(2,false);
+  lc.shutdown(3,false);
+  lc.shutdown(4,false);
+  lc.shutdown(5,false);
   /* Set the brightness to a medium values */
   lc.setIntensity(0,8);
   lc.setIntensity(1,1);
   lc.setIntensity(2,4);
+  lc.setIntensity(3,1);
+  lc.setIntensity(4,2);
+  lc.setIntensity(5,4);
   /* and clear the display */
   lc.clearDisplay(0);
   lc.clearDisplay(1);
   lc.clearDisplay(2);
+  lc.clearDisplay(3);
+  lc.clearDisplay(4);
+  lc.clearDisplay(5);
 
   display.setBrightness(0x0f);
 

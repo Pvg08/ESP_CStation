@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include "./sensorblock.h"
+#include "./ipcamviewer.h"
 #include "../server.h"
 
 namespace Ui {
@@ -37,6 +38,7 @@ public:
     quint64 getSensorGraphicsLogInterval() const;
     void setSensorGraphicsLogInterval(const quint64 &value);
 
+    void setIPCamVisibility(bool isvisible);
 private slots:
     void update_blocks_list();
     void new_sensor(Sensor* new_sensor);
@@ -55,6 +57,8 @@ private:
     quint16 display_block_id;
     quint16 next_page_timeout;
     QMap<unsigned, unsigned> sensor_counters;
+
+    IPCamViewer *camviewer;
 
     virtual void showEvent(QShowEvent * event);
 };

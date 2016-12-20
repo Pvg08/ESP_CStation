@@ -38,6 +38,14 @@
 #define DHTPIN 6
 /* /pins */
 
+#define TONE_LEN_SHORT 250
+#define TONE_LEN_NORMAL 750
+#define TONE_LEN_LONG 1500
+
+#define TONE_FREQ_INFO 1000
+#define TONE_FREQ_MESSAGE 700
+#define TONE_FREQ_ERROR 400
+
 #define VOLTAGE_HAS_SIGNAL 3.0
 #define VOLTAGE_LOWLEVEL 11.0
 #define VOLTAGE_HIGHLEVEL 12.4
@@ -66,6 +74,14 @@ bool constant_charging;
 unsigned long int charging_start_time;
 volatile bool charge_btn;
 volatile unsigned long int charge_btn_press_millis, charge_press_duration;
+
+void fastBeep(unsigned msec, unsigned frequency = TONE_FREQ_MESSAGE) {
+  digitalWrite(TONE_PIN, LOW);
+  tone(TONE_PIN, frequency);
+  delay(msec);
+  noTone(TONE_PIN);
+  digitalWrite(TONE_PIN, HIGH);
+}
 
 void updateVoltage() {
   int value = analogRead(VOLTAGE_ANALOG_PIN);
@@ -139,12 +155,6 @@ void ChargeBTN_Change()
   }
 }
 
-void fastBeep(unsigned msec) {
-  digitalWrite(TONE_PIN, HIGH);
-  delay(msec);
-  digitalWrite(TONE_PIN, LOW);
-}
-
 void fastOff()
 {
   turned_on = turning_off = false;
@@ -163,8 +173,8 @@ void turnOn(bool isfast)
   byte i = 0;
   voltage = 0;
   while (i<=10 && voltage<VOLTAGE_HAS_SIGNAL) {
-    fastBeep(500);
-    delay(500);
+    fastBeep(TONE_LEN_SHORT, i>0 ? TONE_FREQ_ERROR : TONE_FREQ_INFO);
+    delay(TONE_LEN_SHORT);
     updateVoltage();
     i++;
   }
@@ -184,7 +194,7 @@ void turnOn(bool isfast)
     if (external_signal) {
       delay(500);
       if (digitalRead(POWER_SIGNAL_MAIN_PIN)==LOW) {
-        fastBeep(50);
+        fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
         is_ready = true;
       }
     }
@@ -192,7 +202,7 @@ void turnOn(bool isfast)
 
   if (!is_ready) {
     fastOff();
-    fastBeep(1000);
+    fastBeep(TONE_LEN_LONG, TONE_FREQ_ERROR);
   }
   power_btn = false;
   power_btn_press_millis = power_press_duration = 0;
@@ -255,14 +265,17 @@ void updateChargeState()
       charging = false;
       constant_charging = false;
       charging_start_time = 0;
+      fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
       digitalWrite(CHARGE_PIN, LOW);
     } else {
       if (long_press) {
         constant_charging = true;
         charging_start_time = 0;
+        fastBeep(TONE_LEN_NORMAL, TONE_FREQ_INFO);
       } else {
         constant_charging = false;
         charging_start_time = cmillis;
+        fastBeep(TONE_LEN_SHORT, TONE_FREQ_INFO);
       }
       charging = true;
       digitalWrite(CHARGE_PIN, HIGH);
@@ -276,6 +289,7 @@ void updateChargeState()
       constant_charging = false;
       charging_start_time = 0;
       digitalWrite(CHARGE_PIN, LOW);
+      fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
     }
   }
 }
@@ -316,7 +330,7 @@ void setup() {
   attachInterrupt(BTN_POWER_INT, PowerBTN_Change, CHANGE);
   attachInterrupt(BTN_CHARGE_INT, ChargeBTN_Change, CHANGE);
   dht.begin();
-  fastBeep(2000);
+  fastBeep(TONE_LEN_NORMAL, TONE_FREQ_MESSAGE);
 }
 
 void loop() {
@@ -345,4 +359,5 @@ void loop() {
 
   delay(250);
 }
+
 

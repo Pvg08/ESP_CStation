@@ -21,9 +21,10 @@ public:
     bool SendData(QString ip_to, QString message);
     bool SendData(QHostAddress ip_to, QString message);
     bool SendData(quint16 block_id, QString message);
-    bool SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid);
+    bool SendSetConfigsAndReset(QString ip_to, QString ssid, QString pssw, QString servip, quint8 stid, quint8 lcd_i2c_addr);
 
     quint16 getNextBlockID(quint16 block_id);
+    quint16 getFirstBlockID();
 
     const QStringList getIPsList();
     ClientBlock *getClientBlock(QString ip_addr);
