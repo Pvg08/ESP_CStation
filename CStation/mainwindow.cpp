@@ -45,6 +45,9 @@ void MainWindow::save_settings(QString filename)
     settings.setValue("main/display_color_bg", ui->toolButton_color_bg->palette().background().color().name());
     settings.setValue("main/display_color_gr", ui->toolButton_color_graphics->palette().background().color().name());
 
+    settings.setValue("main/event_time_from", ui->spinBox_evt_from->value());
+    settings.setValue("main/event_time_to", ui->spinBox_evt_to->value());
+
     settings.setValue("window/maximized", isMaximized());
     settings.setValue("window/minimized", isMinimized());
     if (!isMaximized() && !isMinimized()) {
@@ -82,6 +85,9 @@ void MainWindow::load_settings(QString filename)
     ui->spinBox_nextpage_delay->setValue(settings.value("main/next_page_timeout", 5000).toInt());
     ui->spinBox_graphics_timeinterval->setValue(settings.value("main/graphics_timeinterval", 86400).toInt());
     ui->lineEdit_sensor_codes->setText(settings.value("main/sensor_codes", "ATPHLRNOBMxMyMz").toString());
+
+    ui->spinBox_evt_from->setValue(settings.value("main/event_time_from", 22).toInt());
+    ui->spinBox_evt_to->setValue(settings.value("main/event_time_to", 8).toInt());
 
     setBtnColor(ui->toolButton_color_label, settings.value("main/display_color_l", "#000000").toString());
     setBtnColor(ui->toolButton_color_value, settings.value("main/display_color_v", "#000000").toString());
@@ -262,6 +268,9 @@ void MainWindow::on_pushButton_listen_clicked()
         server->StartServer();
         ui->pushButton_sensors_display_show->setEnabled(true);
 
+        server->setTimeEvtFrom(ui->spinBox_evt_from->value());
+        server->setTimeEvtTo(ui->spinBox_evt_to->value());
+
         actions_form = new ClientBlocksListActionsForm(ui->widget_actions, server);
         actions_form->setIPString(ui->comboBox_ip->currentText());
         ui->verticalLayout_actions->addWidget(actions_form);
@@ -392,4 +401,14 @@ void MainWindow::on_checkBox_log_clicked(bool checked)
     if (!checked) on_pushButton_clearlog_clicked();
     ui->textEdit_log->setEnabled(checked);
     ui->pushButton_clearlog->setEnabled(checked);
+}
+
+void MainWindow::on_spinBox_evt_from_valueChanged(int arg1)
+{
+    if (server) server->setTimeEvtFrom(arg1);
+}
+
+void MainWindow::on_spinBox_evt_to_valueChanged(int arg1)
+{
+    if (server) server->setTimeEvtTo(arg1);
 }

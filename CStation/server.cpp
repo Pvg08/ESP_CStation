@@ -266,6 +266,108 @@ void Server::clientBlockReady()
     }
 }
 
+void Server::setTimeEvtTo(int value)
+{
+    time_evt_to = value;
+}
+
+void Server::setTimeEvtFrom(int value)
+{
+    time_evt_from = value;
+}
+
+QString Server::getTranslit(QString str)
+{
+    QString result;
+    int i, rU, rL;
+    QString validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890-_,. ()[]{}<>~!@#$%^&*+=?";
+    QString rusUpper = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЭЮЯ";
+    QString rusLower = "абвгдеёжзийклмнопрстуфхцчшщыэюя";
+    QStringList latUpper, latLower;
+    latUpper <<"A"<<"B"<<"V"<<"G"<<"D"<<"E"<<"Jo"<<"Zh"<<"Z"<<"I"<<"J"<<"K"<<"L"<<"M"<<"N"
+        <<"O"<<"P"<<"R"<<"S"<<"T"<<"U"<<"F"<<"H"<<"C"<<"Ch"<<"Sh"<<"Sh"<<"I"<<"E"<<"Ju"<<"Ja";
+    latLower <<"a"<<"b"<<"v"<<"g"<<"d"<<"e"<<"jo"<<"zh"<<"z"<<"i"<<"j"<<"k"<<"l"<<"m"<<"n"
+        <<"o"<<"p"<<"r"<<"s"<<"t"<<"u"<<"f"<<"h"<<"c"<<"ch"<<"sh"<<"sh"<<"i"<<"e"<<"ju"<<"ja";
+    for (i=0; i < str.size(); ++i){
+        if ( validChars.contains(str[i]) ){
+            result = result + str[i];
+        }else{
+            rU = rusUpper.indexOf(str[i]);
+            rL = rusLower.indexOf(str[i]);
+            if (rU >= 0)         result = result + latUpper[rU];
+            else if (rL >= 0)    result = result + latLower[rL];
+        }
+    }
+    return result;
+}
+
+void Server::processEventGroup(QString message_type, QString message, QTcpSocket *tcpSocket)
+{
+    int idusersocs=tcpSocket->socketDescriptor();
+    QTextStream os(tcpSocket);
+    os.setAutoDetectUnicode(true);
+    os << "HTTP/1.0 200 Ok\r\n"
+          "Content-Type: text/html; charset=\"utf-8\"\r\n"
+          "\r\n"
+          "<h1>Nothing to see here</h1>\n"
+          << QDateTime::currentDateTime().toString() << "\n";
+
+    if (message_type == "smsread" || message_type == "phoneread") {
+
+        QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
+        while (i != clientblocks->constEnd()) {
+            SendData(i.value()->getblockId(), "TONE=0");
+            SendData(i.value()->getblockId(), "SERV_LT=");
+            ++i;
+        }
+
+    } else if (message_type == "sms" || message_type == "phone" || message_type == "notify") {
+
+        QString username = "";
+        int index = message.indexOf("INFO=");
+        if (index >= 0) {
+            index += 5;
+            username = message.mid(index);
+            QUrl upath = QUrl(username);
+            username = upath.fromPercentEncoding(username.toUtf8());
+            username = getTranslit(username);
+            emit write_message(username);
+        }
+        username = username.replace('+', " ");
+        if (username.length() > 16) {
+            username.resize(16);
+        }
+
+        bool need_sound = false;
+        int hour = QDateTime::currentDateTime().toString("hh").toInt();
+        if (time_evt_to >= time_evt_from) {
+            if (hour <= time_evt_from || hour >= time_evt_to) {
+                need_sound = true;
+            }
+        } else {
+            if (hour >= time_evt_to && hour <= time_evt_from) {
+                need_sound = true;
+            }
+        }
+
+        QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
+        while (i != clientblocks->constEnd()) {
+            if (message_type == "sms") {
+                if (need_sound) SendData(i.value()->getblockId(), "TONE=300,1500");
+                SendData(i.value()->getblockId(), "SERV_LT=SMS  " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username);
+            } else if (message_type == "phone") {
+                if (need_sound) SendData(i.value()->getblockId(), "TONE=500,500");
+                SendData(i.value()->getblockId(), "SERV_LT=CALL " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username);
+            } else {
+                if (need_sound) SendData(i.value()->getblockId(), "TONE=800,2000");
+                SendData(i.value()->getblockId(), "SERV_LT=NOT  " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username);
+            }
+            ++i;
+        }
+
+    }
+}
+
 int Server::getPort() const
 {
     return port;
@@ -327,7 +429,20 @@ void Server::recieveData()
             QString message = QString::fromUtf8(mem, size).trimmed();
             delete mem;
             emit write_message(tr("Recieved data (size=%1) from %2. Content: \"%3\"").arg(size).arg(tcpSocket->peerAddress().toString()).arg(message));
-            processMessageGroup(message, i.key());
+
+            if (message.startsWith("POST /sms HTTP/")) {
+                processEventGroup("sms", message, tcpSocket);
+            } else if (message.startsWith("POST /smsread HTTP/")) {
+                processEventGroup("smsread", message, tcpSocket);
+            } else if (message.startsWith("POST /phone HTTP/")) {
+                processEventGroup("phone", message, tcpSocket);
+            } else if (message.startsWith("POST /phoneread HTTP/")) {
+                processEventGroup("phoneread", message, tcpSocket);
+            } else if (message.startsWith("POST /notify HTTP/")) {
+                processEventGroup("notify", message, tcpSocket);
+            } else  {
+                processMessageGroup(message, i.key());
+            }
         }
         ++i;
     }

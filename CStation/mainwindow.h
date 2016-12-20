@@ -44,6 +44,10 @@ private slots:
     void on_comboBox_ip_currentTextChanged(const QString &arg1);
     void on_checkBox_log_clicked(bool checked);
 
+    void on_spinBox_evt_from_valueChanged(int arg1);
+
+    void on_spinBox_evt_to_valueChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
     Server* server;

@@ -33,7 +33,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
@@ -2604,6 +2604,51 @@
               </property>
               <property name="text">
                <string>51016</string>
+              </property>
+             </widget>
+             <widget class="QSpinBox" name="spinBox_evt_from">
+              <property name="geometry">
+               <rect>
+                <x>190</x>
+                <y>200</y>
+                <width>61</width>
+                <height>22</height>
+               </rect>
+              </property>
+              <property name="maximum">
+               <number>23</number>
+              </property>
+              <property name="value">
+               <number>22</number>
+              </property>
+             </widget>
+             <widget class="QSpinBox" name="spinBox_evt_to">
+              <property name="geometry">
+               <rect>
+                <x>260</x>
+                <y>200</y>
+                <width>61</width>
+                <height>22</height>
+               </rect>
+              </property>
+              <property name="maximum">
+               <number>23</number>
+              </property>
+              <property name="value">
+               <number>8</number>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_8">
+              <property name="geometry">
+               <rect>
+                <x>190</x>
+                <y>180</y>
+                <width>131</width>
+                <height>16</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Silence time interval:</string>
               </property>
              </widget>
             </widget>
