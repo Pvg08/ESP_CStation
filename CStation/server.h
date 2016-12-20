@@ -35,6 +35,10 @@ public:
     void setRemotePort(int value);
     int getPort() const;
     void setPort(int value);
+
+    void setTimeEvtFrom(int value);
+    void setTimeEvtTo(int value);
+
 signals:
     void blocks_change();
     void sensors_change(quint16 block_id);
@@ -60,9 +64,12 @@ private:
     QString ipAddress;
     QTcpServer *tcpServer;
     QNetworkSession *networkSession;
+    int time_evt_from, time_evt_to;
 
+    void processEventGroup(QString message_type, QString message, QTcpSocket* tcpSocket);
     void processMessageGroup(QString message_gr, quint32 ipaddr);
     void processMessage(QString message, quint32 ipaddr);
+    QString getTranslit(QString str);
 };
 
 #endif
