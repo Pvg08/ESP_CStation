@@ -311,6 +311,7 @@ QString Server::getTranslit(QString str)
 
 void Server::processEventGroup(QString message_type, QString message, QTcpSocket *tcpSocket)
 {
+    QString smsg;
     int idusersocs=tcpSocket->socketDescriptor();
     QTextStream os(tcpSocket);
     os.setAutoDetectUnicode(true);
@@ -324,8 +325,9 @@ void Server::processEventGroup(QString message_type, QString message, QTcpSocket
 
         QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
         while (i != clientblocks->constEnd()) {
-            SendData(i.value()->getblockId(), "TONE=0");
-            SendData(i.value()->getblockId(), "SERV_LT=");
+            smsg  = "TONE=0\n";
+            smsg += "SERV_LT=";
+            SendData(i.value()->getblockId(), smsg);
             ++i;
         }
 
@@ -360,16 +362,18 @@ void Server::processEventGroup(QString message_type, QString message, QTcpSocket
 
         QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
         while (i != clientblocks->constEnd()) {
+            smsg = "";
             if (message_type == "sms") {
-                if (need_sound) SendData(i.value()->getblockId(), "TONE=300,1500");
-                SendData(i.value()->getblockId(), "SERV_LT=SMS  " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username);
+                if (need_sound) smsg += "TONE=300,1500\n";
+                smsg += "SERV_LT=SMS  " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username;
             } else if (message_type == "phone") {
-                if (need_sound) SendData(i.value()->getblockId(), "TONE=500,500");
-                SendData(i.value()->getblockId(), "SERV_LT=CALL " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username);
+                if (need_sound) smsg += "TONE=500,500\n";
+                smsg += "SERV_LT=CALL " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username;
             } else {
-                if (need_sound) SendData(i.value()->getblockId(), "TONE=800,2000");
-                SendData(i.value()->getblockId(), "SERV_LT=NOT  " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username);
+                if (need_sound) smsg += "TONE=800,2000\n";
+                smsg += "SERV_LT=NOT  " + QDateTime::currentDateTime().toString("dd.MM hh:mm") + username;
             }
+            SendData(i.value()->getblockId(), smsg);
             ++i;
         }
 

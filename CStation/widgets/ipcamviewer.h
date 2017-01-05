@@ -25,7 +25,7 @@ private:
     QImage tmpimage;
     bool show_next_img;
 
-    void IPCamViewer::paintEvent(QPaintEvent *);
+    virtual void paintEvent(QPaintEvent *);
 };
 
 #endif // IPCAMVIEWER_H
