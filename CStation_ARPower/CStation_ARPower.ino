@@ -1,4 +1,5 @@
 #include "DHT.h"
+#include "TimerOne.h"
 
 /* fan-control */
 #define TEMP_LOWLEVEL 18
@@ -10,7 +11,12 @@
 /* /fan-control */
 
 /* pins */
-#define VOLTAGE_ANALOG_PIN 3
+#define AMPERAGE_ANALOG_PIN A0
+#define AMPERAGE_MVPERAMP 66
+#define AMPERAGE_ACSOFFSET 2500
+#define AMPERAGE_VK (5000 / 1024.0)
+
+#define VOLTAGE_ANALOG_PIN A3
 #define VOLTAGE_R1 59850.0
 #define VOLTAGE_R2 10000.0
 #define BASE_VOLTAGE 5.0
@@ -23,6 +29,12 @@
 #define POWER_PIN 4
 #define CHARGE_PIN 8
 #define POWER_SIGNAL_MAIN_PIN 9
+
+#define POWER_LED_OFF 0
+#define POWER_LED_ON 1
+#define POWER_LED_FLASH_FAST 2
+#define POWER_LED_FLASH_NORM 3
+#define POWER_LED_FLASH_SLOW 4
 
 #define BASE_CHARGING_TIME 14400000
 
@@ -51,6 +63,9 @@
 #define VOLTAGE_HIGHLEVEL 12.4
 #define VOLTAGE_CRITICALLEVEL 13
 
+#define AMPERAGE_HIGHLEVEL 10
+#define AMPERAGE_CRITICALLEVEL 15
+
 /* dht-sensor */
 #define DHT_READ_MS 20000
 #define DHTTYPE DHT11
@@ -60,6 +75,7 @@ DHT dht(DHTPIN, DHTTYPE);
 unsigned long int last_dht_read;
 int current_fan_speed;
 float voltage;
+float amperage;
 float temperature;
 float humidity;
 
@@ -74,6 +90,43 @@ bool constant_charging;
 unsigned long int charging_start_time;
 volatile bool charge_btn;
 volatile unsigned long int charge_btn_press_millis, charge_press_duration;
+volatile byte power_led_repeats_cnt;
+volatile bool power_led_state;
+volatile bool power_led_curr_mode;
+
+void PowerLedSet(byte mode, byte repeats = 0) {
+  if (power_led_curr_mode == mode && power_led_curr_mode == repeats) {
+    return;
+  }
+  power_led_curr_mode = mode;
+  power_led_repeats_cnt = 0;
+  Timer1.stop();
+  if (mode == POWER_LED_OFF) {
+    power_led_state = false;
+    digitalWrite(POWER_PIN, LOW);
+  } else if (mode == POWER_LED_ON) {
+    power_led_state = true;
+    digitalWrite(POWER_PIN, HIGH);
+  } else if (mode == POWER_LED_FLASH_FAST) {
+    power_led_state = true;
+    digitalWrite(POWER_PIN, HIGH);
+    Timer1.initialize(100000);
+    Timer1.start();
+    power_led_repeats_cnt = repeats;
+  } else if (mode == POWER_LED_FLASH_NORM) {
+    power_led_state = true;
+    digitalWrite(POWER_PIN, HIGH);
+    Timer1.initialize(400000);
+    Timer1.start();
+    power_led_repeats_cnt = repeats;
+  } else if (mode == POWER_LED_FLASH_SLOW) {
+    power_led_state = true;
+    digitalWrite(POWER_PIN, HIGH);
+    Timer1.initialize(1000000);
+    Timer1.start();
+    power_led_repeats_cnt = repeats;
+  }
+}
 
 void fastBeep(unsigned msec, unsigned frequency = TONE_FREQ_MESSAGE) {
   digitalWrite(TONE_PIN, LOW);
@@ -91,6 +144,15 @@ void updateVoltage() {
   }
 }
 
+void updateAmperage() {
+  int value = analogRead(AMPERAGE_ANALOG_PIN);
+  amperage = value * AMPERAGE_VK;
+  amperage = (amperage - AMPERAGE_ACSOFFSET) / AMPERAGE_MVPERAMP;
+  if (amperage<0.001) {
+    amperage=0.0;
+  }
+}
+
 void updateFanSpeeds() {
   int calc_speed = 0;
 
@@ -98,6 +160,24 @@ void updateFanSpeeds() {
   
   if (voltage>VOLTAGE_HIGHLEVEL) calc_speed+=(int) (voltage-VOLTAGE_HIGHLEVEL)*80;
   if (voltage>VOLTAGE_CRITICALLEVEL) calc_speed+=255;
+
+  if (amperage > AMPERAGE_CRITICALLEVEL) {
+    PowerLedSet(POWER_LED_FLASH_FAST);
+    turning_off = true;
+    turning_off_start_time = millis();
+    current_fan_speed = 0;
+    analogWrite(FAN_IN_PIN, current_fan_speed);
+    analogWrite(FAN_OUT_PIN, current_fan_speed);
+    return;
+  }
+
+  if (voltage>VOLTAGE_CRITICALLEVEL) {
+    PowerLedSet(POWER_LED_FLASH_FAST);
+  } else if (amperage > AMPERAGE_HIGHLEVEL || voltage > VOLTAGE_HIGHLEVEL) {
+    PowerLedSet(POWER_LED_FLASH_NORM);
+  } else if (power_led_curr_mode != POWER_LED_OFF && power_led_curr_mode != POWER_LED_ON) {
+    PowerLedSet(POWER_LED_ON);
+  }
 
   if (!isnan(humidity)) {
     calc_speed+=(int) (humidity-HUMIDITY_BASELEVEL);
@@ -159,7 +239,7 @@ void fastOff()
 {
   turned_on = turning_off = false;
   turning_off_start_time = 0;
-  digitalWrite(POWER_PIN, LOW);
+  PowerLedSet(POWER_LED_OFF);
   power_btn = false;
   power_btn_press_millis = power_press_duration = turn_on_time = 0;
 }
@@ -167,7 +247,7 @@ void fastOff()
 void turnOn(bool isfast)
 {
   turned_on = true;
-  digitalWrite(POWER_PIN, HIGH);
+  PowerLedSet(POWER_LED_FLASH_NORM);
   digitalWrite(LED_POWER_ALERT_PIN, HIGH);
 
   byte i = 0;
@@ -176,6 +256,7 @@ void turnOn(bool isfast)
     fastBeep(TONE_LEN_SHORT, i>0 ? TONE_FREQ_ERROR : TONE_FREQ_INFO);
     delay(TONE_LEN_SHORT);
     updateVoltage();
+    updateAmperage();
     i++;
   }
 
@@ -183,6 +264,7 @@ void turnOn(bool isfast)
   pinMode(POWER_SIGNAL_MAIN_PIN, INPUT);
   
   if (!is_ready && voltage>=VOLTAGE_HAS_SIGNAL) {
+    PowerLedSet(POWER_LED_FLASH_FAST);
     unsigned long int cmillis = millis();
     bool external_signal = digitalRead(POWER_SIGNAL_MAIN_PIN)==HIGH;
     i = 0;
@@ -200,7 +282,9 @@ void turnOn(bool isfast)
     }
   }
 
-  if (!is_ready) {
+  if (is_ready) {
+    PowerLedSet(POWER_LED_ON);
+  } else {
     fastOff();
     fastBeep(TONE_LEN_LONG, TONE_FREQ_ERROR);
   }
@@ -213,6 +297,8 @@ void turnOn(bool isfast)
 void updateOnOffState()
 {
   if (turning_off) {
+    PowerLedSet(POWER_LED_FLASH_SLOW);
+
     digitalWrite(LED_POWER_ALERT_PIN, HIGH);
     pinMode(POWER_SIGNAL_MAIN_PIN, OUTPUT);
     digitalWrite(POWER_SIGNAL_MAIN_PIN, HIGH);
@@ -312,6 +398,9 @@ void setup() {
   constant_charging = false;
   charging_start_time = 0;
   turning_off_start_time = 0;
+  power_led_state = 0;
+  power_led_repeats_cnt = 0;
+  power_led_curr_mode = 255;
 
   pinMode(LED_POWER_ALERT_PIN, OUTPUT);
   pinMode(FAN_IN_PIN, OUTPUT);
@@ -331,10 +420,13 @@ void setup() {
   attachInterrupt(BTN_CHARGE_INT, ChargeBTN_Change, CHANGE);
   dht.begin();
   fastBeep(TONE_LEN_NORMAL, TONE_FREQ_MESSAGE);
+
+  Timer1.attachInterrupt(onTimer1Timer);
 }
 
 void loop() {
   updateVoltage();
+  updateAmperage();
 
   if (voltage>VOLTAGE_HAS_SIGNAL) {
     if (!last_dht_read || millis() - last_dht_read > DHT_READ_MS) {
@@ -360,4 +452,14 @@ void loop() {
   delay(250);
 }
 
+void onTimer1Timer() {
+  if (power_led_repeats_cnt > 0) {
+    power_led_repeats_cnt--;
+    if (power_led_repeats_cnt == 0) {
+      Timer1.stop();
+    }
+  }
+  power_led_state = !power_led_state;
+  digitalWrite(POWER_PIN, power_led_state ? HIGH : LOW);
+}
 
