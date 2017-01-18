@@ -6,8 +6,9 @@
 #define TEMP_HIGHLEVEL 30
 #define TEMP_CRITICALLEVEL 60
 #define HUMIDITY_BASELEVEL 50
-#define FAN_MIN_SPEED 100
+#define FAN_MIN_SPEED 140
 #define FAN_MAX_SPEED 255
+#define FAN_UPDATE_TIME 1000
 /* /fan-control */
 
 /* pins */
@@ -23,7 +24,7 @@
 #define VOLTAGE_K (BASE_VOLTAGE * (VOLTAGE_R1+VOLTAGE_R2) / (1024.0 * VOLTAGE_R2))
 
 #define FAN_IN_PIN 10
-#define FAN_OUT_PIN 11
+#define FAN_OUT_PIN 9
 #define TONE_PIN 5
 
 #define POWER_PIN 4
@@ -46,7 +47,7 @@
 #define BTN_CHARGE_PIN 3
 #define BTN_CHARGE_INT 1
 
-#define LED_POWER_ALERT_PIN 9
+#define LED_POWER_ALERT_PIN 11
 
 #define DHTPIN 6
 /* /pins */
@@ -74,7 +75,7 @@ DHT dht(DHTPIN, DHTTYPE);
 /* /dht-sensor */
 
 unsigned long int last_dht_read;
-int current_fan_speed;
+byte current_fan_speed;
 float voltage;
 float amperage;
 float temperature;
@@ -90,6 +91,7 @@ bool charging;
 bool constant_charging;
 unsigned long int charging_start_time;
 unsigned long int last_voltage_error_time;
+unsigned long int last_fan_update_time;
 volatile bool charge_btn;
 volatile unsigned long int charge_btn_press_millis, charge_press_duration;
 volatile byte power_led_repeats_cnt;
@@ -159,11 +161,11 @@ void updateAmperage() {
 }
 
 void updateFanSpeeds() {
-  int calc_speed = 0;
+  int calc_speed = FAN_MIN_SPEED;
   bool is_voltage_error = false;
   unsigned long int cmillis = millis();
 
-  if (turn_on_time && (cmillis-turn_on_time)<30000) calc_speed+=(30000-cmillis+turn_on_time)/200;
+  if (turn_on_time && (cmillis > turn_on_time) && (cmillis-turn_on_time)<60000) calc_speed+=(FAN_MAX_SPEED - FAN_MIN_SPEED)*(60000+turn_on_time-cmillis)/60000.0;
   
   if (voltage>VOLTAGE_HIGHLEVEL) calc_speed+=(int) (voltage-VOLTAGE_HIGHLEVEL)*80;
   if (voltage>VOLTAGE_CRITICALLEVEL) calc_speed+=255;
@@ -278,7 +280,7 @@ void turnOn(bool isfast)
   digitalWrite(POWER_PIN, HIGH);
   PowerLedSet(POWER_LED_FLASH_NORM);
 
-  current_fan_speed = FAN_MIN_SPEED;
+  current_fan_speed = FAN_MAX_SPEED;
   analogWrite(FAN_IN_PIN, current_fan_speed);
   analogWrite(FAN_OUT_PIN, current_fan_speed);
 
@@ -435,6 +437,7 @@ void setup() {
   power_led_repeats_cnt = 0;
   power_led_curr_mode = 255;
   last_voltage_error_time = 0;
+  last_fan_update_time = 0;
 
   pinMode(LED_POWER_ALERT_PIN, OUTPUT);
   pinMode(FAN_IN_PIN, OUTPUT);
@@ -449,18 +452,17 @@ void setup() {
 
   PowerLedSet(POWER_LED_OFF);
   digitalWrite(POWER_PIN, LOW);
-  digitalWrite(FAN_IN_PIN, LOW);
-  digitalWrite(FAN_OUT_PIN, LOW);
+  analogWrite(FAN_IN_PIN, 0);
+  analogWrite(FAN_OUT_PIN, 0);
   digitalWrite(TONE_PIN, LOW);
   digitalWrite(CHARGE_PIN, LOW);
-
-  TCCR1B = TCCR1B & 0b11111000 | 0x01;
-  TCCR2B = TCCR2B & 0b11111000 | 0x01;
 
   attachInterrupt(BTN_POWER_INT, PowerBTN_Change, CHANGE);
   attachInterrupt(BTN_CHARGE_INT, ChargeBTN_Change, CHANGE);
   dht.begin();
   fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
+
+  TCCR2B = TCCR2B & 0b11111000 | 0x01;
 }
 
 void loop() {
@@ -482,13 +484,16 @@ void loop() {
       }
     }
 
-    if (turned_on && !turning_off) updateFanSpeeds();
+    if (turned_on && !turning_off && ((millis() - last_fan_update_time) >= FAN_UPDATE_TIME)) {
+      last_fan_update_time = millis();
+      updateFanSpeeds();
+    }
   }
 
   updateOnOffState();
   updateChargeState();
 
-  delay(200);
+  delay(250);
 }
 
 void onTimer1Timer() {
