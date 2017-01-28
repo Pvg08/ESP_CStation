@@ -1,14 +1,16 @@
 #include "DHT.h"
-#include "TimerOne.h"
+#include <IRremote.h>
+#include "onewire_helper.h"
 
 /* fan-control */
 #define TEMP_LOWLEVEL 18
-#define TEMP_HIGHLEVEL 30
+#define TEMP_HIGHLEVEL 40
 #define TEMP_CRITICALLEVEL 60
 #define HUMIDITY_BASELEVEL 50
+#define FAN_ZERO_SPEED 1
 #define FAN_MIN_SPEED 140
 #define FAN_MAX_SPEED 255
-#define FAN_UPDATE_TIME 1000
+#define FAN_UPDATE_TIME 1120
 /* /fan-control */
 
 /* pins */
@@ -26,10 +28,16 @@
 #define FAN_IN_PIN 10
 #define FAN_OUT_PIN 9
 #define TONE_PIN 5
+#define IRECV_PIN 12
 
 #define POWER_PIN 4
 #define CHARGE_PIN 8
+
+/* OneWire */
 #define POWER_SIGNAL_MAIN_PIN 7
+#define ONEWIRE_CODE_OFF 0x11
+#define ONEWIRE_CODE_SILENT_MODE_OFF 0xA2
+#define ONEWIRE_CODE_SILENT_MODE_ON 0x78
 
 #define POWER_LED_OFF 0
 #define POWER_LED_ON 1
@@ -68,11 +76,21 @@
 #define AMPERAGE_HIGHLEVEL 1
 #define AMPERAGE_CRITICALLEVEL 2
 
+/* Command codes */
+#define CM_TOGGLEONOFF 0xFFB04F
+#define CM_TOGGLECHARGE 0xFFF807
+
 /* dht-sensor */
 #define DHT_READ_MS 20000
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 /* /dht-sensor */
+
+/* IR Reciever */
+IRrecv irrecv(IRECV_PIN);
+decode_results ir_results;
+
+OneWireHelper *wire_helper;
 
 unsigned long int last_dht_read;
 byte current_fan_speed;
@@ -98,13 +116,19 @@ volatile byte power_led_repeats_cnt;
 volatile bool power_led_state;
 volatile bool power_led_curr_mode;
 
+unsigned long int last_timer_time;
+unsigned timer_interval;
+
+bool silence_mode;
+
 void PowerLedSet(byte mode, byte repeats = 0) {
   if (power_led_curr_mode == mode && power_led_curr_mode == repeats) {
     return;
   }
   power_led_curr_mode = mode;
   power_led_repeats_cnt = 0;
-  Timer1.stop();
+  last_timer_time = millis();
+  timer_interval = 0;
   if (mode == POWER_LED_OFF) {
     power_led_state = false;
     digitalWrite(LED_POWER_ALERT_PIN, LOW);
@@ -114,23 +138,17 @@ void PowerLedSet(byte mode, byte repeats = 0) {
   } else if (mode == POWER_LED_FLASH_FAST) {
     power_led_state = true;
     digitalWrite(LED_POWER_ALERT_PIN, HIGH);
-    Timer1.attachInterrupt(onTimer1Timer);
-    Timer1.initialize(100000);
-    Timer1.start();
+    timer_interval = 100;
     power_led_repeats_cnt = repeats;
   } else if (mode == POWER_LED_FLASH_NORM) {
     power_led_state = true;
     digitalWrite(LED_POWER_ALERT_PIN, HIGH);
-    Timer1.attachInterrupt(onTimer1Timer);
-    Timer1.initialize(400000);
-    Timer1.start();
+    timer_interval = 400;
     power_led_repeats_cnt = repeats;
   } else if (mode == POWER_LED_FLASH_SLOW) {
     power_led_state = true;
     digitalWrite(LED_POWER_ALERT_PIN, HIGH);
-    Timer1.attachInterrupt(onTimer1Timer);
-    Timer1.initialize(1000000);
-    Timer1.start();
+    timer_interval = 1000;
     power_led_repeats_cnt = repeats;
   }
 }
@@ -138,7 +156,12 @@ void PowerLedSet(byte mode, byte repeats = 0) {
 void fastBeep(unsigned msec, unsigned frequency = TONE_FREQ_MESSAGE) {
   digitalWrite(TONE_PIN, LOW);
   tone(TONE_PIN, frequency);
-  delay(msec);
+  unsigned delta = msec >> 3;
+  if (delta == 0) delta = 1;
+  for(int i=0; i<8; i++) {
+    delay(delta);
+    onTimerCheck();
+  }
   noTone(TONE_PIN);
   digitalWrite(TONE_PIN, HIGH);
 }
@@ -168,13 +191,13 @@ void updateFanSpeeds() {
   if (turn_on_time && (cmillis > turn_on_time) && (cmillis-turn_on_time)<60000) calc_speed+=(FAN_MAX_SPEED - FAN_MIN_SPEED)*(60000+turn_on_time-cmillis)/60000.0;
   
   if (voltage>VOLTAGE_HIGHLEVEL) calc_speed+=(int) (voltage-VOLTAGE_HIGHLEVEL)*80;
-  if (voltage>VOLTAGE_CRITICALLEVEL) calc_speed+=255;
+  if (voltage>VOLTAGE_CRITICALLEVEL) calc_speed+=400;
 
   if (amperage > AMPERAGE_CRITICALLEVEL) {
     PowerLedSet(POWER_LED_FLASH_FAST);
     turning_off = true;
     turning_off_start_time = cmillis;
-    current_fan_speed = 0;
+    current_fan_speed = FAN_ZERO_SPEED;
     analogWrite(FAN_IN_PIN, current_fan_speed);
     analogWrite(FAN_OUT_PIN, current_fan_speed);
     fastBeep(TONE_LEN_LONG, TONE_FREQ_ERROR);
@@ -210,14 +233,22 @@ void updateFanSpeeds() {
     }
   }
 
-  if (calc_speed>0) {
+  if (silence_mode && !is_voltage_error) {
+    calc_speed = calc_speed/2;
+  }
+
+  if (calc_speed>FAN_ZERO_SPEED) {
     calc_speed+=FAN_MIN_SPEED;
     if (calc_speed < FAN_MIN_SPEED) calc_speed = FAN_MIN_SPEED;
-  } else if (calc_speed<0) {
-    calc_speed = 0;
+  } else if (calc_speed<FAN_ZERO_SPEED) {
+    calc_speed = FAN_ZERO_SPEED;
   }
 
   if (calc_speed > FAN_MAX_SPEED) calc_speed = FAN_MAX_SPEED;
+
+  if (silence_mode && !is_voltage_error && calc_speed <= FAN_MIN_SPEED) {
+    calc_speed = FAN_ZERO_SPEED;
+  }
 
   if (is_voltage_error && (cmillis > last_voltage_error_time) && (cmillis - last_voltage_error_time) > BASE_VOLTAGE_ERROR_TIME) {
     last_voltage_error_time = cmillis;
@@ -271,10 +302,30 @@ void fastOff()
   digitalWrite(POWER_PIN, LOW);
   power_btn = false;
   power_btn_press_millis = power_press_duration = turn_on_time = 0;
+  irrecv.enableIRIn();
 }
 
 void turnOn(bool isfast)
 {
+  last_dht_read = 0;
+  voltage = 0;
+  temperature = NAN;
+  humidity = NAN;
+  power_btn_press_millis = 0;
+  charge_btn_press_millis = 0;
+  power_press_duration = 0;
+  charge_press_duration = 0;
+  turning_off = false;
+  turning_off_start_time = 0;
+  power_led_state = 0;
+  power_led_repeats_cnt = 0;
+  power_led_curr_mode = 255;
+  last_voltage_error_time = 0;
+  last_fan_update_time = 0;
+  last_timer_time = 0;
+  silence_mode = false;
+  irrecv.enableIRIn();
+
   turned_on = true;
   turn_on_time = 0;
   digitalWrite(POWER_PIN, HIGH);
@@ -289,30 +340,20 @@ void turnOn(bool isfast)
   while (i<=10 && voltage<VOLTAGE_HAS_SIGNAL) {
     fastBeep(TONE_LEN_SHORT, i>0 ? TONE_FREQ_ERROR : TONE_FREQ_INFO);
     delay(TONE_LEN_SHORT);
+    onTimerCheck();
     updateVoltage();
     updateAmperage();
     i++;
   }
 
   bool is_ready = isfast && voltage>=VOLTAGE_HAS_SIGNAL;
-  pinMode(POWER_SIGNAL_MAIN_PIN, INPUT);
+  wire_helper->reset();
   
   if (!is_ready && voltage>=VOLTAGE_HAS_SIGNAL) {
     PowerLedSet(POWER_LED_FLASH_FAST);
-    unsigned long int cmillis = millis();
-    bool external_signal = digitalRead(POWER_SIGNAL_MAIN_PIN)==HIGH;
-    i = 0;
-    while (i<=100 && !external_signal) {
-      delay(50);
-      external_signal = digitalRead(POWER_SIGNAL_MAIN_PIN)==HIGH;
-      i++;
-    }
-    if (external_signal) {
-      delay(500);
-      if (digitalRead(POWER_SIGNAL_MAIN_PIN)==LOW) {
-        fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
-        is_ready = true;
-      }
+    is_ready = wire_helper->waitStartSignal();
+    if (is_ready) {
+      fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
     }
   }
 
@@ -332,25 +373,9 @@ void updateOnOffState()
   if (turning_off) {
     fastBeep(TONE_LEN_SHORT, TONE_FREQ_INFO);
     PowerLedSet(POWER_LED_FLASH_SLOW);
-
-    pinMode(POWER_SIGNAL_MAIN_PIN, OUTPUT);
-    digitalWrite(POWER_SIGNAL_MAIN_PIN, HIGH);
-    delay(1500);
-    digitalWrite(POWER_SIGNAL_MAIN_PIN, LOW);
-    pinMode(POWER_SIGNAL_MAIN_PIN, INPUT);
-    
-    delay(100);
-    bool external_signal = digitalRead(POWER_SIGNAL_MAIN_PIN)==HIGH;
-    byte i = 0;
-    while (i<=100 && !external_signal) {
-      delay(200);
-      external_signal = digitalRead(POWER_SIGNAL_MAIN_PIN)==HIGH;
-      i++;
-    }
-
+    bool external_signal = wire_helper->sendOffPing();
     fastOff();
     fastBeep(TONE_LEN_LONG, external_signal ? TONE_FREQ_MESSAGE : TONE_FREQ_ERROR);
-
     return;
   }
 
@@ -438,6 +463,8 @@ void setup() {
   power_led_curr_mode = 255;
   last_voltage_error_time = 0;
   last_fan_update_time = 0;
+  last_timer_time = 0;
+  silence_mode = false;
 
   pinMode(LED_POWER_ALERT_PIN, OUTPUT);
   pinMode(FAN_IN_PIN, OUTPUT);
@@ -448,24 +475,58 @@ void setup() {
   pinMode(BTN_POWER_PIN, INPUT);
   pinMode(BTN_CHARGE_PIN, INPUT);
   pinMode(DHTPIN, INPUT);
-  pinMode(POWER_SIGNAL_MAIN_PIN, INPUT);
+  wire_helper = new OneWireHelper(POWER_SIGNAL_MAIN_PIN, onTimerCheck);
 
   PowerLedSet(POWER_LED_OFF);
   digitalWrite(POWER_PIN, LOW);
-  analogWrite(FAN_IN_PIN, 0);
-  analogWrite(FAN_OUT_PIN, 0);
+  analogWrite(FAN_IN_PIN, FAN_ZERO_SPEED);
+  analogWrite(FAN_OUT_PIN, FAN_ZERO_SPEED);
   digitalWrite(TONE_PIN, LOW);
   digitalWrite(CHARGE_PIN, LOW);
 
   attachInterrupt(BTN_POWER_INT, PowerBTN_Change, CHANGE);
   attachInterrupt(BTN_CHARGE_INT, ChargeBTN_Change, CHANGE);
   dht.begin();
+  irrecv.enableIRIn();
+  irrecv.blink13(1);
+  pinMode(IRECV_PIN, INPUT);
   fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
 
-  TCCR2B = TCCR2B & 0b11111000 | 0x01;
+  TCCR2B = (TCCR2B & 0b11111000) | 0x01;
 }
 
 void loop() {
+  int onewire_byte = wire_helper->readByte();
+  if (onewire_byte >= 0) {
+    if (onewire_byte == ONEWIRE_CODE_OFF && !turning_off) {
+      turning_off = true;
+      turning_off_start_time = millis();
+      power_btn = false;
+      power_btn_press_millis = power_press_duration = 0;
+    } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_ON) {
+      silence_mode = true;
+      last_fan_update_time = 0;
+    } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_OFF) {
+      silence_mode = true;
+      last_fan_update_time = 0;
+    }
+  }
+  if (irrecv.decode(&ir_results)) {
+    if (ir_results.decode_type == NEC) {
+      if (ir_results.value == CM_TOGGLEONOFF) {
+        power_btn = true;
+        power_press_duration = 0;
+      } else if (ir_results.value == CM_TOGGLECHARGE) {
+        charge_btn = true;
+        charge_press_duration = 0;
+      } else if (ir_results.value == 0xFFB847) {
+         silence_mode = !silence_mode;
+         last_fan_update_time = 0;
+      }
+    }
+    irrecv.resume();
+  }
+  onTimerCheck();
   updateVoltage();
   updateAmperage();
 
@@ -476,11 +537,12 @@ void loop() {
       float t = dht.readTemperature();
       if (!isnan(h)) humidity = h;
       if (!isnan(t)) temperature = t;
-
+      onTimerCheck();
       if (!isnan(h) || !isnan(t)) {
         digitalWrite(13, HIGH);
         delay(100);
         digitalWrite(13, LOW);
+        onTimerCheck();
       }
     }
 
@@ -492,18 +554,19 @@ void loop() {
 
   updateOnOffState();
   updateChargeState();
-
-  delay(250);
 }
 
-void onTimer1Timer() {
-  if (power_led_repeats_cnt > 0) {
-    power_led_repeats_cnt--;
-    if (power_led_repeats_cnt == 0) {
-      Timer1.stop();
+void onTimerCheck() {
+  if (timer_interval && (last_timer_time+timer_interval)<=millis()) {
+    if (power_led_repeats_cnt > 0) {
+      power_led_repeats_cnt--;
+      if (power_led_repeats_cnt == 0) {
+        timer_interval = 0;
+      }
     }
+    power_led_state = !power_led_state;
+    digitalWrite(LED_POWER_ALERT_PIN, power_led_state ? HIGH : LOW);
+    last_timer_time = millis();
   }
-  power_led_state = !power_led_state;
-  digitalWrite(LED_POWER_ALERT_PIN, power_led_state ? HIGH : LOW);
 }
 
