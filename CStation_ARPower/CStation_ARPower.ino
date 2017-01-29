@@ -35,6 +35,7 @@
 
 /* OneWire */
 #define POWER_SIGNAL_MAIN_PIN 7
+#define ONEWIRE_CODE_NOOP 0x00
 #define ONEWIRE_CODE_OFF 0x11
 #define ONEWIRE_CODE_SILENT_MODE_OFF 0xA2
 #define ONEWIRE_CODE_SILENT_MODE_ON 0x78
@@ -496,8 +497,8 @@ void setup() {
 }
 
 void loop() {
-  int onewire_byte = wire_helper->readByte();
-  if (onewire_byte >= 0) {
+  int onewire_byte = wire_helper->tryReadByteCommand();
+  if (onewire_byte != ONEWIRE_CODE_NOOP) {
     if (onewire_byte == ONEWIRE_CODE_OFF && !turning_off) {
       turning_off = true;
       turning_off_start_time = millis();
@@ -507,7 +508,7 @@ void loop() {
       silence_mode = true;
       last_fan_update_time = 0;
     } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_OFF) {
-      silence_mode = true;
+      silence_mode = false;
       last_fan_update_time = 0;
     }
   }
