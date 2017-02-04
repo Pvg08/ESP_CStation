@@ -16,12 +16,16 @@ class OneWireHelper
     {
       rpin = pin;
       timerCallback = callback;
-      reset();
+      read_mode();
     }
 
-    void reset() 
+    void read_mode() 
     {
       pinMode(rpin, INPUT);
+    }
+    void write_mode() 
+    {
+      pinMode(rpin, OUTPUT);
     }
 
     bool waitStartSignal()
@@ -39,12 +43,12 @@ class OneWireHelper
 
     bool sendOffPing()
     {
-      pinMode(rpin, OUTPUT);
+      write_mode();
       digitalWrite(rpin, HIGH);
       sleepDelay(1500, 50);
       digitalWrite(rpin, LOW);
-      reset();
       sleepDelay(100, 50);
+      read_mode();
       return waitForSignal(HIGH, 20000, 50);
     }
 
@@ -59,7 +63,7 @@ class OneWireHelper
     bool waitForSignal(byte state, unsigned int maxmsdelay, unsigned int rdelay)
     {
       bool external_signal = digitalRead(rpin)==state;
-      for(unsigned int i=0; i<=maxmsdelay && !external_signal; i+=rdelay) {
+      for(unsigned int i=0; (i<=maxmsdelay) && !external_signal; i+=rdelay) {
         delay(rdelay);
         if (timerCallback && ((rdelay>1) || (i % DEF_TIMER_DELAY == 0))) timerCallback();
         external_signal = digitalRead(rpin)==state;
@@ -97,7 +101,7 @@ class OneWireHelper
 
     void writeByteCommand(byte wbyte)
     {
-      pinMode(rpin, OUTPUT);
+      write_mode();
       digitalWrite(rpin, HIGH);
       delay(2500);
       digitalWrite(rpin, LOW);
@@ -108,7 +112,7 @@ class OneWireHelper
       }
       delay(ONE_BIT_DELAY_MS);
       digitalWrite(rpin, LOW);
-      reset();
+      read_mode();
     }
 };
 
