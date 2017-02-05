@@ -3,74 +3,37 @@
 #include <TimerFreeTone.h>
 #include "onewire_helper.h"
 
+#define CSTATION_DEBUG_MODE
+
 /* fan-control */
+#define FAN_ZERO_SPEED 0
+#define FAN_MIN_SPEED 75
+#define FAN_MAX_SPEED 255
+#define FAN_UPDATE_TIME 1120
+
 #define TEMP_LOWLEVEL 15
 #define TEMP_NORMLEVEL 30
 #define TEMP_HIGHLEVEL 45
 #define TEMP_CRITICALLEVEL 60
 #define HUMIDITY_BASELEVEL 50
-#define FAN_ZERO_SPEED 0
-#define FAN_MIN_SPEED 75
-#define FAN_MAX_SPEED 255
-#define FAN_UPDATE_TIME 1120
 /* /fan-control */
 
 /* pins */
 #define AMPERAGE_ANALOG_PIN A0
-#define AMPERAGE_MVPERAMP 66
-#define AMPERAGE_ACSOFFSET 2500
-#define AMPERAGE_VK (5000 / 1024.0)
-
 #define VOLTAGE_ANALOG_PIN A3
-#define VOLTAGE_R1 59850.0
-#define VOLTAGE_R2 10000.0
-#define BASE_VOLTAGE 5.0
-#define VOLTAGE_K (BASE_VOLTAGE * (VOLTAGE_R1+VOLTAGE_R2) / (1024.0 * VOLTAGE_R2))
-
 #define FAN_IN_PIN 10
 #define FAN_OUT_PIN 9
 #define TONE_PIN 5
 #define IRECV_PIN 12
-
 #define POWER_PIN 4
 #define CHARGE_PIN 8
-
-/* OneWire */
-#define POWER_SIGNAL_MAIN_PIN 7
-#define ONEWIRE_CODE_NOOP 0x00
-#define ONEWIRE_CODE_OFF 0x11
-#define ONEWIRE_CODE_SILENT_MODE_OFF 0xA2
-#define ONEWIRE_CODE_SILENT_MODE_ON 0x78
-
-#define POWER_LED_OFF 0
-#define POWER_LED_ON 1
-#define POWER_LED_FLASH_FAST 2
-#define POWER_LED_FLASH_NORM 3
-#define POWER_LED_FLASH_SLOW 4
-
-#define BASE_CHARGING_TIME 14400000
-#define BASE_VOLTAGE_ERROR_TIME 45000
-
-#define BTN_SHORTEST_PRESS 20
-#define BTN_LONG_PRESS 2000
-#define BTN_POWER_PIN 2
-#define BTN_POWER_INT 0
-#define BTN_CHARGE_PIN 3
-#define BTN_CHARGE_INT 1
-
-#define LED_POWER_ALERT_PIN 11
-
 #define DHTPIN 6
+#define LED_POWER_ALERT_PIN 11
+#define BTN_POWER_PIN 2
+#define BTN_CHARGE_PIN 3
 /* /pins */
 
-#define TONE_LEN_SHORT 250
-#define TONE_LEN_NORMAL 900
-#define TONE_LEN_LONG 2000
-
-#define TONE_FREQ_INFO 2200
-#define TONE_FREQ_MESSAGE 600
-#define TONE_FREQ_ERROR 300
-
+/* amperage-voltage levels */
 #define VOLTAGE_HAS_SIGNAL 7.0
 #define VOLTAGE_LOWLEVEL 10.5
 #define VOLTAGE_NORMALLEVEL 12.0
@@ -80,21 +43,77 @@
 #define AMPERAGE_NORMALLEVEL 0.5
 #define AMPERAGE_HIGHLEVEL 1
 #define AMPERAGE_CRITICALLEVEL 2
+/* /amperage-voltage levels */
+
+/* amperage-voltage constants */
+#define AMPERAGE_MVPERAMP 66
+#define AMPERAGE_ACSOFFSET 2500
+#define AMPERAGE_VK (5000 / 1024.0)
+
+#define VOLTAGE_R1 59850.0
+#define VOLTAGE_R2 10000.0
+#define BASE_VOLTAGE 5.0
+#define VOLTAGE_K (BASE_VOLTAGE * (VOLTAGE_R1+VOLTAGE_R2) / (1024.0 * VOLTAGE_R2))
+/* /amperage-voltage constants */
+
+/* OneWire codes */
+#define POWER_SIGNAL_MAIN_PIN 7
+#define ONEWIRE_CODE_NOOP 0x00
+#define ONEWIRE_CODE_OFF 0b11011001
+#define ONEWIRE_CODE_SILENT_MODE_OFF 0b11100000
+#define ONEWIRE_CODE_SILENT_MODE_MID 0b10100001
+#define ONEWIRE_CODE_SILENT_MODE_ON 0b01100111
+/* /OneWire codes */
+
+/* LED codes & intervals */
+#define POWER_LED_OFF 0
+#define POWER_LED_ON 1
+#define POWER_LED_FLASH_FAST 2
+#define POWER_LED_FLASH_NORM 3
+#define POWER_LED_FLASH_SLOW 4
+
+#define POWER_LED_FLASH_INTERVAL_FAST 100
+#define POWER_LED_FLASH_INTERVAL_NORM 400
+#define POWER_LED_FLASH_INTERVAL_SLOW 1000
+/* /LED codes & intervals */
+
+/* button params */
+#define BTN_SHORTEST_PRESS 20
+#define BTN_LONG_PRESS 2000
+#define BTN_POWER_INT 0
+#define BTN_CHARGE_INT 1
+/* /button params */
+
+/* tone signal params */
+#define TONE_LEN_SHORT 250
+#define TONE_LEN_NORMAL 900
+#define TONE_LEN_LONG 2000
+
+#define TONE_FREQ_INFO 2200
+#define TONE_FREQ_MESSAGE 600
+#define TONE_FREQ_ERROR 300
+/* /tone signal params */
 
 /* Command codes */
 #define CM_TOGGLEONOFF 0xFFB04F
 #define CM_TOGGLECHARGE 0xFFF807
+#define CM_TOGGLESILENCE 0xFFB847
+#define CM_TOGGLESPEEDTEST 0xFF9867
+/* /Command codes */
 
-/* dht-sensor */
+/* dht-sensor params */
 #define DHT_READ_MS 20000
 #define DHTTYPE DHT11
-DHT dht(DHTPIN, DHTTYPE);
-/* /dht-sensor */
+/* /dht-sensor params */
 
-/* IR Reciever */
+/* other consts */
+#define BASE_CHARGING_TIME 14400000
+#define BASE_VOLTAGE_ERROR_TIME 45000
+/* /other consts */
+
+DHT dht(DHTPIN, DHTTYPE);
 IRrecv irrecv(IRECV_PIN);
 decode_results ir_results;
-
 OneWireHelper *wire_helper;
 
 unsigned long int last_dht_read;
@@ -123,7 +142,7 @@ volatile byte power_led_curr_mode;
 unsigned long int last_timer_time;
 unsigned timer_interval;
 
-bool silence_mode;
+bool silence_mode, silence_ismid;
 
 void PowerLedSet(byte mode, byte repeats = 0) {
   if (power_led_curr_mode == mode && power_led_curr_mode == repeats) {
@@ -139,27 +158,33 @@ void PowerLedSet(byte mode, byte repeats = 0) {
   } else if (mode == POWER_LED_ON) {
     power_led_state = true;
     digitalWrite(LED_POWER_ALERT_PIN, HIGH);
-    timer_interval = 1000;
+    timer_interval = POWER_LED_FLASH_INTERVAL_SLOW;
     power_led_repeats_cnt = repeats ? repeats : 20;
   } else if (mode == POWER_LED_FLASH_FAST) {
     power_led_state = true;
     digitalWrite(LED_POWER_ALERT_PIN, HIGH);
-    timer_interval = 100;
+    timer_interval = POWER_LED_FLASH_INTERVAL_FAST;
     power_led_repeats_cnt = repeats;
   } else if (mode == POWER_LED_FLASH_NORM) {
     power_led_state = true;
     digitalWrite(LED_POWER_ALERT_PIN, HIGH);
-    timer_interval = 400;
+    timer_interval = POWER_LED_FLASH_INTERVAL_NORM;
     power_led_repeats_cnt = repeats;
   } else if (mode == POWER_LED_FLASH_SLOW) {
     power_led_state = true;
     digitalWrite(LED_POWER_ALERT_PIN, HIGH);
-    timer_interval = 1000;
+    timer_interval = POWER_LED_FLASH_INTERVAL_SLOW;
     power_led_repeats_cnt = repeats;
   }
 }
 
 void fastBeep(unsigned msec, unsigned frequency = TONE_FREQ_MESSAGE) {
+  if (silence_mode) {
+    if ((frequency == TONE_FREQ_INFO) || (silence_ismid && (frequency == TONE_FREQ_MESSAGE))) {
+      wire_helper->sleepDelay(msec, 50);
+      return;
+    }
+  }
   TimerFreeTone(TONE_PIN, frequency, msec);
   onTimerCheck();
 }
@@ -224,7 +249,7 @@ void updateFanSpeeds() {
   }
 
   if (silence_mode && !is_feed_error) {
-    calc_speed = FAN_ZERO_SPEED;
+    calc_speed = silence_ismid ? FAN_MIN_SPEED : FAN_ZERO_SPEED;
   }
 
   if (calc_speed>FAN_ZERO_SPEED) {
@@ -237,7 +262,7 @@ void updateFanSpeeds() {
   if (calc_speed > FAN_MAX_SPEED) calc_speed = FAN_MAX_SPEED;
 
   if (silence_mode && !is_feed_error && calc_speed <= FAN_MIN_SPEED) {
-    calc_speed = FAN_ZERO_SPEED;
+    calc_speed = silence_ismid ? FAN_MIN_SPEED : FAN_ZERO_SPEED;
   }
 
   if (is_feed_error && (cmillis > last_voltage_error_time) && (cmillis - last_voltage_error_time) > BASE_VOLTAGE_ERROR_TIME) {
@@ -331,6 +356,7 @@ void reset_onoffvars() {
   last_fan_update_time = 0;
   last_timer_time = 0;
   silence_mode = false;
+  silence_ismid = false;
   voltage = 0.0;
   amperage = 0.0;
   PowerLedSet(POWER_LED_OFF);
@@ -475,9 +501,15 @@ void loop() {
       power_btn_press_millis = power_press_duration = 0;
     } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_ON) {
       silence_mode = true;
+      silence_ismid = false;
+      last_fan_update_time = 0;
+    } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_MID) {
+      silence_mode = true;
+      silence_ismid = true;
       last_fan_update_time = 0;
     } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_OFF) {
       silence_mode = false;
+      silence_ismid = false;
       last_fan_update_time = 0;
     }
   }
@@ -486,65 +518,73 @@ void loop() {
       if (ir_results.value == CM_TOGGLEONOFF) {
         power_btn = true;
         power_press_duration = BTN_SHORTEST_PRESS;
-        
-        fastBeep(TONE_LEN_SHORT, 100);
+        #ifdef CSTATION_DEBUG_MODE
+            fastBeep(TONE_LEN_SHORT, 100);
+        #endif
       } else if (ir_results.value == CM_TOGGLECHARGE) {
         charge_btn = true;
         charge_press_duration = BTN_SHORTEST_PRESS;
-        
-        fastBeep(TONE_LEN_SHORT, 150);
-      } else if (ir_results.value == 0xFFB847) {
-         silence_mode = !silence_mode;
-         last_fan_update_time = 0;
-      } else if (ir_results.value == 0xFF9867) {
-
-current_fan_speed = 255;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-current_fan_speed = 210;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-current_fan_speed = 180;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-current_fan_speed = 150;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-current_fan_speed = 128;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-current_fan_speed = 115;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-current_fan_speed = 100;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-current_fan_speed = 50;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-current_fan_speed = 25;
-fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
-analogWrite(FAN_IN_PIN, current_fan_speed);
-analogWrite(FAN_OUT_PIN, current_fan_speed);
-delay(10000);
-
+        #ifdef CSTATION_DEBUG_MODE
+            fastBeep(TONE_LEN_SHORT, 150);
+        #endif
+      } 
+      #ifdef CSTATION_DEBUG_MODE
+      else if (ir_results.value == CM_TOGGLESILENCE) {
+        if (silence_mode && !silence_ismid) {
+          silence_ismid = true;
+        } else {
+          silence_mode = !silence_mode;
+          silence_ismid = false;
+        }
+        last_fan_update_time = 0;
+      } else if (ir_results.value == CM_TOGGLESPEEDTEST) {
+        current_fan_speed = 255;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
+        current_fan_speed = 240;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
+        current_fan_speed = 210;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
+        current_fan_speed = 180;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
+        current_fan_speed = 150;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
+        current_fan_speed = 128;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
+        current_fan_speed = 100;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
+        current_fan_speed = 75;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
+        current_fan_speed = 50;
+        fastBeep(TONE_LEN_SHORT, current_fan_speed * 2);
+        analogWrite(FAN_IN_PIN, current_fan_speed);
+        analogWrite(FAN_OUT_PIN, current_fan_speed);
+        delay(10000);
       }
+      #endif
     }
     irrecv.resume();
   }
