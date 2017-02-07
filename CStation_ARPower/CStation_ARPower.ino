@@ -3,13 +3,14 @@
 #include <TimerFreeTone.h>
 #include "onewire_helper.h"
 
-#define CSTATION_DEBUG_MODE
+//#define CSTATION_DEBUG_MODE
 
 /* fan-control */
 #define FAN_ZERO_SPEED 0
-#define FAN_MIN_SPEED 75
+#define FAN_MIN_SPEED 70
 #define FAN_MAX_SPEED 255
 #define FAN_UPDATE_TIME 1120
+#define FAN_START_TRANS_TIME 30000
 
 #define TEMP_LOWLEVEL 15
 #define TEMP_NORMLEVEL 30
@@ -31,6 +32,7 @@
 #define LED_POWER_ALERT_PIN 11
 #define BTN_POWER_PIN 2
 #define BTN_CHARGE_PIN 3
+#define BLINK_TEST_PIN 13
 /* /pins */
 
 /* amperage-voltage levels */
@@ -41,8 +43,8 @@
 #define VOLTAGE_CRITICALLEVEL 13
 
 #define AMPERAGE_NORMALLEVEL 0.5
-#define AMPERAGE_HIGHLEVEL 1
-#define AMPERAGE_CRITICALLEVEL 2
+#define AMPERAGE_HIGHLEVEL 1.5
+#define AMPERAGE_CRITICALLEVEL 2.5
 /* /amperage-voltage levels */
 
 /* amperage-voltage constants */
@@ -145,7 +147,7 @@ unsigned timer_interval;
 bool silence_mode, silence_ismid;
 
 void PowerLedSet(byte mode, byte repeats = 0) {
-  if (power_led_curr_mode == mode && power_led_curr_mode == repeats) {
+  if (power_led_curr_mode == mode && power_led_repeats_cnt == repeats) {
     return;
   }
   power_led_curr_mode = mode;
@@ -180,7 +182,7 @@ void PowerLedSet(byte mode, byte repeats = 0) {
 
 void fastBeep(unsigned msec, unsigned frequency = TONE_FREQ_MESSAGE) {
   if (silence_mode) {
-    if ((frequency == TONE_FREQ_INFO) || (silence_ismid && (frequency == TONE_FREQ_MESSAGE))) {
+    if ((frequency != TONE_FREQ_MESSAGE && frequency != TONE_FREQ_ERROR) || (!silence_ismid && (frequency == TONE_FREQ_MESSAGE))) {
       wire_helper->sleepDelay(msec, 50);
       return;
     }
@@ -215,7 +217,7 @@ void updateFanSpeeds() {
   bool is_feed_error = false;
   unsigned long int cmillis = millis();
 
-  if (turn_on_time && (cmillis > turn_on_time) && (cmillis-turn_on_time)<60000) calc_speed+=(FAN_MAX_SPEED - FAN_MIN_SPEED)*(60000+turn_on_time-cmillis)/60000.0;
+  if (turn_on_time && (cmillis > turn_on_time) && (cmillis-turn_on_time)<FAN_START_TRANS_TIME) calc_speed+=(FAN_MAX_SPEED - FAN_MIN_SPEED)*(FAN_START_TRANS_TIME+turn_on_time-cmillis)/((float) FAN_START_TRANS_TIME);
   
   if (voltage > VOLTAGE_HIGHLEVEL) calc_speed+=(int) (voltage-VOLTAGE_HIGHLEVEL)*120;
   if (amperage > AMPERAGE_HIGHLEVEL) calc_speed-=(int) (amperage-AMPERAGE_HIGHLEVEL)*120;
@@ -276,7 +278,7 @@ void updateFanSpeeds() {
     if (calc_speed > current_fan_speed && current_fan_speed <= FAN_MIN_SPEED) {
       analogWrite(FAN_IN_PIN, FAN_MAX_SPEED);
       analogWrite(FAN_OUT_PIN, FAN_MAX_SPEED);
-      wire_helper->sleepDelay(1000, 100);
+      wire_helper->sleepDelay(1500, 100);
     }
     current_fan_speed = calc_speed;
     analogWrite(FAN_IN_PIN, current_fan_speed);
@@ -601,9 +603,9 @@ void loop() {
       if (!isnan(t)) temperature = t;
       onTimerCheck();
       if (!isnan(h) || !isnan(t)) {
-        digitalWrite(13, HIGH);
-        delay(100);
-        digitalWrite(13, LOW);
+        digitalWrite(BLINK_TEST_PIN, HIGH);
+        delay(50);
+        digitalWrite(BLINK_TEST_PIN, LOW);
         onTimerCheck();
       }
     }
@@ -630,7 +632,7 @@ void onTimerCheck() {
         }
       }
     }
-    if (power_led_curr_mode != POWER_LED_ON) {
+    if (power_led_curr_mode != POWER_LED_ON && power_led_curr_mode != POWER_LED_OFF) {
       power_led_state = !power_led_state;
       digitalWrite(LED_POWER_ALERT_PIN, power_led_state ? HIGH : LOW);
     }

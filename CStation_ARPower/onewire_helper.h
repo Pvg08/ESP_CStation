@@ -99,11 +99,19 @@ class OneWireHelper
       return result;
     }
 
+    void writeSignal(byte wsignal, unsigned wdelay)
+    {
+      write_mode();
+      digitalWrite(rpin, wsignal);
+      delay(wdelay);
+      read_mode();
+    }
+
     void writeByteCommand(byte wbyte)
     {
       write_mode();
       digitalWrite(rpin, HIGH);
-      delay(2500);
+      delay(2000);
       digitalWrite(rpin, LOW);
       for(byte i = 0; i < 8; i++) {
         delay(ONE_BIT_DELAY_MS);
