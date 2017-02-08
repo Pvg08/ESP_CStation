@@ -7,7 +7,8 @@
 
 /* fan-control */
 #define FAN_ZERO_SPEED 0
-#define FAN_MIN_SPEED 70
+#define FAN_MIN_SPEED 65
+#define FAN_NORMSKIP_SPEED 150
 #define FAN_MAX_SPEED 255
 #define FAN_UPDATE_TIME 1120
 #define FAN_START_TRANS_TIME 30000
@@ -272,6 +273,14 @@ void updateFanSpeeds() {
     fastBeep(TONE_LEN_NORMAL, TONE_FREQ_ERROR);
   } else if (!is_feed_error && power_led_curr_mode != POWER_LED_OFF && power_led_curr_mode != POWER_LED_ON) {
     PowerLedSet(POWER_LED_ON);
+  }
+
+  if (calc_speed > FAN_NORMSKIP_SPEED && calc_speed < FAN_MAX_SPEED) {
+    if (calc_speed >= ((FAN_NORMSKIP_SPEED + FAN_MAX_SPEED)/2)) {
+      calc_speed = FAN_MAX_SPEED;
+    } else {
+      calc_speed = FAN_NORMSKIP_SPEED;
+    }
   }
 
   if (current_fan_speed != calc_speed) {
