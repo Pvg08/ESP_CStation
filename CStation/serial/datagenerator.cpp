@@ -17,6 +17,11 @@ uint16_t DataGenerator::getBufferSize()
     return state_count;
 }
 
+bool DataGenerator::isGenerationNeeded(uint32_t current_index)
+{
+    return true;
+}
+
 void DataGenerator::fillNextState(uint32_t full_index, QByteArray *buffer)
 {
     return fillEmptyState(full_index, buffer);

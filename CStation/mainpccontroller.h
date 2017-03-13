@@ -55,6 +55,7 @@ signals:
 
 private slots:
     void showLogMessage(QString msg);
+    void recieveMainCMD(uint8_t param1, uint8_t param2, uint8_t param3, uint8_t param4);
 
 private:
     Server* server;
@@ -65,6 +66,8 @@ private:
     int server_remote_port = 0;
     int server_evt_from = 0;
     int server_evt_to = 0;
+
+    void sendMainCMD(uint8_t cmd, uint32_t param0, uint8_t param1, uint8_t param2, uint8_t param3);
 };
 
 #endif // MAINPCCONTROLLER_H

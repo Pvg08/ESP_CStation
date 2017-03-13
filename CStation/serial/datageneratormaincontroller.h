@@ -2,6 +2,7 @@
 #define DATAGENERATORMAINCONTROLLER_H
 
 #include "./datagenerator.h"
+#include <QStack>
 
 #define MAINCONTROLLER_STATE_BUFFER_SIZE 2
 
@@ -41,9 +42,13 @@ class DataGeneratorMainController : public DataGenerator
 public:
     DataGeneratorMainController();
 
+    virtual bool isGenerationNeeded(uint32_t current_index);
     virtual void fillNextState(uint32_t full_index, QByteArray* buffer);
     virtual void fillEmptyState(uint32_t full_index, QByteArray* buffer);
+
+    void appendNextCommand(uint8_t cmd, uint32_t param0, uint8_t param1, uint8_t param2, uint8_t param3);
 private:
+    QStack<MainControllerState> next_states;
     MainControllerState getNextState(uint32_t full_index);
     MainControllerState getEmptyState(uint32_t full_index);
 };

@@ -32,6 +32,7 @@ signals:
     void log(const QString &s);
     void frame_play_confirmed();
     void frame_error();
+    void some_command(uint8_t param1, uint8_t param2, uint8_t param3, uint8_t param4);
 
 private:
     QString portName;

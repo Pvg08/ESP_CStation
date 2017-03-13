@@ -31,6 +31,7 @@ MainPCController::MainPCController(QObject *parent, QString config_filename) : Q
             //connect(units->data()[i].thread, SIGNAL(frame_error()), this, SLOT(frame_error()));
         }
     }
+    connect(units->data()[UNIT_MAIN].thread, SIGNAL(some_command(uint8_t,uint8_t,uint8_t,uint8_t)), this, SLOT(recieveMainCMD(uint8_t,uint8_t,uint8_t,uint8_t)));
 
     config_file = config_filename;
     QSettings settings(config_file, QSettings::IniFormat);
@@ -160,11 +161,27 @@ void MainPCController::setUSBPortForUnit(int unit_code, QString usbport)
 {
     units->data()[unit_code].usb_id = usbport;
     if (units->data()[unit_code].thread->isRunning()) {
-        units->data()[unit_code].thread->listen(usbport, 30000);
+        if (!usbport.isEmpty()) {
+            units->data()[unit_code].thread->listen(usbport, 30000);
+        } else {
+            units->data()[unit_code].thread->do_stop();
+        }
     }
 }
 
 void MainPCController::showLogMessage(QString msg)
 {
     emit logMessage(msg);
+}
+
+void MainPCController::recieveMainCMD(uint8_t param1, uint8_t param2, uint8_t param3, uint8_t param4)
+{
+    // @todo
+}
+
+void MainPCController::sendMainCMD(uint8_t cmd, uint32_t param0, uint8_t param1, uint8_t param2, uint8_t param3)
+{
+    if (units->data()[UNIT_MAIN].thread && units->data()[UNIT_MAIN].thread->isRunning()) {
+        ((DataGeneratorMainController*) units->data()[UNIT_MAIN].generator)->appendNextCommand(cmd, param0, param1, param2, param3);
+    }
 }

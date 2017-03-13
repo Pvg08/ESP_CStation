@@ -171,6 +171,10 @@ void SerialFXWriter::resetBuffers()
 
 void SerialFXWriter::fillBuffer()
 {
+    if (!generator->isGenerationNeeded(state_index)) {
+        return;
+    }
+
     unsigned interval = 0;
 
     if (request_confirm_position < request_generate_position) {
@@ -226,6 +230,11 @@ void SerialFXWriter::responseCheck(QByteArray response)
             confirm_set = true;
             i+=6;
             emit log("SET confirmed_last_write_index: "+QString::number(confirmed_last_write_index));
+        }
+        if (response.at(i) == 'C' && response.at(i+1) == 'M' && response.at(i+2) == 'D') {
+            emit some_command(response.at(i+3), response.at(i+4), response.at(i+5), response.at(i+6));
+            i+=6;
+            emit log("CMD Recieved: " + QString::number(response.at(i+3)) + " " + QString::number(response.at(i+4)) + " " + QString::number(response.at(i+5)) + " " + QString::number(response.at(i+6)));
         }
     }
     if (confirm_set && (confirmed_last_write_index-confirmed_last_play_index)<half_buf_size) {

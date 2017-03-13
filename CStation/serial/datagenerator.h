@@ -38,6 +38,7 @@ public:
     uint16_t getDataSize();
     uint16_t getBufferSize();
 
+    virtual bool isGenerationNeeded(uint32_t current_index);
     virtual void fillNextState(uint32_t full_index, QByteArray* buffer);
     virtual void fillEmptyState(uint32_t full_index, QByteArray* buffer);
     uint32_t getBaseTimeout() const;
