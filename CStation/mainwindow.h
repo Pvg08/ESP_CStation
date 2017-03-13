@@ -5,7 +5,10 @@
 #include <QColorDialog>
 #include <QMessageBox>
 #include <QToolButton>
-#include "server.h"
+#include <QComboBox>
+#include <QtSerialPort/QSerialPortInfo>
+
+#include "./mainpccontroller.h"
 #include "./widgets/sensorsdisplayform.h"
 #include "./widgets/clientblockslistactionsform.h"
 #include "./widgets/ipcamviewer.h"
@@ -44,24 +47,36 @@ private slots:
     void on_spinBox_graphics_timeinterval_valueChanged(int arg1);
     void on_comboBox_ip_currentTextChanged(const QString &arg1);
     void on_checkBox_log_clicked(bool checked);
-
     void on_spinBox_evt_from_valueChanged(int arg1);
-
     void on_spinBox_evt_to_valueChanged(int arg1);
+    void on_lineEdit_port_textChanged(const QString &arg1);
+    void on_lineEdit_remote_port_textChanged(const QString &arg1);
+    void on_toolButton_refreshC_clicked();
+    void on_toolButton_refreshLS_clicked();
+    void on_toolButton_refreshSRV_clicked();
+    void on_toolButton_refreshLR_clicked();
+    void on_comboBox_portC_activated(int index);
+    void on_comboBox_portLS_activated(int index);
+    void on_comboBox_portSRV_activated(int index);
+    void on_comboBox_portLR_activated(int index);
 
 private:
     Ui::MainWindow *ui;
-    Server* server;
+    MainPCController* controller;
+
     SensorsDisplayForm* sensors_form;
     ClientBlocksListActionsForm* actions_form;
 
-    Server *getServer();
     void save_settings(QString filename);
     void load_settings(QString filename);
     void closeEvent(QCloseEvent *event);
 
     void setBtnColor(QToolButton* button, QColor color);
     void colorPick(QToolButton* button);
+    void setCBUSBPorts(QComboBox* cb, int unitcode, QString curr_usb = "");
+    void pickUSBPort(QComboBox* cb, int unitcode);
+
+    QString convertComName(QString comname);
 };
 
 #endif // MAINWINDOW_H

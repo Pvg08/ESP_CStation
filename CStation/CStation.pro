@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui network
+QT       += core gui serialport network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -18,6 +18,15 @@ include(deployment.pri)
 
 SOURCES += main.cpp\
     mainwindow.cpp \
+    serial/crc16.cpp \
+    serial/datagenerator.cpp \
+    serial/serialfxwriter.cpp \
+    serial/datageneratorledscreen.cpp \
+    serial/datageneratorledring.cpp \
+    serial/datageneratorledringrgb.cpp \
+    serial/datageneratorledrgbw.cpp \
+    serial/datageneratorservolaser.cpp \
+    serial/datageneratormaincontroller.cpp \
     abstractserver.cpp \
     server.cpp \
     clientblock.cpp \
@@ -30,9 +39,19 @@ SOURCES += main.cpp\
     widgets/clientblockactionlistform.cpp \
     widgets/clientblockslistactionsform.cpp \
     widgets/ipcamviewer.cpp \
-    ipcamthread.cpp
+    ipcamthread.cpp \
+    mainpccontroller.cpp
 
 HEADERS  += mainwindow.h \
+    serial/crc16.h \
+    serial/datagenerator.h \
+    serial/serialfxwriter.h \
+    serial/datageneratorledscreen.h \
+    serial/datageneratorledring.h \
+    serial/datageneratorledringrgb.h \
+    serial/datageneratorledrgbw.h \
+    serial/datageneratorservolaser.h \
+    serial/datageneratormaincontroller.h \
     abstractserver.h \
     server.h \
     clientblock.h \
@@ -133,7 +152,8 @@ HEADERS  += mainwindow.h \
     vlc/libvlc_vlm.h \
     vlc/vlc.h \
     widgets/ipcamviewer.h \
-    ipcamthread.h
+    ipcamthread.h \
+    mainpccontroller.h
 
 FORMS    += mainwindow.ui \
     widgets/sensorblock.ui \
