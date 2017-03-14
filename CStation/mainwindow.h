@@ -30,6 +30,7 @@ private slots:
     void get_error(QString message);
     void update_blocks_list(quint16 new_block_id);
     void update_sensors_values(quint16 block_id);
+    void getReadyToClose();
 
     void sensors_form_destroyed();
 

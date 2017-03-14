@@ -14,15 +14,7 @@ Server::Server()
 
 Server::~Server()
 {
-    QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
-    while (i != clientblocks->constEnd()) {
-        delete i.value();
-        ++i;
-    }
-    clientblocks->clear();
-
-    if (tcpServer) delete tcpServer;
-    if (networkSession) delete networkSession;
+    StopServer();
     delete clientblocks;
     delete sockets;
 }
@@ -79,6 +71,31 @@ void Server::StartServer()
     }
 
     connect(tcpServer, SIGNAL(newConnection()), this, SLOT(recieveConnection()));
+}
+
+void Server::StopServer()
+{
+    QMap<quint16, ClientBlock *>::const_iterator i = clientblocks->constBegin();
+    while (i != clientblocks->constEnd()) {
+        delete i.value();
+        ++i;
+    }
+    clientblocks->clear();
+    sockets->clear();
+    if (tcpServer) {
+        if (tcpServer->isListening()) {
+            tcpServer->close();
+        }
+        delete tcpServer;
+        tcpServer = NULL;
+    }
+    if (networkSession) {
+        if (networkSession->isOpen()) {
+            networkSession->close();
+        }
+        delete networkSession;
+        networkSession = NULL;
+    }
 }
 
 bool Server::SendData(QString ip_to, QString message)

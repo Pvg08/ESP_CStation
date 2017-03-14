@@ -2,6 +2,12 @@
 
 MainPCController::MainPCController(QObject *parent, QString config_filename) : QObject(parent)
 {
+    mode_state_tracking = 0;
+    mode_state_indication = 0;
+    mode_state_silence = 0;
+    mode_state_control = 0;
+    mode_state_security = 0;
+
     server = NULL;
     units = new QVector<PeripheralUnit>();
     for(int i=0; i<PERIPHERAL_UNITS_COUNT; i++ ) {
@@ -49,25 +55,7 @@ MainPCController::MainPCController(QObject *parent, QString config_filename) : Q
 
 MainPCController::~MainPCController()
 {
-    if (!config_file.isEmpty()) {
-        QSettings settings(config_file, QSettings::IniFormat);
-        settings.setValue("main/server_port", server_port);
-        settings.setValue("main/remote_port", server_remote_port);
-        settings.setValue("main/event_time_from", server_evt_from);
-        settings.setValue("main/event_time_to", server_evt_to);
-        settings.setValue("units/main_unit.usb", getUSBPortForUnit(UNIT_MAIN));
-        settings.setValue("units/ledscreen_unit.usb", getUSBPortForUnit(UNIT_LED_SCREEN));
-        settings.setValue("units/servo_unit.usb", getUSBPortForUnit(UNIT_LSTRIP_SERVO));
-        settings.setValue("units/ledring_unit.usb", getUSBPortForUnit(UNIT_LED_RING));
-    }
-
-    for(int i=0; i<PERIPHERAL_UNITS_COUNT; i++ ) {
-        if (units->at(i).thread) {
-            if (units->at(i).thread->isRunning()) units->at(i).thread->terminate();
-            if (units->at(i).generator) delete units->at(i).generator;
-            delete units->at(i).thread;
-        }
-    }
+    getReadyToClose(false);
     delete units;
     if (server) delete server;
 }
@@ -108,6 +96,9 @@ void MainPCController::restartUnitThreads()
             units->data()[i].thread->listen(units->data()[i].usb_id, 30000);
         }
     }
+    last_rtc_send = QDateTime::currentDateTime();
+    sendMainCMD(CMD_CMD_TURNINGON, 0, 0, 0, 0);
+    sendMainCMD(CMD_CMD_SETRTCTIME, last_rtc_send.toMSecsSinceEpoch()/1000, 0, 0, 0);
 }
 
 void MainPCController::setServerPort(int value)
@@ -174,14 +165,82 @@ void MainPCController::showLogMessage(QString msg)
     emit logMessage(msg);
 }
 
-void MainPCController::recieveMainCMD(uint8_t param1, uint8_t param2, uint8_t param3, uint8_t param4)
+void MainPCController::recieveMainCMD(uint8_t cmd, uint8_t param1, uint8_t param2, uint8_t param3)
 {
-    // @todo
+    switch (cmd) {
+    case CMD_CMD_TURNOFF:
+        doTurnOff();
+    break;
+    case CMD_CMD_SETMODESTATE:
+        setModeState(param1, param2);
+    break;
+    }
+}
+
+void MainPCController::setModeState(uint8_t mode_code, uint8_t mode_state)
+{
+    switch (mode_code) {
+    case CMD_MODE_TRACKING:
+        mode_state_tracking = mode_state;
+    break;
+    case CMD_MODE_INDICATION:
+        mode_state_indication = mode_state;
+    break;
+    case CMD_MODE_SILENCE:
+        mode_state_silence = mode_state;
+    break;
+    case CMD_MODE_CONTROL:
+        mode_state_control = mode_state;
+    break;
+    case CMD_MODE_SECURITY:
+        mode_state_security = mode_state;
+    break;
+    }
 }
 
 void MainPCController::sendMainCMD(uint8_t cmd, uint32_t param0, uint8_t param1, uint8_t param2, uint8_t param3)
 {
     if (units->data()[UNIT_MAIN].thread && units->data()[UNIT_MAIN].thread->isRunning()) {
         ((DataGeneratorMainController*) units->data()[UNIT_MAIN].generator)->appendNextCommand(cmd, param0, param1, param2, param3);
+    }
+}
+
+void MainPCController::doTurnOff()
+{
+    emit turningOff();
+    getReadyToClose(true);
+    if (server) {
+        server->StopServer();
+        delete server;
+        server = NULL;
+    }
+    QEventLoop loop;
+    while (true) {
+        sendMainCMD(CMD_CMD_TURNOFFREADY, 0, 0, 0, 0);
+        QTimer::singleShot(1000, &loop, SLOT(quit()));
+        loop.exec();
+    }
+}
+
+void MainPCController::getReadyToClose(bool dont_close_mainc_thread)
+{
+    if (!config_file.isEmpty()) {
+        QSettings settings(config_file, QSettings::IniFormat);
+        settings.setValue("main/server_port", server_port);
+        settings.setValue("main/remote_port", server_remote_port);
+        settings.setValue("main/event_time_from", server_evt_from);
+        settings.setValue("main/event_time_to", server_evt_to);
+        settings.setValue("units/main_unit.usb", getUSBPortForUnit(UNIT_MAIN));
+        settings.setValue("units/ledscreen_unit.usb", getUSBPortForUnit(UNIT_LED_SCREEN));
+        settings.setValue("units/servo_unit.usb", getUSBPortForUnit(UNIT_LSTRIP_SERVO));
+        settings.setValue("units/ledring_unit.usb", getUSBPortForUnit(UNIT_LED_RING));
+    }
+    for(int i=0; i<PERIPHERAL_UNITS_COUNT; i++ ) {
+        if (units->at(i).thread && (!dont_close_mainc_thread || !(dont_close_mainc_thread && i==UNIT_MAIN))) {
+            if (units->at(i).thread->isRunning()) units->at(i).thread->terminate();
+            if (units->at(i).generator) delete units->at(i).generator;
+            delete units->at(i).thread;
+            units->data()[i].thread = NULL;
+        }
     }
 }

@@ -18,6 +18,7 @@ public:
     ~Server();
     void Reset();
     void StartServer();
+    void StopServer();
     bool SendData(QString ip_to, QString message);
     bool SendData(QHostAddress ip_to, QString message);
     bool SendData(quint16 block_id, QString message);

@@ -13,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent) :
     actions_form = NULL;
 
     controller = new MainPCController(this, config_path);
+
+    connect(controller, SIGNAL(turningOff()), this, SLOT(getReadyToClose()));
+
     ui->lineEdit_port->setText(QString::number(controller->getServerPort()));
     ui->lineEdit_remote_port->setText(QString::number(controller->getServerRemotePort()));
     ui->spinBox_evt_from->setValue(controller->getServerEvtFrom());
@@ -251,6 +254,11 @@ void MainWindow::update_sensors_values(quint16 block_id)
     }
 
     ui->tableWidget_sensors->resizeColumnsToContents();
+}
+
+void MainWindow::getReadyToClose()
+{
+    save_settings(QCoreApplication::instance()->applicationDirPath()+"/config.cfg");
 }
 
 void MainWindow::on_pushButton_send_clicked()
