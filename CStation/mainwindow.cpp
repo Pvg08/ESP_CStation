@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     controller = new MainPCController(this, config_path);
 
     connect(controller, SIGNAL(turningOff()), this, SLOT(getReadyToClose()));
+    connect(controller, SIGNAL(logMessage(QString)), this, SLOT(get_message(QString)));
 
     ui->lineEdit_port->setText(QString::number(controller->getServerPort()));
     ui->lineEdit_remote_port->setText(QString::number(controller->getServerRemotePort()));
@@ -274,10 +275,10 @@ void MainWindow::on_pushButton_listen_clicked()
 {
     if (!controller->serverIsRunning()) {
         controller->restartServer();
-        QObject::connect(controller->getServer(), SIGNAL(error(QString)), this, SLOT(get_error(QString)));
-        QObject::connect(controller->getServer(), SIGNAL(write_message(QString)), this, SLOT(get_message(QString)));
-        QObject::connect(controller->getServer(), SIGNAL(new_block_ready(quint16)), this, SLOT(update_blocks_list(quint16)));
-        QObject::connect(controller->getServer(), SIGNAL(sensors_change(quint16)), this, SLOT(update_sensors_values(quint16)));
+        connect(controller->getServer(), SIGNAL(error(QString)), this, SLOT(get_error(QString)));
+        connect(controller->getServer(), SIGNAL(write_message(QString)), this, SLOT(get_message(QString)));
+        connect(controller->getServer(), SIGNAL(new_block_ready(quint16)), this, SLOT(update_blocks_list(quint16)));
+        connect(controller->getServer(), SIGNAL(sensors_change(quint16)), this, SLOT(update_sensors_values(quint16)));
         ui->pushButton_sensors_display_show->setEnabled(true);
         actions_form = new ClientBlocksListActionsForm(ui->widget_actions, controller->getServer());
         actions_form->setIPString(ui->comboBox_ip->currentText());
@@ -336,7 +337,7 @@ void MainWindow::on_pushButton_sensors_display_show_clicked()
         IPCamThread::Instance()->listen(ui->lineEdit_ipcam_url->text(), ui->spinBox_ipcam_fps->value());
     }
 
-    QObject::connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
+    connect(sensors_form, SIGNAL(destroyed()), this, SLOT(sensors_form_destroyed()));
 
     if (ui->checkBox_fullscreen->isChecked()) {
         sensors_form->showFullScreen();

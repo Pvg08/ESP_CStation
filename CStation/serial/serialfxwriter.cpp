@@ -108,11 +108,9 @@ void SerialFXWriter::run()
 
         // read response
         if (serial.waitForReadyRead(currentWaitTimeout)) {
-            emit log("Ready read...");
             QByteArray responseData = serial.readAll();
             while (serial.waitForReadyRead(10))
                 responseData += serial.readAll();
-
             responseCheck(responseData);
         } else {
             emit timeout(tr("Wait read response timeout %1")
@@ -201,13 +199,13 @@ void SerialFXWriter::fillBuffer()
     emit log("Buffer genpos: "+QString::number(request_generate_position));
 }
 
-void SerialFXWriter::responseCheck(QByteArray response)
+void SerialFXWriter::responseCheck(const QByteArray response)
 {
-    emit this->response(((QString) response.toHex()) + " (" + QString::fromLocal8Bit(response) + ")");
-
+    emit this->response(((QString) response.toHex()) + " (" + QString::fromLocal8Bit(response) + ") size:" + QString::number(response.size()));
     bool confirm_set = false;
     uint8_t data[4];
-    for(int i=0; i<response.size()-6; i++) {
+    int i = 0;
+    while ((i+6) < response.size()) {
         if (response.at(i) == 'C' && response.at(i+1) == 'S' && response.at(i+2) == 'P') {
             data[0] = response.at(i+3);
             data[1] = response.at(i+4);
@@ -218,25 +216,26 @@ void SerialFXWriter::responseCheck(QByteArray response)
                 confirmed_last_play_index = *((uint32_t*)(void*)data);
             }
             confirm_set = true;
-            i+=6;
+            i+=7;
             emit log("SET confirmed_last_play_index: "+QString::number(confirmed_last_play_index));
-        }
-        if (response.at(i) == 'C' && response.at(i+1) == 'S' && response.at(i+2) == 'W') {
+        } else if (response.at(i) == 'C' && response.at(i+1) == 'S' && response.at(i+2) == 'W') {
             data[0] = response.at(i+3);
             data[1] = response.at(i+4);
             data[2] = response.at(i+5);
             data[3] = response.at(i+6);
             confirmed_last_write_index = *((uint32_t*)(void*)data);
             confirm_set = true;
-            i+=6;
+            i+=7;
             emit log("SET confirmed_last_write_index: "+QString::number(confirmed_last_write_index));
-        }
-        if (response.at(i) == 'C' && response.at(i+1) == 'M' && response.at(i+2) == 'D') {
+        } else if (response.at(i) == 'C' && response.at(i+1) == 'M' && response.at(i+2) == 'D') {
             emit some_command(response.at(i+3), response.at(i+4), response.at(i+5), response.at(i+6));
-            i+=6;
             emit log("CMD Recieved: " + QString::number(response.at(i+3)) + " " + QString::number(response.at(i+4)) + " " + QString::number(response.at(i+5)) + " " + QString::number(response.at(i+6)));
+            i+=7;
+        } else {
+            i++;
         }
     }
+
     if (confirm_set && (confirmed_last_write_index-confirmed_last_play_index)<half_buf_size) {
         setConfirmPosition(confirmed_last_write_index);
     }

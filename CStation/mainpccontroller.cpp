@@ -97,8 +97,13 @@ void MainPCController::restartUnitThreads()
         }
     }
     last_rtc_send = QDateTime::currentDateTime();
+
+    QDateTime dateTime1 = last_rtc_send;
+    dateTime1.setTimeSpec(Qt::LocalTime);
+    quint64 tt = dateTime1.offsetFromUtc() + (QDateTime::currentMSecsSinceEpoch()/1000);
+
     sendMainCMD(CMD_CMD_TURNINGON, 0, 0, 0, 0);
-    sendMainCMD(CMD_CMD_SETRTCTIME, last_rtc_send.toMSecsSinceEpoch()/1000, 0, 0, 0);
+    sendMainCMD(CMD_CMD_SETRTCTIME, tt, 0, 0, 0);
 }
 
 void MainPCController::setServerPort(int value)
@@ -207,6 +212,7 @@ void MainPCController::sendMainCMD(uint8_t cmd, uint32_t param0, uint8_t param1,
 
 void MainPCController::doTurnOff()
 {
+    emit logMessage("Turning Off ...");
     emit turningOff();
     getReadyToClose(true);
     if (server) {

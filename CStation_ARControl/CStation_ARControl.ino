@@ -49,7 +49,7 @@
 /* /IR Button codes */
 
 /* OneWire codes */
-#define POWER_SIGNAL_MAIN_PIN 24
+#define POWER_SIGNAL_MAIN_PIN 8
 #define ONEWIRE_CODE_NOOP 0x00
 #define ONEWIRE_CODE_OFF 0b11011001
 #define ONEWIRE_CODE_SILENT_MODE_OFF 0b11100000
@@ -179,7 +179,7 @@ void clearClockDisplay() {
 }
 
 void showTime() {
-  if (clock_last_show_millis < 0 && (millis() - clock_last_show_millis) < CLOCK_DELAY_MS) {
+  if (clock_last_show_millis > 0 && (millis() - clock_last_show_millis) < CLOCK_DELAY_MS) {
     return;
   }
   clock_last_show_millis = millis();

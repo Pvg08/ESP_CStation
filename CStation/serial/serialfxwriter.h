@@ -49,7 +49,7 @@ private:
 
     void resetBuffers();
     void fillBuffer();
-    void responseCheck(QByteArray response);
+    void responseCheck(const QByteArray response);
 
     void setConfirmPosition(uint32_t confirm_write_position);
     unsigned getNextPosition(unsigned cur_position);
