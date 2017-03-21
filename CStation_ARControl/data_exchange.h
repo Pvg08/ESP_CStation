@@ -96,27 +96,27 @@ void ClearSerial() {
   }
 }
 
-void sendToMainPC(uint8_t param1, uint8_t param2, uint8_t param3, uint8_t param4) {
+void sendToMainPC(uint8_t command, uint8_t param1, uint8_t param2, uint8_t param3) {
   ClearSerial();
   Serial.write('C');
   Serial.write('M');
   Serial.write('D');
+  Serial.write(command);
   Serial.write(param1);
   Serial.write(param2);
   Serial.write(param3);
-  Serial.write(param4);
   Serial.flush();
 }
-void sendToMainPC(uint32_t param0) {
+void sendToMainPC(uint8_t command, uint16_t param1) {
   ClearSerial();
-  byte* last_pos = (byte*) (void*) &param0;
+  byte* last_pos = (byte*) (void*) &param1;
   Serial.write('C');
   Serial.write('M');
   Serial.write('D');
+  Serial.write(command);
   Serial.write(last_pos[0]);
   Serial.write(last_pos[1]);
-  Serial.write(last_pos[2]);
-  Serial.write(last_pos[3]);
+  Serial.write(0);
   Serial.flush();
 }
 

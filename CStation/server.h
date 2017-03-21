@@ -40,6 +40,8 @@ public:
     void setTimeEvtFrom(int value);
     void setTimeEvtTo(int value);
 
+    bool isStarted();
+
 signals:
     void blocks_change();
     void sensors_change(quint16 block_id);

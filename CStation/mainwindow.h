@@ -61,6 +61,8 @@ private slots:
     void on_comboBox_portSRV_activated(int index);
     void on_comboBox_portLR_activated(int index);
 
+    void on_pushButton_shutdown_clicked();
+
 private:
     Ui::MainWindow *ui;
     MainPCController* controller;

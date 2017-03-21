@@ -42,6 +42,11 @@ void Server::Reset()
     sessionOpened();
 }
 
+bool Server::isStarted()
+{
+    return !!networkSession;
+}
+
 void Server::StartServer()
 {
     emit write_message(tr("Network session starting."));

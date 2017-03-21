@@ -1,7 +1,11 @@
+#include <SPI.h>
+#include <MFRC522.h>
 #include <IRremote.h>
 #include <TM1637Display.h>
 #include <TimeLib.h>
 #include <DS1302RTC.h>
+#include <HMC5883L.h>
+#include <Crc16.h>
 #include "data_exchange.h"
 #include "onewire_helper.h"
 
@@ -40,7 +44,16 @@
 
 /* other pins */
 #define IR_RECV_PIN 13
+
+#define RFID_RST_PIN 5
+#define RFID_SS_PIN 53
 /* /other pins */
+
+// Mega2560 interrupt pins: 2, 3, 18, 19, 20, 21
+/* movement sensor */
+#define HC_PIN 18
+#define HC_INTERRUPT_MODE RISING
+/* /movement sensor */
 
 /* IR Button codes */
 #define CM_ON 0xFFB04F
@@ -64,18 +77,27 @@
 #define CMD_CMD_TURNOFF 0x05
 #define CMD_CMD_SETMODESTATE 0x10
 #define CMD_CMD_SETRTCTIME 0x20
+#define CMD_CMD_PRESENCE 0x30
+#define CMD_CMD_MAGNETIC_REQUEST 0x40
+#define CMD_CMD_MAGNETIC_SETX 0x41
+#define CMD_CMD_MAGNETIC_SETY 0x42
+#define CMD_CMD_MAGNETIC_SETZ 0x43
+#define CMD_CMD_CARDFOUND 0x50
 
 #define CMD_MODE_TRACKING 0x11
 #define CMD_MODE_INDICATION 0x12
 #define CMD_MODE_SILENCE 0x13
 #define CMD_MODE_CONTROL 0x14
 #define CMD_MODE_SECURITY 0x15
+#define CMD_MODE_AUTOANIMATOR 0x16
 /* /Data Exchange Params */
 
+MFRC522 mfrc522(RFID_SS_PIN, RFID_RST_PIN);
 IRrecv irrecv(IR_RECV_PIN);
 decode_results ir_results;
 OneWireHelper *wire_helper;
-
+HMC5883L magnetic_meter;
+bool MXYZ_init = false;
 TM1637Display display(TM_CLK, TM_DIO);
 DS1302RTC RTC(DS1302_RST_PIN, DS1302_DAT_PIN, DS1302_CLK_PIN);
 
@@ -90,11 +112,14 @@ unsigned long int main_pc_turnon_time = 0;
 bool clock_show_dots = false;
 unsigned long int clock_last_show_millis = 0;
 
+bool hc_info_need_to_send = false;
+
 byte mode_state_tracking = 0;
 byte mode_state_indication = 0;
 byte mode_state_silence = 0;
 byte mode_state_control = 0;
 byte mode_state_security = 0;
+byte mode_state_autoanimator = 0;
 
 void turnOff(bool send_pc_notify, bool send_fd_notify) {
   main_pc_ready = false;
@@ -122,6 +147,15 @@ void setCurrentTime(uint32_t t) {
   }
 }
 
+void sendCurrentMagnetic() {
+  if (MXYZ_init) {
+    Vector norm = magnetic_meter.readNormalize();
+    sendToMainPC(CMD_CMD_MAGNETIC_SETX, round(norm.XAxis*100));
+    sendToMainPC(CMD_CMD_MAGNETIC_SETY, round(norm.YAxis*100));
+    sendToMainPC(CMD_CMD_MAGNETIC_SETZ, round(norm.ZAxis*100));
+  }
+}
+
 void setModeState(byte mode_code, byte mode_state, bool send_pc_notify = false) {
   switch (mode_code) {
     case CMD_MODE_TRACKING:
@@ -143,6 +177,10 @@ void setModeState(byte mode_code, byte mode_state, bool send_pc_notify = false) 
     case CMD_MODE_SECURITY:
       mode_state_security = mode_state;
       // @todo set security state
+    break;
+    case CMD_MODE_AUTOANIMATOR:
+      mode_state_autoanimator = mode_state;
+      // @todo set autoanimator state
     break;
   }
   if (main_pc_ready && send_pc_notify) {
@@ -167,6 +205,9 @@ void runExternalCommand(MControllerState* state) {
     break;
     case CMD_CMD_SETRTCTIME:
       setCurrentTime(state->param0);
+    break;
+    case CMD_CMD_MAGNETIC_REQUEST:
+      sendCurrentMagnetic();
     break;
   }
 }
@@ -203,6 +244,8 @@ void setup() {
   main_pc_send_off = false;
   main_pc_ready = false;
   main_pc_turnon_time = 0;
+  hc_info_need_to_send = false;
+  MXYZ_init = false;
 
   TCCR1B = (TCCR1B & 0b11111000) | 0x01;
 
@@ -212,20 +255,34 @@ void setup() {
   digitalWrite(DS1302_GND_PIN, LOW);
   digitalWrite(DS1302_VCC_PIN, HIGH);
 
+  // Init Magnetic meter
+  MXYZ_init = !!magnetic_meter.begin();
+  if (MXYZ_init) 
+  {
+    magnetic_meter.setRange(HMC5883L_RANGE_1_3GA);
+    magnetic_meter.setMeasurementMode(HMC5883L_CONTINOUS);
+    magnetic_meter.setDataRate(HMC5883L_DATARATE_30HZ);
+    magnetic_meter.setSamples(HMC5883L_SAMPLES_2);
+  }
+
   wire_helper = new OneWireHelper(POWER_SIGNAL_MAIN_PIN, onTimerCheck);
 
+  SPI.begin();
   irrecv.enableIRIn();
   display.setBrightness(0x0f);
 
   RTC.haltRTC();
   RTC.writeEN();
   setSyncProvider(RTC.get);
+  mfrc522.PCD_Init();
 
   resetState();
 
   delay(500);
 
   wire_helper->writeSignal(HIGH, 200);
+
+  attachInterrupt(digitalPinToInterrupt(HC_PIN), HC_State_Changed, HC_INTERRUPT_MODE);
 }
 
 void r_loop() {
@@ -236,6 +293,12 @@ void r_loop() {
     }
     irrecv.resume();
   }
+  if (mfrc522.PICC_IsNewCardPresent()) {
+    if (mfrc522.PICC_ReadCardSerial()) {
+      Crc16 crc;
+      sendToMainPC(CMD_CMD_CARDFOUND, crc.XModemCrc(mfrc522.uid.uidByte, 0, mfrc522.uid.size));
+    }
+  }
   showTime();
   if (!main_pc_send_off && wire_helper->tryReadOffSignal()) {
     main_pc_send_off = true;
@@ -245,10 +308,18 @@ void r_loop() {
       turnOff(true, true);
     }
   }
+  if (hc_info_need_to_send) {
+    hc_info_need_to_send = false;
+    sendToMainPC(CMD_CMD_PRESENCE, 0, 0, 0);
+  }
 }
 
 void loop() {
   checkState(r_loop, runExternalCommand);
+}
+
+void HC_State_Changed() {
+  hc_info_need_to_send = false;
 }
 
 void onTimerCheck() {

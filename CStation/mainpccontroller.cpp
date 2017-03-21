@@ -7,6 +7,8 @@ MainPCController::MainPCController(QObject *parent, QString config_filename) : Q
     mode_state_silence = 0;
     mode_state_control = 0;
     mode_state_security = 0;
+    mode_state_autoanimator = 0;
+    magnetic_vector_was_set = false;
 
     server = NULL;
     units = new QVector<PeripheralUnit>();
@@ -73,11 +75,11 @@ bool MainPCController::serverIsRunning()
 
 void MainPCController::restartServer()
 {
-    if (!server) {
-        server = new Server();
-        server->setPort(server_port);
-        server->setRemotePort(server_remote_port);
-        server->StartServer();
+    if (!server || !server->isStarted()) {
+        initServer();
+        if (!server->isStarted()) {
+            server->StartServer();
+        }
         server->setTimeEvtFrom(server_evt_from);
         server->setTimeEvtTo(server_evt_to);
         restartUnitThreads();
@@ -86,6 +88,15 @@ void MainPCController::restartServer()
         server->setRemotePort(server_remote_port);
         server->Reset();
         restartUnitThreads();
+    }
+}
+
+void MainPCController::initServer()
+{
+    if (!server) {
+        server = new Server();
+        server->setPort(server_port);
+        server->setRemotePort(server_remote_port);
     }
 }
 
@@ -104,6 +115,7 @@ void MainPCController::restartUnitThreads()
 
     sendMainCMD(CMD_CMD_TURNINGON, 0, 0, 0, 0);
     sendMainCMD(CMD_CMD_SETRTCTIME, tt, 0, 0, 0);
+    sendMainCMD(CMD_CMD_MAGNETIC_REQUEST, 0, 0, 0, 0);
 }
 
 void MainPCController::setServerPort(int value)
@@ -165,6 +177,15 @@ void MainPCController::setUSBPortForUnit(int unit_code, QString usbport)
     }
 }
 
+void MainPCController::shutDown()
+{
+    if (units->data()[UNIT_MAIN].thread && units->data()[UNIT_MAIN].thread->isRunning()) {
+        doTurnOff();
+    } else {
+        emit logMessage(tr("Can't turn off. Main module is not connected!"));
+    }
+}
+
 void MainPCController::showLogMessage(QString msg)
 {
     emit logMessage(msg);
@@ -178,6 +199,21 @@ void MainPCController::recieveMainCMD(uint8_t cmd, uint8_t param1, uint8_t param
     break;
     case CMD_CMD_SETMODESTATE:
         setModeState(param1, param2);
+    break;
+    case CMD_CMD_PRESENCE:
+        doOnPresence();
+    break;
+    case CMD_CMD_CARDFOUND:
+        doOnCardFound(param1*256 + param2);
+    break;
+    case CMD_CMD_MAGNETIC_SETX:
+        doSetMagneticVectorComponent(&magnetic_vector_x, param1, param2);
+    break;
+    case CMD_CMD_MAGNETIC_SETY:
+        doSetMagneticVectorComponent(&magnetic_vector_y, param1, param2);
+    break;
+    case CMD_CMD_MAGNETIC_SETZ:
+        doSetMagneticVectorComponent(&magnetic_vector_z, param1, param2);
     break;
     }
 }
@@ -200,7 +236,26 @@ void MainPCController::setModeState(uint8_t mode_code, uint8_t mode_state)
     case CMD_MODE_SECURITY:
         mode_state_security = mode_state;
     break;
+    case CMD_MODE_AUTOANIMATOR:
+        mode_state_autoanimator = mode_state;
+    break;
     }
+}
+
+void MainPCController::doOnPresence()
+{
+    emit logMessage("Presence!");
+}
+
+void MainPCController::doOnCardFound(uint16_t crc_hash)
+{
+    emit logMessage("Card found: " + QString::number(crc_hash));
+}
+
+void MainPCController::doSetMagneticVectorComponent(float *variab, uint8_t param1, uint8_t param2)
+{
+    uint16_t param0 = param1*256 + param2;
+    (*variab) = param0 / 100;
 }
 
 void MainPCController::sendMainCMD(uint8_t cmd, uint32_t param0, uint8_t param1, uint8_t param2, uint8_t param3)

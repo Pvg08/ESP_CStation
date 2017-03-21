@@ -21,12 +21,19 @@
 #define CMD_CMD_TURNOFF 0x05
 #define CMD_CMD_SETMODESTATE 0x10
 #define CMD_CMD_SETRTCTIME 0x20
+#define CMD_CMD_PRESENCE 0x30
+#define CMD_CMD_MAGNETIC_REQUEST 0x40
+#define CMD_CMD_MAGNETIC_SETX 0x41
+#define CMD_CMD_MAGNETIC_SETY 0x42
+#define CMD_CMD_MAGNETIC_SETZ 0x43
+#define CMD_CMD_CARDFOUND 0x50
 
 #define CMD_MODE_TRACKING 0x11
 #define CMD_MODE_INDICATION 0x12
 #define CMD_MODE_SILENCE 0x13
 #define CMD_MODE_CONTROL 0x14
 #define CMD_MODE_SECURITY 0x15
+#define CMD_MODE_AUTOANIMATOR 0x16
 /* /Data Exchange Params */
 
 #define PERIPHERAL_UNITS_COUNT 4
@@ -51,6 +58,7 @@ public:
 
     Server *getServer();
     bool serverIsRunning();
+    void initServer();
     void restartServer();
     void restartUnitThreads();
 
@@ -65,6 +73,7 @@ public:
 
     QString getUSBPortForUnit(int unit_code);
     void setUSBPortForUnit(int unit_code, QString usbport);
+    void shutDown();
 signals:
     void logMessage(QString);
     void turningOff();
@@ -84,16 +93,25 @@ private:
     uint8_t mode_state_silence;
     uint8_t mode_state_control;
     uint8_t mode_state_security;
+    uint8_t mode_state_autoanimator;
 
     int server_port = 0;
     int server_remote_port = 0;
     int server_evt_from = 0;
     int server_evt_to = 0;
 
+    float magnetic_vector_x = 0;
+    float magnetic_vector_y = 0;
+    float magnetic_vector_z = 0;
+    bool magnetic_vector_was_set = false;
+
     void sendMainCMD(uint8_t cmd, uint32_t param0, uint8_t param1, uint8_t param2, uint8_t param3);
     void doTurnOff();
     void getReadyToClose(bool dont_close_mainc_thread);
     void setModeState(uint8_t mode_code, uint8_t mode_state);
+    void doOnPresence();
+    void doOnCardFound(uint16_t crc_hash);
+    void doSetMagneticVectorComponent(float *variab, uint8_t param1, uint8_t param2);
 };
 
 #endif // MAINPCCONTROLLER_H

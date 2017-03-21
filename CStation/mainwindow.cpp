@@ -274,11 +274,12 @@ void MainWindow::on_pushButton_send_clicked()
 void MainWindow::on_pushButton_listen_clicked()
 {
     if (!controller->serverIsRunning()) {
-        controller->restartServer();
+        controller->initServer();
         connect(controller->getServer(), SIGNAL(error(QString)), this, SLOT(get_error(QString)));
         connect(controller->getServer(), SIGNAL(write_message(QString)), this, SLOT(get_message(QString)));
         connect(controller->getServer(), SIGNAL(new_block_ready(quint16)), this, SLOT(update_blocks_list(quint16)));
         connect(controller->getServer(), SIGNAL(sensors_change(quint16)), this, SLOT(update_sensors_values(quint16)));
+        controller->restartServer();
         ui->pushButton_sensors_display_show->setEnabled(true);
         actions_form = new ClientBlocksListActionsForm(ui->widget_actions, controller->getServer());
         actions_form->setIPString(ui->comboBox_ip->currentText());
@@ -521,4 +522,9 @@ void MainWindow::on_comboBox_portSRV_activated(int index)
 void MainWindow::on_comboBox_portLR_activated(int index)
 {
     pickUSBPort(ui->comboBox_portLR, UNIT_LED_RING);
+}
+
+void MainWindow::on_pushButton_shutdown_clicked()
+{
+    controller->shutDown();
 }
