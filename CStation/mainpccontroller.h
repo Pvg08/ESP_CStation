@@ -42,6 +42,13 @@
 #define UNIT_LSTRIP_SERVO 2
 #define UNIT_LED_RING 3
 
+enum TrackingModeState {TRACKING_ON, TRACKING_SENSORONLY, TRACKING_OFF};
+enum IndicationModeState {INDICATION_ON, INDICATION_LOW, INDICATION_SCREENOFF, INDICATION_LEDOFF, INDICATION_OFF};
+enum SilenceModeState {SILENCE_NO, SILENCE_MEDIUM, SILENCE_MAX};
+enum ControlModeState {CONTROL_ON, CONTROL_OFF};
+enum SecurityModeState {SECURITY_LOCKED, SECURITY_UNLOCKED};
+enum AutoAnimatorModeState {AA_OFF, AA_ON};
+
 typedef struct
 {
     QString usb_id;
@@ -88,12 +95,12 @@ private:
     QVector<PeripheralUnit>* units;
     QDateTime last_rtc_send;
 
-    uint8_t mode_state_tracking;
-    uint8_t mode_state_indication;
-    uint8_t mode_state_silence;
-    uint8_t mode_state_control;
-    uint8_t mode_state_security;
-    uint8_t mode_state_autoanimator;
+    TrackingModeState mode_state_tracking;
+    IndicationModeState mode_state_indication;
+    SilenceModeState mode_state_silence;
+    ControlModeState mode_state_control;
+    SecurityModeState mode_state_security;
+    AutoAnimatorModeState mode_state_autoanimator;
 
     int server_port = 0;
     int server_remote_port = 0;

@@ -2,12 +2,12 @@
 
 MainPCController::MainPCController(QObject *parent, QString config_filename) : QObject(parent)
 {
-    mode_state_tracking = 0;
-    mode_state_indication = 0;
-    mode_state_silence = 0;
-    mode_state_control = 0;
-    mode_state_security = 0;
-    mode_state_autoanimator = 0;
+    mode_state_tracking = TRACKING_ON;
+    mode_state_indication = INDICATION_ON;
+    mode_state_silence = SILENCE_NO;
+    mode_state_control = CONTROL_ON;
+    mode_state_security = SECURITY_LOCKED;
+    mode_state_autoanimator = AA_OFF;
     magnetic_vector_was_set = false;
 
     server = NULL;

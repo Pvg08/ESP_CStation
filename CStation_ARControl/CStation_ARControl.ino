@@ -8,94 +8,14 @@
 #include <Crc16.h>
 #include "data_exchange.h"
 #include "onewire_helper.h"
-
-/* RTC and clock display pins & params */
-#define TM_CLK 22
-#define TM_DIO 23
-
-#define DS1302_GND_PIN 24
-#define DS1302_VCC_PIN 25
-#define DS1302_RST_PIN 26
-#define DS1302_DAT_PIN 28
-#define DS1302_CLK_PIN 30
-
-#define CLOCK_DELAY_MS 500
-/* /RTC and clock display pins & params */
-
-/* led pins */
-#define LED_MAIN_PC_READY_PIN 27
-#define LED_PDU_PIN 29
-#define LED_CARDREADING_PIN 31
-
-#define LED_LEDOFF_PIN 33
-#define LED_LOCKOPEN_PIN 35
-#define LED_CONTROLSBLOCKED_PIN 37
-#define LED_CAMERA_PIN 39
-#define LED_UVLAMP_PIN 41
-/* /led pins */
-
-/* control pins */
-#define CTRL_LEDOFF_PIN 34
-#define CTRL_LOCKOPEN_PIN 36
-#define CTRL_CONTROLSBLOCKED_PIN 38
-#define CTRL_CAMERA_PIN 40
-#define CTRL_UVLAMP_PIN 42
-/* /control pins */
-
-/* other pins */
-#define IR_RECV_PIN 13
-
-#define RFID_RST_PIN 5
-#define RFID_SS_PIN 53
-/* /other pins */
-
-// Mega2560 interrupt pins: 2, 3, 18, 19, 20, 21
-/* movement sensor */
-#define HC_PIN 18
-#define HC_INTERRUPT_MODE RISING
-/* /movement sensor */
-
-/* IR Button codes */
-#define CM_ON 0xFFB04F
-#define CM_OFF 0xFFF807
-#define CM_REPEAT 0xFFFFFFFF
-/* /IR Button codes */
-
-/* OneWire codes */
-#define POWER_SIGNAL_MAIN_PIN 8
-#define ONEWIRE_CODE_NOOP 0x00
-#define ONEWIRE_CODE_OFF 0b11011001
-#define ONEWIRE_CODE_SILENT_MODE_OFF 0b11100000
-#define ONEWIRE_CODE_SILENT_MODE_MID 0b10100001
-#define ONEWIRE_CODE_SILENT_MODE_ON 0b01100111
-/* /OneWire codes */
-
-/* Data Exchange Params */
-#define CMD_CMD_TURNINGON 0x01
-#define CMD_CMD_TURNOFFBEGIN 0x03
-#define CMD_CMD_TURNOFFREADY 0x04
-#define CMD_CMD_TURNOFF 0x05
-#define CMD_CMD_SETMODESTATE 0x10
-#define CMD_CMD_SETRTCTIME 0x20
-#define CMD_CMD_PRESENCE 0x30
-#define CMD_CMD_MAGNETIC_REQUEST 0x40
-#define CMD_CMD_MAGNETIC_SETX 0x41
-#define CMD_CMD_MAGNETIC_SETY 0x42
-#define CMD_CMD_MAGNETIC_SETZ 0x43
-#define CMD_CMD_CARDFOUND 0x50
-
-#define CMD_MODE_TRACKING 0x11
-#define CMD_MODE_INDICATION 0x12
-#define CMD_MODE_SILENCE 0x13
-#define CMD_MODE_CONTROL 0x14
-#define CMD_MODE_SECURITY 0x15
-#define CMD_MODE_AUTOANIMATOR 0x16
-/* /Data Exchange Params */
+#include "indication_controller.h"
+#include "params.h"
 
 MFRC522 mfrc522(RFID_SS_PIN, RFID_RST_PIN);
 IRrecv irrecv(IR_RECV_PIN);
 decode_results ir_results;
 OneWireHelper *wire_helper;
+IndicationController *indication_controller;
 HMC5883L magnetic_meter;
 bool MXYZ_init = false;
 TM1637Display display(TM_CLK, TM_DIO);
@@ -114,14 +34,15 @@ unsigned long int clock_last_show_millis = 0;
 
 bool hc_info_need_to_send = false;
 
-byte mode_state_tracking = 0;
-byte mode_state_indication = 0;
-byte mode_state_silence = 0;
-byte mode_state_control = 0;
-byte mode_state_security = 0;
-byte mode_state_autoanimator = 0;
+TrackingModeState mode_state_tracking = TRACKING_ON;
+IndicationModeState mode_state_indication = INDICATION_ON;
+SilenceModeState mode_state_silence = SILENCE_NO;
+ControlModeState mode_state_control = CONTROL_ON;
+SecurityModeState mode_state_security = SECURITY_LOCKED;
+AutoAnimatorModeState mode_state_autoanimator = AA_OFF;
 
 void turnOff(bool send_pc_notify, bool send_fd_notify) {
+  indication_controller->LedSet(LED_MAIN_PC_READY, false);
   main_pc_ready = false;
   main_pc_turnon_time = 0;
   digitalWrite(DS1302_VCC_PIN, LOW);
@@ -164,7 +85,8 @@ void setModeState(byte mode_code, byte mode_state, bool send_pc_notify = false) 
     break;
     case CMD_MODE_INDICATION:
       mode_state_indication = mode_state;
-      // @todo set indication state
+      indication_controller->setIndicationShow(mode_state_indication != INDICATION_LEDOFF && mode_state_indication != INDICATION_OFF);
+      // INDICATION_LOW & INDICATION_SCREENOFF (INDICATION_OFF) - pc control
     break;
     case CMD_MODE_SILENCE:
       mode_state_silence = mode_state;
@@ -180,7 +102,11 @@ void setModeState(byte mode_code, byte mode_state, bool send_pc_notify = false) 
     break;
     case CMD_MODE_AUTOANIMATOR:
       mode_state_autoanimator = mode_state;
-      // @todo set autoanimator state
+      if (mode_state_autoanimator == AA_ON) {
+        if (mode_state_tracking != TRACKING_ON)         setModeState(CMD_MODE_TRACKING, TRACKING_ON, send_pc_notify);
+        if (mode_state_indication != INDICATION_LEDOFF) setModeState(CMD_MODE_INDICATION, INDICATION_LEDOFF, send_pc_notify);
+        if (mode_state_silence != SILENCE_NO)           setModeState(CMD_MODE_SILENCE, SILENCE_NO, send_pc_notify);
+      }
     break;
   }
   if (main_pc_ready && send_pc_notify) {
@@ -193,6 +119,7 @@ void runExternalCommand(MControllerState* state) {
     case CMD_CMD_TURNINGON:
       main_pc_ready = true;
       main_pc_turnon_time = millis();
+      indication_controller->LedSet(LED_MAIN_PC_READY, true);
     break;
     case CMD_CMD_TURNOFF:
       turnOff(false, true);
@@ -246,6 +173,12 @@ void setup() {
   main_pc_turnon_time = 0;
   hc_info_need_to_send = false;
   MXYZ_init = false;
+  mode_state_tracking = TRACKING_ON;
+  mode_state_indication = INDICATION_ON;
+  mode_state_silence = SILENCE_NO;
+  mode_state_control = CONTROL_ON;
+  mode_state_security = SECURITY_LOCKED;
+  mode_state_autoanimator = AA_OFF;
 
   TCCR1B = (TCCR1B & 0b11111000) | 0x01;
 
@@ -265,6 +198,7 @@ void setup() {
     magnetic_meter.setSamples(HMC5883L_SAMPLES_2);
   }
 
+  indication_controller = new IndicationController();
   wire_helper = new OneWireHelper(POWER_SIGNAL_MAIN_PIN, onTimerCheck);
 
   SPI.begin();
@@ -310,6 +244,7 @@ void r_loop() {
   }
   if (hc_info_need_to_send) {
     hc_info_need_to_send = false;
+    indication_controller->LedSet(LED_PRESENCE, true, BLINKING_ONCE);
     sendToMainPC(CMD_CMD_PRESENCE, 0, 0, 0);
   }
 }
