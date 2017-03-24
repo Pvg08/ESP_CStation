@@ -20,6 +20,7 @@
 #define CMD_CMD_TURNOFFREADY 0x04
 #define CMD_CMD_TURNOFF 0x05
 #define CMD_CMD_SETMODESTATE 0x10
+#define CMD_CMD_SETDEVICESTATE 0x15
 #define CMD_CMD_SETRTCTIME 0x20
 #define CMD_CMD_PRESENCE 0x30
 #define CMD_CMD_MAGNETIC_REQUEST 0x40
@@ -116,6 +117,7 @@ private:
     void doTurnOff();
     void getReadyToClose(bool dont_close_mainc_thread);
     void setModeState(uint8_t mode_code, uint8_t mode_state);
+    void setDeviceState(uint8_t device_code, bool device_state);
     void doOnPresence();
     void doOnCardFound(uint16_t crc_hash);
     void doSetMagneticVectorComponent(float *variab, uint8_t param1, uint8_t param2);

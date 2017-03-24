@@ -9,6 +9,7 @@
 #include "data_exchange.h"
 #include "onewire_helper.h"
 #include "indication_controller.h"
+#include "device_controller.h"
 #include "params.h"
 
 MFRC522 mfrc522(RFID_SS_PIN, RFID_RST_PIN);
@@ -16,6 +17,7 @@ IRrecv irrecv(IR_RECV_PIN);
 decode_results ir_results;
 OneWireHelper *wire_helper;
 IndicationController *indication_controller;
+DeviceController *device_controller;
 HMC5883L magnetic_meter;
 bool MXYZ_init = false;
 TM1637Display display(TM_CLK, TM_DIO);
@@ -32,14 +34,14 @@ unsigned long int main_pc_turnon_time = 0;
 bool clock_show_dots = false;
 unsigned long int clock_last_show_millis = 0;
 
-bool hc_info_need_to_send = false;
+volatile bool hc_info_need_to_send = false;
 
-TrackingModeState mode_state_tracking = TRACKING_ON;
-IndicationModeState mode_state_indication = INDICATION_ON;
-SilenceModeState mode_state_silence = SILENCE_NO;
-ControlModeState mode_state_control = CONTROL_ON;
-SecurityModeState mode_state_security = SECURITY_LOCKED;
-AutoAnimatorModeState mode_state_autoanimator = AA_OFF;
+volatile TrackingModeState mode_state_tracking = TRACKING_ON;
+volatile IndicationModeState mode_state_indication = INDICATION_ON;
+volatile SilenceModeState mode_state_silence = SILENCE_NO;
+volatile ControlModeState mode_state_control = CONTROL_ON;
+volatile SecurityModeState mode_state_security = SECURITY_LOCKED;
+volatile AutoAnimatorModeState mode_state_autoanimator = AA_OFF;
 
 void turnOff(bool send_pc_notify, bool send_fd_notify) {
   indication_controller->LedSet(LED_MAIN_PC_READY, false);
@@ -77,11 +79,22 @@ void sendCurrentMagnetic() {
   }
 }
 
+
+void setDeviceState(ControlDevice device, bool device_state, bool send_pc_notify = false) {
+  device_controller->ControlSet(device, device_state);
+  if (main_pc_ready && send_pc_notify) {
+    sendToMainPC(CMD_CMD_SETDEVICESTATE, device, device_state ? 1 : 0, 0);
+  }
+}
+
 void setModeState(byte mode_code, byte mode_state, bool send_pc_notify = false) {
+  if (main_pc_ready && send_pc_notify) {
+    sendToMainPC(CMD_CMD_SETMODESTATE, mode_code, mode_state, 0);
+  }
   switch (mode_code) {
     case CMD_MODE_TRACKING:
       mode_state_tracking = mode_state;
-      // @todo set tracking state
+      setDeviceState(CTRL_CAMERA, mode_state_tracking == TRACKING_ON, send_pc_notify);
     break;
     case CMD_MODE_INDICATION:
       mode_state_indication = mode_state;
@@ -98,7 +111,7 @@ void setModeState(byte mode_code, byte mode_state, bool send_pc_notify = false) 
     break;
     case CMD_MODE_SECURITY:
       mode_state_security = mode_state;
-      // @todo set security state
+      setDeviceState(CTRL_LOCKOPEN, mode_state_security == SECURITY_UNLOCKED, send_pc_notify);
     break;
     case CMD_MODE_AUTOANIMATOR:
       mode_state_autoanimator = mode_state;
@@ -108,9 +121,6 @@ void setModeState(byte mode_code, byte mode_state, bool send_pc_notify = false) 
         if (mode_state_silence != SILENCE_NO)           setModeState(CMD_MODE_SILENCE, SILENCE_NO, send_pc_notify);
       }
     break;
-  }
-  if (main_pc_ready && send_pc_notify) {
-    sendToMainPC(CMD_CMD_SETMODESTATE, mode_code, mode_state, 0);
   }
 }
 
@@ -129,6 +139,9 @@ void runExternalCommand(MControllerState* state) {
     break;
     case CMD_CMD_SETMODESTATE:
       setModeState(state->param1, state->param2, false);
+    break;
+    case CMD_CMD_SETDEVICESTATE:
+      setDeviceState(state->param1, state->param2 > 0, false);
     break;
     case CMD_CMD_SETRTCTIME:
       setCurrentTime(state->param0);
@@ -199,6 +212,7 @@ void setup() {
   }
 
   indication_controller = new IndicationController();
+  device_controller = new DeviceController(indication_controller);
   wire_helper = new OneWireHelper(POWER_SIGNAL_MAIN_PIN, onTimerCheck);
 
   SPI.begin();
@@ -224,6 +238,7 @@ void r_loop() {
     if (ir_results.decode_type == NEC) {
       command_current = ir_results.value;
       // @todo
+      indication_controller->LedSet(LED_PDU, true, BLINKING_ONCE);
     }
     irrecv.resume();
   }
@@ -254,7 +269,9 @@ void loop() {
 }
 
 void HC_State_Changed() {
-  hc_info_need_to_send = false;
+  if (mode_state_tracking != TRACKING_OFF) {
+    hc_info_need_to_send = true;
+  }
 }
 
 void onTimerCheck() {

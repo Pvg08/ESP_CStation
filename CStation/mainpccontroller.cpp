@@ -200,6 +200,9 @@ void MainPCController::recieveMainCMD(uint8_t cmd, uint8_t param1, uint8_t param
     case CMD_CMD_SETMODESTATE:
         setModeState(param1, param2);
     break;
+    case CMD_CMD_SETDEVICESTATE:
+        setDeviceState(param1, param2 > 0);
+    break;
     case CMD_CMD_PRESENCE:
         doOnPresence();
     break;
@@ -222,24 +225,29 @@ void MainPCController::setModeState(uint8_t mode_code, uint8_t mode_state)
 {
     switch (mode_code) {
     case CMD_MODE_TRACKING:
-        mode_state_tracking = mode_state;
+        mode_state_tracking = (TrackingModeState) mode_state;
     break;
     case CMD_MODE_INDICATION:
-        mode_state_indication = mode_state;
+        mode_state_indication = (IndicationModeState) mode_state;
     break;
     case CMD_MODE_SILENCE:
-        mode_state_silence = mode_state;
+        mode_state_silence = (SilenceModeState) mode_state;
     break;
     case CMD_MODE_CONTROL:
-        mode_state_control = mode_state;
+        mode_state_control = (ControlModeState) mode_state;
     break;
     case CMD_MODE_SECURITY:
-        mode_state_security = mode_state;
+        mode_state_security = (SecurityModeState) mode_state;
     break;
     case CMD_MODE_AUTOANIMATOR:
-        mode_state_autoanimator = mode_state;
+        mode_state_autoanimator = (AutoAnimatorModeState) mode_state;
     break;
     }
+}
+
+void MainPCController::setDeviceState(uint8_t device_code, bool device_state)
+{
+    emit logMessage("Device " + QString::number(device_code) + " state changed to " + QString::number(device_state ? 1 : 0));
 }
 
 void MainPCController::doOnPresence()

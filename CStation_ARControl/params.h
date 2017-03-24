@@ -1,4 +1,3 @@
-
 /* RTC and clock display pins & params */
 #define TM_CLK 22
 #define TM_DIO 23
@@ -12,14 +11,6 @@
 #define CLOCK_DELAY_MS 500
 /* /RTC and clock display pins & params */
 
-
-/* control pins */
-#define CTRL_LEDOFF_PIN 34
-#define CTRL_LOCKOPEN_PIN 36
-#define CTRL_CONTROLSBLOCKED_PIN 38
-#define CTRL_CAMERA_PIN 40
-#define CTRL_UVLAMP_PIN 42
-/* /control pins */
 
 /* other pins */
 #define IR_RECV_PIN 13
@@ -58,6 +49,7 @@
 #define CMD_CMD_TURNOFFREADY 0x04
 #define CMD_CMD_TURNOFF 0x05
 #define CMD_CMD_SETMODESTATE 0x10
+#define CMD_CMD_SETDEVICESTATE 0x15
 #define CMD_CMD_SETRTCTIME 0x20
 #define CMD_CMD_PRESENCE 0x30
 #define CMD_CMD_MAGNETIC_REQUEST 0x40
