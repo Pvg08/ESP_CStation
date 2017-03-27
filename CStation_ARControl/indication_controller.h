@@ -3,24 +3,31 @@
 
 #define LED_COUNT 13
 enum LedIndicator {
-    LED_MAIN_PC_READY, 
-    LED_PDU, 
-    LED_CARDREADING, 
-    LED_LOCKOPEN, 
-    LED_CONTROLSBLOCKED, 
-    LED_CAMERA, 
-    LED_UVLAMP, 
-    LED_PRESENCE, 
-    LED_BLAMP, 
-    LED_USBDEVICE, 
-    LED_STATE1, 
-    LED_STATE2
+    LED_MAIN_PC_READY = 0, 
+    LED_PDU = 1, 
+    LED_CARDREADING = 2, 
+    LED_LOCKOPEN = 3, 
+    LED_CONTROLSBLOCKED = 4, 
+    LED_CAMERA = 5, 
+    LED_UVLAMP = 6, 
+    LED_PRESENCE = 7, 
+    LED_BLAMP = 8, 
+    LED_USBDEVICE = 9, 
+    LED_STATE1 = 10, 
+    LED_STATE2 = 11, 
+    LED_NO_LED = 12
 };
 enum BlinkState {
     BLINKING_NO, 
     BLINKING_ONCE, 
     BLINKING_SLOW, 
     BLINKING_FAST
+};
+
+struct IndicatorStruct {
+    uint8_t pin;
+    bool state;
+    BlinkState blinks;
 };
 
 /* led pins */
@@ -44,22 +51,30 @@ class IndicationController
 {
   private:
     bool indication_show;
-    byte led_pins[LED_COUNT];
-    bool led_states[LED_COUNT];
-    BlinkState led_blinks[LED_COUNT];
+    IndicatorStruct indicators[LED_COUNT];
 
     void initLed(LedIndicator led, byte pin) {
-      led_pins[led] = LED_MAIN_PC_READY_PIN;
-      led_states[led] = false;
-      led_blinks[led] = BLINKING_NO;
+      indicators[led].pin = pin;
+      indicators[led].state = false;
+      indicators[led].blinks = BLINKING_NO;
       pinMode(pin, OUTPUT);
       digitalWrite(pin, LOW);
+    }
+
+    void updateIndicatorsState()
+    {
+      for(byte i=0; i < LED_COUNT; i++) {
+        if (i != LED_NO_LED) {
+          digitalWrite(indicators[i].pin, (indication_show && indicators[i].state) ? HIGH : LOW);
+        }
+      }
     }
 
   public:
 
     IndicationController() 
     {
+      memset(indicators, 0, sizeof(indicators));
       indication_show = true;
       initLed(LED_MAIN_PC_READY, LED_MAIN_PC_READY_PIN);
       initLed(LED_PDU, LED_PDU_PIN);
@@ -72,23 +87,15 @@ class IndicationController
       initLed(LED_USBDEVICE, LED_USBDEVICE_PIN);
       initLed(LED_STATE1, LED_STATE1_PIN);
       initLed(LED_STATE2, LED_STATE2_PIN);
-      pinMode(LED_NO_LED_PIN, OUTPUT);
-      digitalWrite(LED_NO_LED_PIN, LOW);
+      initLed(LED_NO_LED, LED_NO_LED_PIN);
     }
 
     void LedSet(LedIndicator led, bool state, BlinkState blinking_state = BLINKING_NO)
     {
-      led_states[led] = state;
-      led_blinks[led] = blinking_state;
-      if (indication_show) {
-        digitalWrite(led_pins[led], state ? HIGH : LOW);
-      }
-    }
-
-    void updateIndicatorsState()
-    {
-      for(byte i=0; i < LED_COUNT; i++) {
-        digitalWrite(led_pins[i], (indication_show && led_states[i]) ? HIGH : LOW);
+      indicators[led].state = state;
+      indicators[led].blinks = blinking_state;
+      if (indication_show || led == LED_NO_LED) {
+        digitalWrite(indicators[led].pin, state ? HIGH : LOW);
       }
     }
 
@@ -97,8 +104,13 @@ class IndicationController
       if (new_indication_show != indication_show) {
         indication_show = new_indication_show;
         updateIndicatorsState();
-        digitalWrite(LED_NO_LED_PIN, indication_show ? LOW : HIGH);
+        LedSet(LED_NO_LED, indication_show ? LOW : HIGH);
       }
+    }
+
+    bool getIndicationState(LedIndicator led)
+    {
+      return indicators[led].state;
     }
 
     void onTimer()

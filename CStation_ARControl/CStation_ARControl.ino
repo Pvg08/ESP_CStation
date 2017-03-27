@@ -236,9 +236,16 @@ void setup() {
 void r_loop() {
   if (irrecv.decode(&ir_results)) {
     if (ir_results.decode_type == NEC) {
-      command_current = ir_results.value;
-      // @todo
       indication_controller->LedSet(LED_PDU, true, BLINKING_ONCE);
+      command_current = ir_results.value;
+      if (command_current) {
+        int dev_id = device_controller->DeviceControlIRCode(command_current);
+        if (dev_id >= 0) {
+          sendToMainPC(CMD_CMD_SETDEVICESTATE, dev_id, device_controller->getDeviceState(dev_id) ? 1 : 0, 0);
+        } else {
+          // @todo check other commands
+        }
+      }
     }
     irrecv.resume();
   }
