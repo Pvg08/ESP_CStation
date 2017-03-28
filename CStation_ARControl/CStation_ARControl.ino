@@ -152,6 +152,43 @@ void runExternalCommand(MControllerState* state) {
   }
 }
 
+bool checkLightCMD(unsigned long int command) {
+  ElightControl ctrl = LIGHT_NOP;
+  switch (command) {
+    case CM_LIGHT_ON:           ctrl = LIGHT_ON;          break;
+    case CM_LIGHT_OFF:          ctrl = LIGHT_OFF;         break;
+    case CM_LIGHT_B_DOWN:       ctrl = LIGHT_B_DOWN;      break;
+    case CM_LIGHT_B_DOWN2:      ctrl = LIGHT_B_DOWN2;     break;
+    case CM_LIGHT_B_UP:         ctrl = LIGHT_B_UP ;       break;
+    case CM_LIGHT_B_UP2:        ctrl = LIGHT_B_UP2;       break;
+    case CM_LIGHT_R:            ctrl = CM_LIGHT_R;        break;
+    case CM_LIGHT_G:            ctrl = CM_LIGHT_G;        break;
+    case CM_LIGHT_B:            ctrl = CM_LIGHT_B;        break;
+    case CM_LIGHT_W:            ctrl = CM_LIGHT_W;        break;
+    case CM_LIGHT_COL11:        ctrl = LIGHT_COL11;       break;
+    case CM_LIGHT_COL21:        ctrl = LIGHT_COL21;       break;
+    case CM_LIGHT_COL31:        ctrl = LIGHT_COL31;       break;
+    case CM_LIGHT_COL41:        ctrl = LIGHT_COL41;       break;
+    case CM_LIGHT_COL22:        ctrl = LIGHT_COL22;       break;
+    case CM_LIGHT_COL32:        ctrl = LIGHT_COL32;       break;
+    case CM_LIGHT_COL42:        ctrl = LIGHT_COL42;       break;
+    case CM_LIGHT_COL13:        ctrl = LIGHT_COL13;       break;
+    case CM_LIGHT_COL23:        ctrl = LIGHT_COL23;       break;
+    case CM_LIGHT_COL33:        ctrl = LIGHT_COL33;       break;
+    case CM_LIGHT_COL43:        ctrl = LIGHT_COL43;       break;
+    case CM_LIGHT_MODE_FLASH:   ctrl = LIGHT_MODE_FLASH;  break;
+    case CM_LIGHT_MODE_STROBE:  ctrl = LIGHT_MODE_STROBE; break;
+    case CM_LIGHT_MODE_FADE:    ctrl = LIGHT_MODE_FADE;   break;
+    case CM_LIGHT_MODE_SMOOTH:  ctrl = LIGHT_MODE_SMOOTH; break;
+
+  }
+  if (ctrl != LIGHT_NOP) {
+    sendToMainPC(CMD_CMD_LIGHTPDUCMD, ctrl, 0, 0);
+    return true;
+  }
+  return false;
+}
+
 void clearClockDisplay() {
   uint8_t segto = SEG_G;
   for (byte i = 0; i < 4; i++) {
@@ -242,7 +279,7 @@ void r_loop() {
         int dev_id = device_controller->DeviceControlIRCode(command_current);
         if (dev_id >= 0) {
           sendToMainPC(CMD_CMD_SETDEVICESTATE, dev_id, device_controller->getDeviceState(dev_id) ? 1 : 0, 0);
-        } else {
+        } else if (!checkLightCMD(command_current)) {
           // @todo check other commands
         }
       }

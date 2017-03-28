@@ -9,7 +9,11 @@ enum ControlDevice {
     CTRL_CAMERA = 1,
     CTRL_UVLAMP = 2,
     CTRL_BLAMP = 3,
-    CTRL_USBDEVICE = 4
+    CTRL_USBDEVICE = 4,
+
+    // pseudo devices
+    CTRL_STATE1 = 5,
+    CTRL_STATE2 = 6
 };
 
 struct DeviceStruct {
@@ -45,8 +49,10 @@ class DeviceController
       controls[device].led = led;
       controls[device].ir_code = ir_code;
       controls[device].state = first_state;
-      pinMode(pin, OUTPUT);
-      digitalWrite(pin, first_state ? HIGH : LOW);
+      if (pin > 0) {
+        pinMode(pin, OUTPUT);
+        digitalWrite(pin, first_state ? HIGH : LOW);
+      }
       if (first_state) {
         indication_controller->LedSet(led, true);
       }
@@ -63,7 +69,8 @@ class DeviceController
       initControl(CTRL_CAMERA, CTRL_CAMERA_PIN, LED_CAMERA, 0, true);
       initControl(CTRL_UVLAMP, CTRL_UVLAMP_PIN, LED_UVLAMP, CM_CTRL_UVLAMP, false);
       initControl(CTRL_BLAMP, CTRL_BLAMP_PIN, LED_BLAMP, CM_CTRL_BLAMP, false);
-      initControl(CTRL_USBDEVICE, CTRL_USBDEVICE_PIN, LED_USBDEVICE, CM_CTRL_USBDEVICE, false);
+      initControl(CTRL_STATE1, 0, LED_STATE1, 0, false);
+      initControl(CTRL_STATE2, 0, LED_STATE2, 0, false);
     }
 
     void ControlSet(ControlDevice device, bool state)
@@ -71,7 +78,9 @@ class DeviceController
       if (!blocking && controls[device].state != state) {
         indication_controller->LedSet(controls[device].led, state);
         controls[device].state = state;
-        digitalWrite(controls[device].pin, state ? HIGH : LOW);
+        if (controls[device].pin > 0) {
+          digitalWrite(controls[device].pin, state ? HIGH : LOW);
+        }
       }
     }
 

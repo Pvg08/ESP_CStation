@@ -28,6 +28,7 @@
 #define CMD_CMD_MAGNETIC_SETY 0x42
 #define CMD_CMD_MAGNETIC_SETZ 0x43
 #define CMD_CMD_CARDFOUND 0x50
+#define CMD_CMD_LIGHTPDUCMD 0x60
 
 #define CMD_MODE_TRACKING 0x11
 #define CMD_MODE_INDICATION 0x12
@@ -118,6 +119,7 @@ private:
     void getReadyToClose(bool dont_close_mainc_thread);
     void setModeState(uint8_t mode_code, uint8_t mode_state);
     void setDeviceState(uint8_t device_code, bool device_state);
+    void onLightPDUCommand(uint8_t cmd_code);
     void doOnPresence();
     void doOnCardFound(uint16_t crc_hash);
     void doSetMagneticVectorComponent(float *variab, uint8_t param1, uint8_t param2);
