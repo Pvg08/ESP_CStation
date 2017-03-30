@@ -134,6 +134,7 @@ void checkState(void (*callback)(), void (*runExternalCommand)(MControllerState*
   bool new_state, new_play_state;
 
   while (true) {
+    if (serialEventRun) serialEventRun();
     new_state = false;
     new_play_state = false;
     while (Serial.available() >= STATE_SIZE) {
@@ -177,8 +178,6 @@ void checkState(void (*callback)(), void (*runExternalCommand)(MControllerState*
     }
 
     if (callback) callback();
-    
-    delay(1);
   }
 }
 

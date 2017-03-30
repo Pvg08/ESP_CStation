@@ -1,16 +1,20 @@
 #include <SPI.h>
 #include <MFRC522.h>
+#include <DirectIO.h>
 #include <IRremote.h>
+#include <Timer5.h>
 #include <TM1637Display.h>
 #include <TimeLib.h>
 #include <DS1302RTC.h>
 #include <HMC5883L.h>
 #include <Crc16.h>
+
 #include "data_exchange.h"
 #include "onewire_helper.h"
 #include "indication_controller.h"
 #include "device_controller.h"
 #include "params.h"
+
 
 MFRC522 mfrc522(RFID_SS_PIN, RFID_RST_PIN);
 IRrecv irrecv(IR_RECV_PIN);
@@ -250,7 +254,7 @@ void setup() {
 
   indication_controller = new IndicationController();
   device_controller = new DeviceController(indication_controller);
-  wire_helper = new OneWireHelper(POWER_SIGNAL_MAIN_PIN, onTimerCheck);
+  wire_helper = new OneWireHelper(POWER_SIGNAL_MAIN_PIN, NULL);
 
   SPI.begin();
   irrecv.enableIRIn();
@@ -318,7 +322,9 @@ void HC_State_Changed() {
   }
 }
 
-void onTimerCheck() {
-  // @todo
+ISR(timer5Event)
+{
+  resetTimer5();
+  indication_controller->onTimer();
 }
 

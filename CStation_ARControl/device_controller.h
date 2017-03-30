@@ -3,17 +3,18 @@
 
 #include "indication_controller.h"
 
-#define CTRL_COUNT 5
+#define CTRL_COUNT 8
 enum ControlDevice {
     CTRL_LOCKOPEN = 0,
     CTRL_CAMERA = 1,
     CTRL_UVLAMP = 2,
     CTRL_BLAMP = 3,
-    CTRL_USBDEVICE = 4,
+    CTRL_USBDEVICE1 = 4,
+    CTRL_USBDEVICE2 = 5,
 
     // pseudo devices
-    CTRL_STATE1 = 5,
-    CTRL_STATE2 = 6
+    CTRL_STATE1 = 6,
+    CTRL_STATE2 = 7
 };
 
 struct DeviceStruct {
@@ -28,13 +29,15 @@ struct DeviceStruct {
 #define CTRL_CAMERA_PIN 40
 #define CTRL_UVLAMP_PIN 42
 #define CTRL_BLAMP_PIN 44
-#define CTRL_USBDEVICE_PIN 46
+#define CTRL_USBDEVICE1_PIN 46
+#define CTRL_USBDEVICE2_PIN 48
 /* /control pins */
 
 /* IR Button codes */
-#define CM_CTRL_UVLAMP 0x000000
-#define CM_CTRL_BLAMP 0x000000
-#define CM_CTRL_USBDEVICE 0x000000
+#define CM_CTRL_UVLAMP 0x100000
+#define CM_CTRL_BLAMP 0x200000
+#define CM_CTRL_USBDEVICE1 0x300000
+#define CM_CTRL_USBDEVICE2 0x400000
 /* /IR Button codes */
 
 class DeviceController 
@@ -69,6 +72,8 @@ class DeviceController
       initControl(CTRL_CAMERA, CTRL_CAMERA_PIN, LED_CAMERA, 0, true);
       initControl(CTRL_UVLAMP, CTRL_UVLAMP_PIN, LED_UVLAMP, CM_CTRL_UVLAMP, false);
       initControl(CTRL_BLAMP, CTRL_BLAMP_PIN, LED_BLAMP, CM_CTRL_BLAMP, false);
+      initControl(CTRL_USBDEVICE1, CTRL_USBDEVICE1_PIN, 0, CM_CTRL_USBDEVICE1, false);
+      initControl(CTRL_USBDEVICE2, CTRL_USBDEVICE2_PIN, 0, CM_CTRL_USBDEVICE2, false);
       initControl(CTRL_STATE1, 0, LED_STATE1, 0, false);
       initControl(CTRL_STATE2, 0, LED_STATE2, 0, false);
     }
