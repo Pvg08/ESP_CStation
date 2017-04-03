@@ -3,7 +3,7 @@
 
 #include <Timer5.h>
 
-#define LED_COUNT 13
+#define LED_COUNT 14
 enum LedIndicator {
     LED_MAIN_PC_READY = 0, 
     LED_PDU = 1, 
@@ -15,9 +15,10 @@ enum LedIndicator {
     LED_PRESENCE = 7, 
     LED_BLAMP = 8, 
     LED_AUTO = 9, 
-    LED_STATE1 = 10, 
-    LED_STATE2 = 11, 
-    LED_NO_LED = 12
+    LED_FUNIT = 10, 
+    LED_STATE1 = 11, 
+    LED_STATE2 = 12, 
+    LED_NO_LED = 13
 };
 enum BlinkState {
     BLINKING_NO, 
@@ -48,7 +49,8 @@ struct IndicatorStruct {
 #define LED_AUTO_PIN 45
 #define LED_STATE1_PIN 47
 #define LED_STATE2_PIN 49
-#define LED_NO_LED_PIN 50
+#define LED_FUNIT_PIN 50
+#define LED_NO_LED_PIN 51
 /* /led pins */
 
 #define FAST_BLINK_INTERVAL_MS 150
@@ -114,6 +116,7 @@ class IndicationController
       initLed(LED_AUTO, LED_AUTO_PIN);
       initLed(LED_STATE1, LED_STATE1_PIN);
       initLed(LED_STATE2, LED_STATE2_PIN);
+      initLed(LED_FUNIT, LED_FUNIT_PIN);
       initLed(LED_NO_LED, LED_NO_LED_PIN);
     }
 

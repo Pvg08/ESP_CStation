@@ -3,7 +3,7 @@
 
 #include "indication_controller.h"
 
-#define CTRL_COUNT 8
+#define CTRL_COUNT 9
 enum ControlDevice {
     CTRL_LOCKOPEN = 0,
     CTRL_CAMERA = 1,
@@ -11,10 +11,11 @@ enum ControlDevice {
     CTRL_BLAMP = 3,
     CTRL_USBDEVICE1 = 4,
     CTRL_USBDEVICE2 = 5,
+    CTRL_FUNIT = 6,
 
     // pseudo devices
-    CTRL_STATE1 = 6,
-    CTRL_STATE2 = 7
+    CTRL_STATE1 = 7,
+    CTRL_STATE2 = 8
 };
 
 struct DeviceStruct {
@@ -31,6 +32,7 @@ struct DeviceStruct {
 #define CTRL_BLAMP_PIN 44
 #define CTRL_USBDEVICE1_PIN 46
 #define CTRL_USBDEVICE2_PIN 48
+#define CTRL_FUNIT_PIN 52
 /* /control pins */
 
 /* IR Button codes */
@@ -74,6 +76,7 @@ class DeviceController
       initControl(CTRL_BLAMP, CTRL_BLAMP_PIN, LED_BLAMP, CM_CTRL_BLAMP, false);
       initControl(CTRL_USBDEVICE1, CTRL_USBDEVICE1_PIN, 0, CM_CTRL_USBDEVICE1, false);
       initControl(CTRL_USBDEVICE2, CTRL_USBDEVICE2_PIN, 0, CM_CTRL_USBDEVICE2, false);
+      initControl(CTRL_FUNIT, CTRL_FUNIT_PIN, LED_FUNIT, 0, false);
       initControl(CTRL_STATE1, 0, LED_STATE1, 0, false);
       initControl(CTRL_STATE2, 0, LED_STATE2, 0, false);
     }

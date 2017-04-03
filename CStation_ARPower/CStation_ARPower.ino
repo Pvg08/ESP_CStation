@@ -28,11 +28,11 @@
 #define TONE_PIN 5
 #define IRECV_PIN 12
 #define POWER_PIN 4
-#define CHARGE_PIN 8
+#define OUTER_DEVICE_PIN 8
 #define DHTPIN 6
 #define LED_POWER_ALERT_PIN 11
 #define BTN_POWER_PIN 2
-#define BTN_CHARGE_PIN 3
+#define BTN_OUTER_DEVICE_PIN 3
 #define BLINK_TEST_PIN 13
 /* /pins */
 
@@ -63,9 +63,9 @@
 #define POWER_SIGNAL_MAIN_PIN 7
 #define ONEWIRE_CODE_NOOP 0x00
 #define ONEWIRE_CODE_OFF 0b11011001
-#define ONEWIRE_CODE_SILENT_MODE_OFF 0b11100000
-#define ONEWIRE_CODE_SILENT_MODE_MID 0b10100001
-#define ONEWIRE_CODE_SILENT_MODE_ON 0b01100111
+#define ONEWIRE_CODE_FAN_OFF 0b11100000
+#define ONEWIRE_CODE_FAN_MID 0b10100001
+#define ONEWIRE_CODE_FAN_ON 0b01100111
 /* /OneWire codes */
 
 /* LED codes & intervals */
@@ -83,8 +83,6 @@
 /* button params */
 #define BTN_SHORTEST_PRESS 20
 #define BTN_LONG_PRESS 2000
-#define BTN_POWER_INT 0
-#define BTN_CHARGE_INT 1
 /* /button params */
 
 /* tone signal params */
@@ -99,7 +97,7 @@
 
 /* Command codes */
 #define CM_TOGGLEONOFF 0xFFB04F
-#define CM_TOGGLECHARGE 0xFFF807
+#define CM_TOGGLEOUTERDEVICE 0xFFF807
 #define CM_TOGGLESILENCE 0xFFB847
 #define CM_TOGGLESPEEDTEST 0xFF9867
 /* /Command codes */
@@ -110,7 +108,7 @@
 /* /dht-sensor params */
 
 /* other consts */
-#define BASE_CHARGING_TIME 14400000
+#define BASE_OUTERDEVICE_TIME 900000
 #define BASE_VOLTAGE_ERROR_TIME 45000
 /* /other consts */
 
@@ -132,12 +130,12 @@ unsigned long int turn_on_time;
 volatile bool power_btn;
 volatile unsigned long int power_btn_press_millis, power_press_duration;
 
-bool charging, constant_charging;
-unsigned long int charging_start_time;
+bool outer_device, constant_outer_device;
+unsigned long int outer_device_start_time;
 unsigned long int last_voltage_error_time;
 unsigned long int last_fan_update_time;
-volatile bool charge_btn;
-volatile unsigned long int charge_btn_press_millis, charge_press_duration;
+volatile bool outer_device_btn;
+volatile unsigned long int outer_device_btn_press_millis, outer_device_press_duration;
 volatile byte power_led_repeats_cnt;
 volatile bool power_led_state;
 volatile byte power_led_curr_mode;
@@ -311,19 +309,19 @@ void PowerBTN_Change()
   }
 }
 
-void ChargeBTN_Change() 
+void outer_deviceBTN_Change() 
 {
-  bool is_pressed = digitalRead(BTN_CHARGE_PIN) == HIGH;
+  bool is_pressed = digitalRead(BTN_OUTER_DEVICE_PIN) == HIGH;
   unsigned long int cmillis = millis();
-  if (is_pressed || !charge_btn_press_millis) {
-    charge_btn_press_millis = cmillis;
+  if (is_pressed || !outer_device_btn_press_millis) {
+    outer_device_btn_press_millis = cmillis;
   } else {
-    charge_btn_press_millis = cmillis-charge_btn_press_millis;
-    if (charge_btn_press_millis>BTN_SHORTEST_PRESS) {
-      if (charge_press_duration<charge_btn_press_millis) charge_press_duration = charge_btn_press_millis;
-      charge_btn = true;
+    outer_device_btn_press_millis = cmillis-outer_device_btn_press_millis;
+    if (outer_device_btn_press_millis>BTN_SHORTEST_PRESS) {
+      if (outer_device_press_duration<outer_device_btn_press_millis) outer_device_press_duration = outer_device_btn_press_millis;
+      outer_device_btn = true;
     }
-    charge_btn_press_millis = cmillis;
+    outer_device_btn_press_millis = cmillis;
   }
 }
 
@@ -331,21 +329,21 @@ void fastOff()
 {
   PowerLedSet(POWER_LED_OFF);
   digitalWrite(POWER_PIN, LOW);
-  reset_onoffvars();
+  resetOnOffVars();
   irrecv.enableIRIn();
 }
 
-void reset_chargevars() {
-  digitalWrite(CHARGE_PIN, LOW);
-  charge_btn = false;
-  charge_btn_press_millis = 0;
-  charge_press_duration = 0;
-  charging = false;
-  constant_charging = false;
-  charging_start_time = 0;
+void resetOuterDeviceVars() {
+  digitalWrite(OUTER_DEVICE_PIN, LOW);
+  outer_device_btn = false;
+  outer_device_btn_press_millis = 0;
+  outer_device_press_duration = 0;
+  outer_device = false;
+  constant_outer_device = false;
+  outer_device_start_time = 0;
 }
 
-void reset_onoffvars() {
+void resetOnOffVars() {
   digitalWrite(POWER_PIN, LOW);
   analogWrite(FAN_IN_PIN, FAN_ZERO_SPEED);
   analogWrite(FAN_OUT_PIN, FAN_ZERO_SPEED);
@@ -375,7 +373,7 @@ void reset_onoffvars() {
 
 void turnOn(bool isfast)
 {
-  reset_onoffvars();
+  resetOnOffVars();
 
   turned_on = true;
   digitalWrite(POWER_PIN, HIGH);
@@ -445,35 +443,35 @@ void updateOnOffState()
   }
 }
 
-void updateChargeState()
+void updateOuterDeviceState()
 {
   unsigned long int cmillis = millis();
   
-  if (charge_btn) {
-    bool long_press = charge_press_duration>=BTN_LONG_PRESS;
+  if (outer_device_btn) {
+    bool long_press = outer_device_press_duration>=BTN_LONG_PRESS;
 
-    if (charging) {
-      reset_chargevars();
+    if (outer_device) {
+      resetOuterDeviceVars();
       fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
     } else {
       if (long_press) {
-        constant_charging = true;
-        charging_start_time = 0;
+        constant_outer_device = true;
+        outer_device_start_time = 0;
         fastBeep(TONE_LEN_NORMAL, TONE_FREQ_INFO);
       } else {
-        constant_charging = false;
-        charging_start_time = cmillis;
+        constant_outer_device = false;
+        outer_device_start_time = cmillis;
         fastBeep(TONE_LEN_SHORT, TONE_FREQ_INFO);
       }
-      charging = true;
-      digitalWrite(CHARGE_PIN, HIGH);
+      outer_device = true;
+      digitalWrite(OUTER_DEVICE_PIN, HIGH);
     }
 
-    charge_btn = false;
-    charge_btn_press_millis = charge_press_duration = 0;
+    outer_device_btn = false;
+    outer_device_btn_press_millis = outer_device_press_duration = 0;
   } else {
-    if (charging && !constant_charging && (cmillis-charging_start_time) > BASE_CHARGING_TIME) {
-      reset_chargevars();
+    if (outer_device && !constant_outer_device && (cmillis-outer_device_start_time) > BASE_OUTERDEVICE_TIME) {
+      resetOuterDeviceVars();
       fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
     }
   }
@@ -486,18 +484,18 @@ void setup() {
   pinMode(FAN_OUT_PIN, OUTPUT);
   pinMode(TONE_PIN, OUTPUT);
   pinMode(POWER_PIN, OUTPUT);
-  pinMode(CHARGE_PIN, OUTPUT);
+  pinMode(OUTER_DEVICE_PIN, OUTPUT);
   pinMode(BTN_POWER_PIN, INPUT);
-  pinMode(BTN_CHARGE_PIN, INPUT);
+  pinMode(BTN_OUTER_DEVICE_PIN, INPUT);
   pinMode(DHTPIN, INPUT);
 
-  reset_onoffvars();
-  reset_chargevars();
+  resetOnOffVars();
+  resetOuterDeviceVars();
 
   wire_helper = new OneWireHelper(POWER_SIGNAL_MAIN_PIN, onTimerCheck);
 
-  attachInterrupt(BTN_POWER_INT, PowerBTN_Change, CHANGE);
-  attachInterrupt(BTN_CHARGE_INT, ChargeBTN_Change, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(BTN_POWER_PIN), PowerBTN_Change, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(BTN_OUTER_DEVICE_PIN), outer_deviceBTN_Change, CHANGE);
   dht.begin();
   irrecv.enableIRIn();
   fastBeep(TONE_LEN_SHORT, TONE_FREQ_MESSAGE);
@@ -510,15 +508,15 @@ void loop() {
       turning_off = true;
       power_btn = false;
       power_btn_press_millis = power_press_duration = 0;
-    } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_ON) {
+    } else if (onewire_byte == ONEWIRE_CODE_FAN_ON) {
       silence_mode = true;
       silence_ismid = false;
       last_fan_update_time = 0;
-    } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_MID) {
+    } else if (onewire_byte == ONEWIRE_CODE_FAN_MID) {
       silence_mode = true;
       silence_ismid = true;
       last_fan_update_time = 0;
-    } else if (onewire_byte == ONEWIRE_CODE_SILENT_MODE_OFF) {
+    } else if (onewire_byte == ONEWIRE_CODE_FAN_OFF) {
       silence_mode = false;
       silence_ismid = false;
       last_fan_update_time = 0;
@@ -532,9 +530,9 @@ void loop() {
         #ifdef CSTATION_DEBUG_MODE
             fastBeep(TONE_LEN_SHORT, 100);
         #endif
-      } else if (ir_results.value == CM_TOGGLECHARGE) {
-        charge_btn = true;
-        charge_press_duration = BTN_SHORTEST_PRESS;
+      } else if (ir_results.value == CM_TOGGLEOUTERDEVICE) {
+        outer_device_btn = true;
+        outer_device_press_duration = BTN_SHORTEST_PRESS;
         #ifdef CSTATION_DEBUG_MODE
             fastBeep(TONE_LEN_SHORT, 150);
         #endif
@@ -626,7 +624,7 @@ void loop() {
   }
 
   updateOnOffState();
-  updateChargeState();
+  updateOuterDeviceState();
 }
 
 void onTimerCheck() {
