@@ -227,22 +227,22 @@ void MainPCController::recieveMainCMD(uint8_t cmd, uint8_t param1, uint8_t param
 void MainPCController::setModeState(uint8_t mode_code, uint8_t mode_state)
 {
     switch (mode_code) {
-    case CMD_MODE_TRACKING:
+    case MODE_TRACKING:
         mode_state_tracking = (TrackingModeState) mode_state;
     break;
-    case CMD_MODE_INDICATION:
+    case MODE_INDICATION:
         mode_state_indication = (IndicationModeState) mode_state;
     break;
-    case CMD_MODE_SILENCE:
+    case MODE_SILENCE:
         mode_state_silence = (SilenceModeState) mode_state;
     break;
-    case CMD_MODE_CONTROL:
+    case MODE_CONTROL:
         mode_state_control = (ControlModeState) mode_state;
     break;
-    case CMD_MODE_SECURITY:
+    case MODE_SECURITY:
         mode_state_security = (SecurityModeState) mode_state;
     break;
-    case CMD_MODE_AUTOANIMATOR:
+    case MODE_AUTOANIMATOR:
         mode_state_autoanimator = (AutoAnimatorModeState) mode_state;
     break;
     }

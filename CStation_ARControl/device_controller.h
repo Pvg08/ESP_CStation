@@ -1,21 +1,22 @@
 #ifndef DEVICE_CONTROLLER_H
 #define DEVICE_CONTROLLER_H
 
+#include "data_exchange.h"
 #include "indication_controller.h"
 
 #define CTRL_COUNT 9
 enum ControlDevice {
-    CTRL_LOCKOPEN = 0,
-    CTRL_CAMERA = 1,
-    CTRL_UVLAMP = 2,
-    CTRL_BLAMP = 3,
-    CTRL_USBDEVICE1 = 4,
-    CTRL_USBDEVICE2 = 5,
-    CTRL_FUNIT = 6,
+    CTRL_LOCKOPEN,
+    CTRL_CAMERA,
+    CTRL_UVLAMP,
+    CTRL_BLAMP,
+    CTRL_USBDEVICE1,
+    CTRL_USBDEVICE2,
+    CTRL_FUNIT,
 
     // pseudo devices
-    CTRL_STATE1 = 7,
-    CTRL_STATE2 = 8
+    CTRL_STATE1,
+    CTRL_STATE2
 };
 
 struct DeviceStruct {
@@ -92,17 +93,29 @@ class DeviceController
       }
     }
 
+    void setDeviceState(ControlDevice device, bool device_state, bool send_pc_notify = false) {
+      ControlSet(device, device_state);
+      if (send_pc_notify) {
+        sendToMainPC(CMD_CMD_SETDEVICESTATE, device, device_state ? 1 : 0, 0);
+      }
+    }
+
     int DeviceControlIRCode(unsigned long int code)
     {
       if (!blocking) {
         for(byte i=0; i<CTRL_COUNT; i++) {
           if (controls[i].ir_code == code) {
-            ControlSet(i, !getDeviceState(i));
+            setDeviceState(i, !getDeviceState(i), true);
             return i;
           }
         }
       }
       return -1;
+    }
+
+    IndicationController *getIndicationController()
+    {
+      return indication_controller;
     }
 
     bool getDeviceState(ControlDevice device)

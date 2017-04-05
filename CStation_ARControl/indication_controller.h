@@ -5,20 +5,20 @@
 
 #define LED_COUNT 14
 enum LedIndicator {
-    LED_MAIN_PC_READY = 0, 
-    LED_PDU = 1, 
-    LED_CARDREADING = 2, 
-    LED_LOCKOPEN = 3, 
-    LED_CONTROLSBLOCKED = 4, 
-    LED_CAMERA = 5, 
-    LED_UVLAMP = 6, 
-    LED_PRESENCE = 7, 
-    LED_BLAMP = 8, 
-    LED_AUTO = 9, 
-    LED_FUNIT = 10, 
-    LED_STATE1 = 11, 
-    LED_STATE2 = 12, 
-    LED_NO_LED = 13
+  LED_MAIN_PC_READY, 
+  LED_PDU, 
+  LED_CARDREADING, 
+  LED_LOCKOPEN, 
+  LED_CONTROLSBLOCKED, 
+  LED_CAMERA, 
+  LED_UVLAMP, 
+  LED_PRESENCE, 
+  LED_BLAMP, 
+  LED_AUTO, 
+  LED_FUNIT, 
+  LED_STATE1, 
+  LED_STATE2, 
+  LED_NO_LED
 };
 enum BlinkState {
     BLINKING_NO, 
