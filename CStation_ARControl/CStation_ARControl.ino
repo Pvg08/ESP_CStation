@@ -199,7 +199,7 @@ void setup() {
   indication_controller = new IndicationController();
   device_controller = new DeviceController(indication_controller);
   wire_helper = new OneWireHelper(POWER_SIGNAL_MAIN_PIN, NULL);
-  mode_controller = new ModeController(device_controller, wire_helper);
+  mode_controller = ModeController::Instance(device_controller, wire_helper);
 
   SPI.begin();
   irrecv.enableIRIn();
@@ -243,18 +243,21 @@ void r_loop() {
     }
   }
   showTime();
-  if (!main_pc_send_off && wire_helper->tryReadOffSignal()) {
-    main_pc_send_off = true;
-    if (main_pc_ready) {
-      sendToMainPC(CMD_CMD_TURNOFF, 0, 0, 0);
-    } else {
-      turnOff(true, true);
+  if (!main_pc_send_off) {
+    mode_controller->checkClicks();
+    if (hc_info_need_to_send) {
+      hc_info_need_to_send = false;
+      indication_controller->LedSet(LED_PRESENCE, true, BLINKING_ONCE);
+      sendToMainPC(CMD_CMD_PRESENCE, 0, 0, 0);
     }
-  }
-  if (hc_info_need_to_send) {
-    hc_info_need_to_send = false;
-    indication_controller->LedSet(LED_PRESENCE, true, BLINKING_ONCE);
-    sendToMainPC(CMD_CMD_PRESENCE, 0, 0, 0);
+    if (wire_helper->tryReadOffSignal()) {
+      main_pc_send_off = true;
+      if (main_pc_ready) {
+        sendToMainPC(CMD_CMD_TURNOFF, 0, 0, 0);
+      } else {
+        turnOff(true, true);
+      }
+    }
   }
 }
 
